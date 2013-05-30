@@ -24,8 +24,7 @@ class Broadcaster(DatagramProtocol):
     #         print "Server received:" + repr(datagram)
     #         self.transport.write("data", address)
 
-
-if __name__ == "__main__":
+def main():
     # file server
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
@@ -33,3 +32,7 @@ if __name__ == "__main__":
                             Broadcaster(), 
                             listenMultiple=False) #don't listen for responses, just broadcast
     reactor.run()
+
+
+if __name__ == "__main__":
+    main()
