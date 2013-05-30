@@ -1,4 +1,4 @@
-Der teiler -- The sharer
+Der Teiler -- The sharer
 ========================
 
 Implementation
