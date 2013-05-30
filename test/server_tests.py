@@ -1,3 +1,4 @@
+from src.server import Broadcaster
 from twisted.trial import unittest
 
 class BroadcastServerTests(unittest.TestCase):

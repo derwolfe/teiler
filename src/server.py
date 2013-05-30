@@ -8,12 +8,13 @@ resource = File('.') # serve the pwd
 factory = Site(resource)
 
 # Broadcast a message that the service is alive on this address
-class BroadcastAddress(DatagramProtocol):
+class Broadcaster(DatagramProtocol):
 
     def startProtocol(self):
         """
         Gets called once the listener has begun, handles configuration.
         """
+        # only the local network, no jumping to another router level
         self.transport.setTTL(1)
         # set the multicast group
         self.transport.joinGroup("224.0.0.1") # this is the all hosts address
@@ -22,6 +23,6 @@ class BroadcastAddress(DatagramProtocol):
 
 reactor.listenTCP(8888, factory)
 reactor.listenMulticast(8005, 
-                        BroadcastAddress(), 
+                        Broadcaster(), 
                         listenMultiple=False) #don't listen for responses, just broadcast
 reactor.run()
