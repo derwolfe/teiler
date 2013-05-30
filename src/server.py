@@ -19,10 +19,17 @@ class Broadcaster(DatagramProtocol):
         # set the multicast group
         self.transport.joinGroup("224.0.0.1") # this is the all hosts address
 
-    
+    # def datagramReceived(self, datagram, address):
+    #     if datagram == "UniqueID":
+    #         print "Server received:" + repr(datagram)
+    #         self.transport.write("data", address)
 
-reactor.listenTCP(8888, factory)
-reactor.listenMulticast(8005, 
-                        Broadcaster(), 
-                        listenMultiple=False) #don't listen for responses, just broadcast
-reactor.run()
+
+if __name__ == "__main__":
+    # file server
+    reactor.listenTCP(8888, factory) 
+    # multicast UDP server
+    reactor.listenMulticast(8005,    
+                            Broadcaster(), 
+                            listenMultiple=False) #don't listen for responses, just broadcast
+    reactor.run()
