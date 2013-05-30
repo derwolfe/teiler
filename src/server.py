@@ -23,5 +23,5 @@ class BroadcastAddress(DatagramProtocol):
 reactor.listenTCP(8888, factory)
 reactor.listenMulticast(8005, 
                         BroadcastAddress(), 
-                        listenMultiple=false) #don't listen for responses, just broadcast
+                        listenMultiple=False) #don't listen for responses, just broadcast
 reactor.run()
