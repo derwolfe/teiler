@@ -9,6 +9,9 @@ class MulticastClientUDP(DatagramProtocol):
 
 # Send multicast on 224.0.0.1:8005, on our dynamically allocated port
 # the listener
-if __name__ == '__main__':
+def main():
     reactor.listenUDP(0, MulticastClientUDP()).write('UniqueID', ('224.0.0.1', 8005))
     reactor.run()
+
+if __name__ == '__main__':
+    main()
