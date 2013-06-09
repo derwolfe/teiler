@@ -13,7 +13,7 @@ class MulticastClientUDP(DatagramProtocol):
         # this could be placed in a config
         self.transport.joinGroup(self.host)
 
-    def datagramReceived(self, datagrami, address):
+    def datagramReceived(self, datagram, address):
         print "Received: " + repr(datagram)
         fileserver = repr(datagram)
         print fileserver
