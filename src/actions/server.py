@@ -25,6 +25,7 @@ class Broadcaster(DatagramProtocol):
     #         self.transport.write("data", address)
 
 def main():
+    print "Serving on {0}:8888 and broadcasting IP on 224.0.0.1:8005".format(0)
     # file server
     reactor.listenTCP(8888, factory) 
     # multicast UDP server

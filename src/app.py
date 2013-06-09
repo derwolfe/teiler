@@ -1,5 +1,5 @@
 import argparse
-from discover import client, server
+from actions import server, client
 
 # the main entry point for the application
 # for simplicity, let's decide that the user decides at runtime to listen
