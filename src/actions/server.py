@@ -3,8 +3,6 @@ from twisted.web.static import File
 from twisted.internet import reactor
 from twisted.internet.protocol import DatagramProtocol
 
-import netifaces
-
 # serves the files in the current directory 
 resource = File('.') # serve the pwd
 factory = Site(resource)
@@ -28,7 +26,7 @@ class Broadcaster(DatagramProtocol):
 
 def main():
     print "Serving on {0}:8888 and broadcasting IP on 224.0.0.1:8005".format(0)
-    get_ip()
+    #get_ip()
     # file server
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
@@ -36,12 +34,6 @@ def main():
                             Broadcaster(), 
                             listenMultiple=False) #don't listen for responses, just broadcast
     reactor.run()
-
-def get_ip():
-    """Wifi is the broadcast address and peer is the eth"""
-    for interface in netifaces.interfaces():
-        print netifaces.ifaddresses(interface)[netifaces.AF_INET]
-    
 
 
 if __name__ == "__main__":
