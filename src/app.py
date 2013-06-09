@@ -8,16 +8,19 @@ from discover import client, server
 def main():
     # get the arguments
     parser = argparse.ArgumentParser(description="Exchange files!")
-    parser.add_argument("flag", metavar="F", type=int,
-                        help="To be the server, use 1; to be the client, type any other number")
+    parser.add_argument('action',
+                        help="To be the server, type serve; to be the client, type listen",
+                        )
     args = parser.parse_args()
-    app_runner(args.flag)
+    app_runner(args.action)
 
 def app_runner(how):
-    if how != 1:
+    if how == "serve":
         server.main()
-    else:
+    elif how == "listen":
         client.main()
+    else:
+        return u'Please specify either listen or serve'
     
 
 if __name__  == '__main__':
