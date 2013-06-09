@@ -12,6 +12,7 @@ def get_live_interface():
     # basically try for wifi first, then ethernet
     addresses = []
     locals = ['127.0.0.1', '127.0.1.1', '127.1.1.1']
+
     # loop over the available network interfaces and try to get the LAN level IP
     for iface in netifaces.interfaces():
         test_iface = netifaces.ifaddresses(iface).get(netifaces.AF_INET) #narrow down to tcp ipv4
@@ -20,6 +21,7 @@ def get_live_interface():
             for i in test_iface:
                 if i['addr'] not in locals:
                     addresses.append(i['addr'])
+
     # return the address to to broadcast out
     return addresses[0] 
 
