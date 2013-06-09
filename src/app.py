@@ -15,9 +15,9 @@ def main():
 
 def app_runner(how):
     if how != 1:
-        server.serve()
+        server.main()
     else:
-        client.listen()
+        client.main()
     
 
 if __name__  == '__main__':
