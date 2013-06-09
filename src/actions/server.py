@@ -16,17 +16,22 @@ class Broadcaster(DatagramProtocol):
     """
     def __init__(self):
         self.ip = locate.get_live_interface()
-
-    def sendHeartbeat(self):
-        self.transport.write(self.ip)
+        self.host = '224.0.0.5'
+        self.port = 8005
 
     def startProtocol(self):
-        print "Serving on {0}:8888 and broadcasting IP on 224.0.0.1:8005".format(self.ip)
+        print "Serving on {0}:8888 and broadcasting IP on 224.0.0.5:8005".format(self.ip)
+        self.transport.joinGroup(self.host)
         self._call = task.LoopingCall(self.sendHeartbeat)
-        self._loop = self._call.start(15)
-        
+        self._loop = self._call.start(5)
+
+    def sendHeartbeat(self):
+        message ='addr:{0}, port:8888'.format(self.ip)
+        print message
+        self.transport.write(message, (self.host, self.port))
+
     def stopProtocol(self):
-        self._call.stop
+        self._call.stop()
     
         
 

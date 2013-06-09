@@ -4,14 +4,18 @@ from twisted.application.internet import MulticastServer
 
 class MulticastClientUDP(DatagramProtocol):
     
-    def startProtocol(self):
-        self.transport.joinGroup('228.0.0.5')
+    def __init__(self):
+        self.host = '224.0.0.5'
 
-    def datagramReceived(self, datagram, address):
+    def startProtocol(self):
+        # this could be placed in a config
+        self.transport.joinGroup(self.host)
+
+    def datagramReceived(self, datagram):
         print "Received: " + repr(datagram)
 
 def main():
-    print "Listening for an IP on 224.0.0.1:8005"
+    print "Listening"
     reactor.listenMulticast(8005, 
                             MulticastClientUDP(),
                             listen_multiple = True)
