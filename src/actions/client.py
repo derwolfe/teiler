@@ -11,8 +11,10 @@ urls = []
 def get_file_urls(self, url):
     f = requests.get("http://" + url)
     for link in BeautifulSoup(f, parseOnlyThese=SoupStrainer('a')):
-        self.urls.append(link)
-        print link
+        urls.append(link)
+
+def get_files():
+    pass
 
 class MulticastClientUDP(DatagramProtocol):
     
@@ -31,9 +33,6 @@ class MulticastClientUDP(DatagramProtocol):
         self.transport.loseConnection()
         reactor.stop()    
 
-    
-# once you receive the message then add it to the 
-
 def main():
     print "Listening"
     reactor.listenMulticast(8005, 
@@ -41,7 +40,7 @@ def main():
                             listenMultiple = True)
     
     reactor.run()
-    # is the reactor done?
+    # reactor is closed at this point.
     get_file_urls(fileserver)
     
 
