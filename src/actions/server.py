@@ -26,14 +26,13 @@ class Broadcaster(DatagramProtocol):
         self._loop = self._call.start(5)
 
     def sendHeartbeat(self):
-        message ='addr:{0}, port:8888'.format(self.ip)
+        message ='{0}:8888'.format(self.ip)
         print message
         self.transport.write(message, (self.host, self.port))
 
     def stopProtocol(self):
         self._call.stop()
     
-        
 
 def main():
     # file server
