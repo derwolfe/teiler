@@ -14,7 +14,13 @@ def get_file_urls(self, url):
         urls.append(link)
 
 def get_files():
-    pass
+    for handle in urls:
+        r = requests.get('http://' + filserver + '/' + handle)
+        if r.status_code = 200:
+            with open(handle, 'rb') as f:
+                for chuck in r.iter_content(1024):
+                    f.write(chunk)
+    print urls
 
 class MulticastClientUDP(DatagramProtocol):
     
