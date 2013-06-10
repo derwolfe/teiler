@@ -27,7 +27,7 @@ Testing levels
 Progress
 --------
 Todo:
-1) tests for protocol, locate
-2) early install using setup (not the package with GUI and frozen)
-3) freeze for exe
+1. tests for protocol, locate
+2. early install using setup (not the package with GUI and frozen)
+3. freeze for exe
 
