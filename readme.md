@@ -13,8 +13,6 @@ Design
 ------
 It should be simple -- the server starts, broadcasts it's address. The client picks up the address and grabs the files.
 
-It should basically consist of a file server and a client that goes and pulls all files from the server.
-
 Testing levels
 --------------
 1. fileserver serves files
