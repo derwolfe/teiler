@@ -14,13 +14,14 @@ def get_file_urls(self, url):
         urls.append(link)
 
 def get_files():
+    print urls
     for handle in urls:
         r = requests.get('http://' + filserver + '/' + handle)
-        if r.status_code = 200:
+        if r.status_code == 200:
             with open(handle, 'rb') as f:
                 for chuck in r.iter_content(1024):
                     f.write(chunk)
-    print urls
+
 
 class MulticastClientUDP(DatagramProtocol):
     
@@ -35,7 +36,8 @@ class MulticastClientUDP(DatagramProtocol):
         print "Received: " + repr(datagram)
         fileserver = repr(datagram).replace("'", "")
 
-        # this will need more checking - it is killing the conn once it receives the address
+        # this will need more checking - it is killing the conn 
+        # once it receives the address
         self.transport.loseConnection()
         reactor.stop()    
 
