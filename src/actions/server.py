@@ -33,7 +33,6 @@ class Broadcaster(DatagramProtocol):
     def stopProtocol(self):
         self._call.stop()
     
-        
 
 def main():
     # file server
