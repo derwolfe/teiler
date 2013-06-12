@@ -5,17 +5,18 @@ from twisted.application.internet import MulticastServer
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 import requests
 
-fileserver = ''
-urls = []
+# should be limited to this module only
+_fileserver = ''
+_urls = []
 
 def get_file_urls(self, url):
     f = requests.get("http://" + url)
     for link in BeautifulSoup(f, parseOnlyThese=SoupStrainer('a')):
-        urls.append(link)
+        _urls.append(link)
 
 def get_files():
     print urls
-    for handle in urls:
+    for handle in _urls:
         r = requests.get('http://' + filserver + '/' + handle)
         if r.status_code == 200:
             with open(handle, 'rb') as f:
@@ -34,7 +35,7 @@ class MulticastClientUDP(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         print "Received: " + repr(datagram)
-        fileserver = repr(datagram).replace("'", "")
+        _fileserver = repr(datagram).replace("'", "")
 
         # this will need more checking - it is killing the conn 
         # once it receives the address
@@ -48,8 +49,9 @@ def main():
                             listenMultiple = True)
     
     reactor.run()
+    # async **should** be over
     # reactor is closed at this point.
-    get_file_urls(fileserver)
+    get_file_urls(_fileserver)
     
 
 if __name__ == '__main__':

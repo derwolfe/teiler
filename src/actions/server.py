@@ -34,6 +34,10 @@ class Broadcaster(DatagramProtocol):
 
     def stopProtocol(self):
         self._call.stop()
+
+    # helps to test?
+    #def datagramReceived(self, datagram, address):
+    #    print "Sent:{0} from {1}".format(repr(datagram), address)
     
 
 def main():
@@ -41,7 +45,7 @@ def main():
     serve_at = locate.get_live_interface()
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
-    reactor.listenMulticast(8005, Broadcaster(serve_at)) #don't listen for responses, just broadcast
+    reactor.listenMulticast(8005, Broadcaster(serve_at)) 
     reactor.run()
 
 
