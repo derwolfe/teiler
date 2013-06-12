@@ -3,7 +3,7 @@ from twisted.web.static import File
 from twisted.internet import reactor, task
 from twisted.internet.protocol import DatagramProtocol
 
-from actions import locate
+from . import locate
 
 # serves the files in the current directory 
 resource = File('.') # serve the pwd
