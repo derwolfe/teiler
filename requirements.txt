@@ -1,4 +1,3 @@
-BeautifulSoup==3.2.1
 Twisted==12.3.0
 ipython==0.13.1
 netifaces==0.8
