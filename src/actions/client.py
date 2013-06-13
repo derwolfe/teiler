@@ -9,19 +9,23 @@ import requests
 _fileserver = ''
 _urls = []
 
-def get_file_urls(self, url):
-    f = requests.get("http://" + url)
-    for link in BeautifulSoup(f, parseOnlyThese=SoupStrainer('a')):
-        _urls.append(link)
+def get_file_urls(url):
+    r = requests.get("http://" + url)
+    if r.status_code == 200:
+        for link in BeautifulSoup(f, parseOnlyThese=SoupStrainer('a')):
+            global _urls
+            _urls.append(link)
+    print "Fileserver not at specified address"
+    return
 
 def get_files():
     print urls
-    for handle in _urls:
-        r = requests.get('http://' + filserver + '/' + handle)
-        if r.status_code == 200:
-            with open(handle, 'rb') as f:
-                for chuck in r.iter_content(1024):
-                    f.write(chunk)
+    #for handle in _urls:
+    #    r = requests.get('http://' + filserver + '/' + handle)
+    #    if r.status_code == 200:
+    #        with open(handle, 'rb') as f:
+    #            for chuck in r.iter_content(1024):
+    #                f.write(chunk)
 
 
 class MulticastClientUDP(DatagramProtocol):
@@ -35,6 +39,7 @@ class MulticastClientUDP(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         print "Received: " + repr(datagram)
+        global _fileserver
         _fileserver = repr(datagram).replace("'", "")
 
         # this will need more checking - it is killing the conn 

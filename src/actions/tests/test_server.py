@@ -13,10 +13,12 @@ from twisted.trial import unittest
 #    def datagramReceived(self, datagram, address):
 #        self.reads.append(repr(datagram))
 
-
+# do you test that it broadcasts or that its broadcasts can be heard?
 class BroadcastServerTests(unittest.TestCase):
     def setUp(self):
-        broadcaster = server.Broadcaster('1.1.1.1')
+        self.protocol = server.Broadcaster('1.1.1.1')
+        self.transport = 
+        self.transport.protocol = self.protocol
         
     def test_broadcasting(self):
         """ does it broadcast correctly?"""
