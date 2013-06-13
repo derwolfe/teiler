@@ -2,26 +2,28 @@ from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from twisted.application.internet import MulticastServer
 
-from BeautifulSoup import BeautifulSoup, SoupStrainer
 import requests
 
-fileserver = ''
-urls = []
+# should be limited to this module only
+_fileserver = ''
 
-def get_file_urls(self, url):
-    f = requests.get("http://" + url)
-    for link in BeautifulSoup(f, parseOnlyThese=SoupStrainer('a')):
-        urls.append(link)
+def get_file_urls(url):
+    r = requests.get("http://" + url + '/teiler-list.txt')
+    if r.status_code == 200:
+        save(r.content)
+    print "Fileserver not at specified address"
 
-def get_files():
-    print urls
-    for handle in urls:
-        r = requests.get('http://' + filserver + '/' + handle)
-        if r.status_code == 200:
-            with open(handle, 'rb') as f:
-                for chuck in r.iter_content(1024):
-                    f.write(chunk)
+#def get_files():
+    #for handle in _urls:
+    #    r = requests.get('http://' + filserver + '/' + handle)
+    #    if r.status_code == 200:
+    #        with open(handle, 'rb') as f:
+    #            for chuck in r.iter_content(1024):
+    #                f.write(chunk)
 
+def save(stuff, name):
+    with open(name, 'w') as f:
+        f.write(stuff)
 
 class MulticastClientUDP(DatagramProtocol):
     
@@ -34,7 +36,8 @@ class MulticastClientUDP(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         print "Received: " + repr(datagram)
-        fileserver = repr(datagram).replace("'", "")
+        global _fileserver
+        _fileserver = repr(datagram).replace("'", "")
 
         # this will need more checking - it is killing the conn 
         # once it receives the address
@@ -48,9 +51,9 @@ def main():
                             listenMultiple = True)
     
     reactor.run()
+    # async **should** be over
     # reactor is closed at this point.
-    get_file_urls(fileserver)
-    
+    get_file_urls(_fileserver)
 
 if __name__ == '__main__':
     main()

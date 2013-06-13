@@ -26,8 +26,9 @@ Testing levels
 
 Progress
 --------
-Todo:
-1. tests for protocol, locate
+Todo
+X1. tests for protocol, locate
 2. early install using setup (not the package with GUI and frozen)
+X3. find the server, get a list of files, get files 
 3. freeze for exe
 

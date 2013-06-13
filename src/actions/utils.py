@@ -1,3 +1,4 @@
+import os
 import netifaces
 
 # """
@@ -23,5 +24,21 @@ def get_live_interface():
 
     # return the address to broadcast out
     return addresses[0] 
+
+
+def list_files():
+    file_list = []
+    for root, dirs, files in os.walk('./'):
+        for name in files:       
+            filename = os.path.join(root, name)
+            file_list.append(filename)
+    return file_list
+
+def make_file_list(file_list):
+    """given a list of files, create a text file containing their names 
+    relative to the serving directory"""
+    with open('teiler-list.txt', 'w') as f:
+        for line in file_list:
+            f.write(line + '\n')
 
                 
