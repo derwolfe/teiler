@@ -1,3 +1,4 @@
+import os
 import netifaces
 
 # """
@@ -24,4 +25,14 @@ def get_live_interface():
     # return the address to broadcast out
     return addresses[0] 
 
+
+def list_files():
+    file_list = []
+    for root, dirs, files in os.walk('./'):
+        for name in files:       
+            filename = os.path.join(root, name)
+            file_list.append(filename)
+    return file_list
+
+    
                 

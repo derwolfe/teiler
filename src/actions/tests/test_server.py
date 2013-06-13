@@ -1,6 +1,7 @@
 # these should test twisted specific code ONLY
 
 from .. import server
+from .. import utils 
 from twisted.internet.interfaces import IMulticastTransport
 from twisted.trial import unittest
 
@@ -17,7 +18,6 @@ from twisted.trial import unittest
 class BroadcastServerTests(unittest.TestCase):
     def setUp(self):
         self.protocol = server.Broadcaster('1.1.1.1')
-        self.transport = 
         self.transport.protocol = self.protocol
         
     def test_broadcasting(self):
@@ -26,7 +26,14 @@ class BroadcastServerTests(unittest.TestCase):
 
 
 class FileServerTests(unittest.TestCase):
+
     def test_Fileserver(self):
         self.fail()
 
+class FileWalkerTests(unittest.TestCase):
+   
+    def test_dir(self):
+        f = utils.list_files()
+        print f
+        self.assertTrue(f[0] == 'fakeDir/file1')
 

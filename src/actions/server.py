@@ -3,7 +3,7 @@ from twisted.web.static import File
 from twisted.internet import reactor, task
 from twisted.internet.protocol import DatagramProtocol
 
-from . import locate
+from . import utils 
 
 # serves the files in the current directory 
 resource = File('.') # serve the pwd
@@ -42,7 +42,7 @@ class Broadcaster(DatagramProtocol):
 
 def main():
     # file server
-    serve_at = locate.get_live_interface()
+    serve_at = utils.get_live_interface()
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
