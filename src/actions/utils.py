@@ -34,5 +34,11 @@ def list_files():
             file_list.append(filename)
     return file_list
 
-    
+def make_file_list(file_list):
+    """given a list of files, create a text file containing their names 
+    relative to the serving directory"""
+    with open('teiler-list.txt', 'w') as f:
+        for line in file_list:
+            f.write(line + '\n')
+
                 

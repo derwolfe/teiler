@@ -43,6 +43,7 @@ class Broadcaster(DatagramProtocol):
 def main():
     # file server
     serve_at = utils.get_live_interface()
+    utils.make_file_list(utils.list_files())
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
