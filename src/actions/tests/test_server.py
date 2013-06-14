@@ -10,6 +10,10 @@ from .. import utils
 from .. import client
 
 class FakeUdpTransport(object):
+    """ Instead of connecting through the network, this transport 
+    writes the broadcast messages to a variable that can be 
+    checked. """
+
     implements(IUDPTransport)
 
     def __init__(self):
@@ -27,7 +31,6 @@ class FakeUdpTransport(object):
     def stopListening():
         pass
 
-# do you test that it broadcasts or that its broadcasts can be heard?
 class BroadcastServerTests(unittest.TestCase):
     def setUp(self):
         self.protocol = server.Broadcaster('1.1.1.1')
@@ -35,7 +38,6 @@ class BroadcastServerTests(unittest.TestCase):
         self.protocol.transport = self.tr
         
     def test_broadcast(self):
-        """ does it broadcast correctly?"""
         self.protocol.sendHeartbeat()
         self.assertTrue(len(self.tr.msgs) > 0)
         self.assertTrue(self.tr.msgs[0] == "'1.1.1.1:8888'")
