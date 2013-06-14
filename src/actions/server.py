@@ -23,8 +23,8 @@ class Broadcaster(DatagramProtocol):
         
         # this should be a call to a logger not a print
         print "Serving on {0}:8888 and broadcasting IP on 224.0.0.5:8005".format(self.ip)
-        # doesn't need to be in the group to send
-        #self.transport.joinGroup(self.host)
+
+        self.transport.joinGroup(self.host)
         self._call = task.LoopingCall(self.sendHeartbeat)
         self._loop = self._call.start(5)
 

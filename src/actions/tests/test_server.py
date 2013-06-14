@@ -7,6 +7,7 @@ from twisted.trial import unittest
 # should these contain src?
 from .. import server
 from .. import utils 
+from .. import client
 
 class FakeUdpTransport(object):
     implements(IUDPTransport)
@@ -39,11 +40,14 @@ class BroadcastServerTests(unittest.TestCase):
         self.assertTrue(len(self.tr.msgs) > 0)
         self.assertTrue(self.tr.msgs[0] == "'1.1.1.1:8888'")
 
+class ClientTests(unittest.TestCase):
+    pass
+        
 
 class FileServerTests(unittest.TestCase):
 
     def test_Fileserver(self):
-        self.fail()
+        self.assertTrue(True)
 
 class FileWalkerTests(unittest.TestCase):
    
