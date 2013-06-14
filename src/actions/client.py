@@ -17,10 +17,11 @@ def get_file_urls(url):
     else:
         print "Fileserver not at specified address"
 
-def _get_file():
+def _get_file(handle):
     """Download all fo the files specified in the file provided by teiler-list.txt"""
+    # make sure the path exists into which the file will be downloaded
     check_path(handle)
-    r = requests.get('http://' + filserver + '/' + handle)
+    r = requests.get('http://' + _fileserver + '/' + handle)
     if r.status_code == 200:
         with open(handle, 'rb') as f:
             for chuck in r.iter_content(1024):
@@ -72,6 +73,6 @@ def main():
     # async **should** be over
     # reactor is closed at this point.
     get_file_urls(_fileserver)
-    get_files()
+    get_files('teiler-list.txt')
 if __name__ == '__main__':
     main()
