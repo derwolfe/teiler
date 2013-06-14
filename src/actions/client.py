@@ -10,13 +10,24 @@ import requests
 # should be limited to this module only
 _fileserver = ''
 
+"""
+There are several ways you could go about getting the directory objects.
+The easiest might be to make teiler-data be a json object. In the json object
+you could have a directory tree containing all of the dirs that need to be 
+created
+
+Further, the client should use some sort of class instead of a global file server
+variable
+
+"""
+
 def get_file_urls(url):
     r = requests.get("http://" + url + '/teiler-list.txt')
     if r.status_code == 200:
         save(r.content)
     else:
         print "Fileserver not at specified address"
-
+            
 def _get_file(handle):
     """Download all fo the files specified in the file provided by teiler-list.txt"""
     # make sure the path exists into which the file will be downloaded
@@ -26,12 +37,12 @@ def _get_file(handle):
         with open(handle, 'rb') as f:
             for chuck in r.iter_content(1024):
                 f.write(chunk)
-                    
+                
 def get_files(files):
     with open('teiler-list.txt', 'r') as f:
         for line in f:
             _get_file(line)
-
+            
 def check_path(path):
     try:
         os.makdirs(path)
@@ -42,7 +53,7 @@ def check_path(path):
 def save(stuff, name):
     with open(name, 'w') as f:
         f.write(stuff)
-
+            
 class MulticastClientUDP(DatagramProtocol):
     
     def __init__(self):
@@ -70,9 +81,12 @@ def main():
                             listenMultiple = True)
     
     reactor.run()
+
     # async **should** be over
     # reactor is closed at this point.
+
     get_file_urls(_fileserver)
     get_files('teiler-list.txt')
+
 if __name__ == '__main__':
     main()
