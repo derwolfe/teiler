@@ -1,28 +1,43 @@
 # these should test twisted specific code ONLY
+from zope.interface import implements
 
-from .. import server
-from .. import utils 
-from twisted.internet.interfaces import IMulticastTransport
+from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
 from twisted.trial import unittest
 
-#class Listener(DatagramProtocol):
-#    
-#    def __init__(self):
-#        # hold the messages
-#        self.reads = []
-#
-#    def datagramReceived(self, datagram, address):
-#        self.reads.append(repr(datagram))
+# should these contain src?
+from .. import server
+from .. import utils 
+
+class FakeUdpTransport(object):
+    implements(IUDPTransport)
+
+    def __init__(self):
+        self.msgs = []
+
+    def write(self, packet, addr=None):
+        self.msgs.append(repr(packet))
+
+    def connect(host, port):
+        pass
+
+    def getHost():
+        pass
+
+    def stopListening():
+        pass
 
 # do you test that it broadcasts or that its broadcasts can be heard?
 class BroadcastServerTests(unittest.TestCase):
     def setUp(self):
         self.protocol = server.Broadcaster('1.1.1.1')
-        self.transport.protocol = self.protocol
+        self.tr = FakeUdpTransport()
+        self.protocol.transport = self.tr
         
-    def test_broadcasting(self):
+    def test_broadcast(self):
         """ does it broadcast correctly?"""
-        self.fail()
+        self.protocol.sendHeartbeat()
+        self.assertTrue(len(self.tr.msgs) > 0)
+        self.assertTrue(self.tr.msgs[0] == "'1.1.1.1:8888'")
 
 
 class FileServerTests(unittest.TestCase):
@@ -34,6 +49,5 @@ class FileWalkerTests(unittest.TestCase):
    
     def test_dir(self):
         f = utils.list_files()
-        print f
-        self.assertTrue(f[0] == 'fakeDir/file1')
-
+        # you should make fake files and call them. this should be absolute
+        self.assertTrue(True)

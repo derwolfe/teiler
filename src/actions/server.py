@@ -38,12 +38,13 @@ class Broadcaster(DatagramProtocol):
     # helps to test?
     #def datagramReceived(self, datagram, address):
     #    print "Sent:{0} from {1}".format(repr(datagram), address)
-    
 
 def main():
-    # file server
+    
     serve_at = utils.get_live_interface()
+    # make the file list at startup. 
     utils.make_file_list(utils.list_files())
+    
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
