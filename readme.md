@@ -1,9 +1,14 @@
 Teiler
-========================
+======
+Basically, make it simple to share files amongst different computers behind the same router.
+
+It is meant to solve the problem of having a friend come over to your house who wants to share a large
+set of files with you. He uses Windows, you use linux. Neither of you has any idea how to start up a 
+file server or use SSH. 
+
 
 Implementation
 --------------
-There are several pieces of this application
 1. a file server
 2. a pinging device to discover the server
 3. some sort of client
@@ -23,12 +28,4 @@ Testing levels
 6. client downloads file
 7. Then gui
 8. Then authenticate
-
-Progress
---------
-Todo
-X1. tests for protocol, locate
-2. early install using setup (not the package with GUI and frozen)
-X3. find the server, get a list of files, get files 
-3. freeze for exe
 
