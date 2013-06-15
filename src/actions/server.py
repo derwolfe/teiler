@@ -1,3 +1,6 @@
+import sys
+
+from twisted.python import log
 from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.internet import reactor, task
@@ -20,10 +23,7 @@ class Broadcaster(DatagramProtocol):
         self.port = 8005
 
     def startProtocol(self):
-        
-        # this should be a call to a logger not a print
-        print "Serving on {0}:8888 and broadcasting IP on 224.0.0.5:8005".format(self.ip)
-
+        log.msg("Serving on {0}:8888 and broadcasting IP on 224.0.0.5:8005".format(self.ip))
         self.transport.joinGroup(self.host)
         self._call = task.LoopingCall(self.sendHeartbeat)
         self._loop = self._call.start(5)
@@ -35,21 +35,17 @@ class Broadcaster(DatagramProtocol):
     def stopProtocol(self):
         self._call.stop()
 
-    # helps to test?
-    #def datagramReceived(self, datagram, address):
-    #    print "Sent:{0} from {1}".format(repr(datagram), address)
-
 def main():
-    
+    log.startLogging(sys.stdout)
     serve_at = utils.get_live_interface()
     # make the file list at startup. 
     utils.make_file_list(utils.list_files())
-    
+    log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 
     # multicast UDP server
+    log.msg("Broadcasting")
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
     reactor.run()
-
 
 if __name__ == "__main__":
     main()

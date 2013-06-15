@@ -1,6 +1,8 @@
 import os
 import errno
+import sys
 
+from twisted.python import log
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from twisted.application.internet import MulticastServer
@@ -64,8 +66,7 @@ class MulticastClientUDP(DatagramProtocol):
         self.transport.joinGroup(self.host)
 
     def datagramReceived(self, datagram, address):
-        # should be a log statement
-        print "Received: " + repr(datagram)
+        log.msg("Received: " + repr(datagram))
         global _fileserver
         _fileserver = repr(datagram).replace("'", "")
 
@@ -75,7 +76,8 @@ class MulticastClientUDP(DatagramProtocol):
         reactor.stop()    
 
 def main():
-    print "Listening"
+    log.startLogging(sys.stdout)
+    log.msg("Starting listener")
     reactor.listenMulticast(8005, 
                             MulticastClientUDP(),
                             listenMultiple = True)
