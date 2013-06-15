@@ -39,7 +39,8 @@ def main():
     log.startLogging(sys.stdout)
     serve_at = utils.get_live_interface()
     # make the file list at startup. 
-    utils.make_file_list(utils.list_files())
+    utils.make_file_list(utils.list_files, utils.list_dirs))
+
     log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 
     # multicast UDP server

@@ -53,7 +53,12 @@ class FileServerTests(unittest.TestCase):
 
 class FileWalkerTests(unittest.TestCase):
    
-    def test_dir(self):
+    def test_list_files(self):
         f = utils.list_files()
-        # you should make fake files and call them. this should be absolute
+        # make dirs in temp
         self.assertTrue(True)
+        # check they exist
+        # clean them up
+
+    def test_creates_json():
+        pass
