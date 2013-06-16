@@ -39,7 +39,7 @@ def list_dirs():
     """get the list of directories that need to exist for the new files"""
     dir_list = []
     for root, dirs, files in os.walk('./'):
-        # here the root 
+        # here the root is the directory name 
         dir_list.append(root)
     return dir_list
 
