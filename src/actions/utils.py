@@ -22,7 +22,7 @@ def get_live_interface():
     # return the address to broadcast out
     return addresses[0] 
 
-# these should be condensed into one function
+# the following two list functions should be condensed into one function
 # it should provide a relative path instead of an absolute path from the home computer
 # i.e. instead of /home/chris/Downloads/ the file list should use Downloads as root 
 # and all files to should relative to root
@@ -44,6 +44,10 @@ def list_dirs(home):
     return dir_list
 
 def make_file_list(files, dirs, serve_at):
+    """Creates a formatted file containing the directories and the
+    files that need to be created on the host system. Directories are listed 
+    first in the **dirs section, followed by files, listed in the **files section
+    """
     with open(serve_at + '/teiler-list.txt', 'w') as f:
         f.write('**dirs\n')
         for foo in dirs:
