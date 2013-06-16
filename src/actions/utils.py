@@ -23,6 +23,10 @@ def get_live_interface():
     return addresses[0] 
 
 # these should be condensed into one function
+# it should provide a relative path instead of an absolute path from the home computer
+# i.e. instead of /home/chris/Downloads/ the file list should use Downloads as root 
+# and all files to should relative to root
+
 def list_files(home):
     file_list = []
     for root, dirs, files in os.walk(home):

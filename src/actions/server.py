@@ -8,9 +8,6 @@ from twisted.internet.protocol import DatagramProtocol
 
 from . import utils 
 
-
-
-# Broadcast a message that the service is alive on this address
 class Broadcaster(DatagramProtocol):
     """
     Broadcast the ip to all of the listeners on the channel
@@ -33,24 +30,20 @@ class Broadcaster(DatagramProtocol):
     def stopProtocol(self):
         self._call.stop()
         
-
 def main(serve_dir):
-
     from twisted.internet import reactor
-    
     resource = File(serve_dir) 
     factory = Site(resource)
- 
     log.startLogging(sys.stdout)
     serve_at = utils.get_live_interface()
-    # file list needs to be saved where the files are served!
+    # this is messy 
+    # the program should expect to serve files at a specific location everytime.
     utils.make_file_list(utils.list_files(serve_dir), 
                          utils.list_dirs(serve_dir),
                          serve_dir)
     
     log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 
-
     log.msg("Broadcasting")
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
     reactor.run()

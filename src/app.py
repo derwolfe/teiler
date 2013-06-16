@@ -1,9 +1,13 @@
 import argparse
+import os
 from actions import server, client
 
 # the main entry point for the application
 # for simplicity, let's decide that the user decides at runtime to listen
 # and the server decides to serve
+
+# location from which files should be served
+app_directory = '/home/chris/blaster'
 
 def main():
     # get the arguments
@@ -11,15 +15,17 @@ def main():
     parser.add_argument('action',
                         help="To be the server, type serve; to be the client, type listen",
                         )
-    parser.add_argument('directory',
-                        help="The top level directory from which to serve files, e.g. '~/Downloads'",
-                        )
+    # parser.add_argument('directory',
+    #                     help="The top level directory from which to serve files, e.g. '~/Downloads'",
+    #                     )
     args = parser.parse_args()
-    app_runner(args.action, args.directory)
+    app_runner(args.action) #, args.directory)
 
-def app_runner(how, where):
+def app_runner(how):
     if how == "serve":
-        server.main(where)
+        if os.path.exists(app_directory) == False:
+            os.mkdir(app_directory)
+        server.main(app_directory)
     elif how == "listen":
         client.main()
     else:
