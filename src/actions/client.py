@@ -4,12 +4,11 @@ import sys
 
 from twisted.python import log
 from twisted.internet.protocol import DatagramProtocol
-
+from twisted.internet import reactor
 from twisted.application.internet import MulticastServer
 
 import requests
 
-# should be limited to this module only
 _fileserver = ''
 
 """
@@ -20,7 +19,6 @@ created
 
 Further, the client should use some sort of class instead of a global file server
 variable
-
 """
 
 def get_file_urls(url):
@@ -58,28 +56,30 @@ class MulticastClientUDP(DatagramProtocol):
         # this could be placed in a config
         self.transport.joinGroup(self.host)
 
+    def stopProtocol(self):
+        pass
+
     def datagramReceived(self, datagram, address):
         log.msg("Received: " + repr(datagram))
         global _fileserver
         _fileserver = repr(datagram).replace("'", "")
-        
         # kill connection 
         self.transport.loseConnection()
         reactor.stop()    
 
 def main():
-    from twisted.internet import reactor
+
     log.startLogging(sys.stdout)
     log.msg("Starting listener")
     reactor.listenMulticast(8005, 
                             MulticastClientUDP(),
                             listenMultiple = True)
-    
     reactor.run()
+
     # async **should** be over
-    # reactor is closed at this point.
+    log.msg("Fileserver located at {0}:8888".format(_fileserver))
     get_file_urls(_fileserver)
-    #get_files('teiler-list.txt')
+
 
 if __name__ == '__main__':
     main()

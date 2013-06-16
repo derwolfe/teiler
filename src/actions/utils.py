@@ -32,7 +32,7 @@ def list_files():
     for root, dirs, files in os.walk('./'):
         for name in files:       
             filename = os.path.join(root, name)
-            file_list.append(filename)
+            file_list.append(filename[2:])
     return file_list
 
 def list_dirs():
@@ -40,15 +40,15 @@ def list_dirs():
     dir_list = []
     for root, dirs, files in os.walk('./'):
         # here the root is the directory name 
-        dir_list.append(root)
+        dir_list.append(root[2:])
     return dir_list
 
 def make_file_list(files, dirs):
     with open('teiler-list.txt', 'w') as f:
-        f.write('dirs')
+        f.write('**dirs')
         for foo in dirs:
             f.write(foo + '\n')
-        f.write('files')
+        f.write('**files')
         for thing in files:
             f.write(thing + '\n')
 

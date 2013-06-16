@@ -44,7 +44,7 @@ def main():
 
     utils.make_file_list(utils.list_files(), utils.list_dirs())
     
-    log.msg("Starting fileserver on{0}:8888".format(serve_at))
+    log.msg("Starting fileserver on{0}:8888\n".format(serve_at))
     reactor.listenTCP(8888, factory) 
 
     log.msg("Broadcasting")
