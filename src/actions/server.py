@@ -3,7 +3,7 @@ import sys
 from twisted.python import log
 from twisted.web.server import Site
 from twisted.web.static import File
-from twisted.internet import reactor, task
+from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
 
 from . import utils 
@@ -37,10 +37,12 @@ class Broadcaster(DatagramProtocol):
 
 def main():
     # XXX this should be injected
+    from twisted.internet import reactor
+ 
     log.startLogging(sys.stdout)
     serve_at = utils.get_live_interface()
 
-    utils.make_file_list(utils.list_files, utils.list_dirs))
+    utils.make_file_list(utils.list_files(), utils.list_dirs())
     
     log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 

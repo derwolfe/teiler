@@ -4,7 +4,7 @@ import sys
 
 from twisted.python import log
 from twisted.internet.protocol import DatagramProtocol
-from twisted.internet import reactor
+
 from twisted.application.internet import MulticastServer
 
 import requests
@@ -26,32 +26,25 @@ variable
 def get_file_urls(url):
     r = requests.get("http://" + url + '/teiler-list.txt')
     if r.status_code == 200:
-        save(r.content)
+        save(r.content, 'teiler-list.txt')
     else:
         print "Fileserver not at specified address"
             
-def _get_file(handle):
-    """Download all fo the files specified in the file provided by teiler-list.txt"""
-    # make sure the path exists into which the file will be downloaded
-    check_path(handle)
-    r = requests.get('http://' + _fileserver + '/' + handle)
-    if r.status_code == 200:
-        with open(handle, 'rb') as f:
-            for chuck in r.iter_content(1024):
-                f.write(chunk)
+# def _get_file(handle):
+#     """Download all fo the files specified in the file provided by teiler-list.txt"""
+#     # make sure the path exists into which the file will be downloaded
+#     check_path(handle)
+#     r = requests.get('http://' + _fileserver + '/' + handle)
+#     if r.status_code == 200:
+#         with open(handle, 'rb') as f:
+#             for chuck in r.iter_content(1024):
+#                 f.write(chunk)
                 
-def get_files(files):
-    with open('teiler-list.txt', 'r') as f:
-        for line in f:
-            _get_file(line)
+#def get_files(files):
+#    with open('teiler-list.txt', 'r') as f:
+#        for line in f:
+#            _get_file(line)
             
-def check_path(path):
-    try:
-        os.makdirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
 def save(stuff, name):
     with open(name, 'w') as f:
         f.write(stuff)
@@ -69,13 +62,13 @@ class MulticastClientUDP(DatagramProtocol):
         log.msg("Received: " + repr(datagram))
         global _fileserver
         _fileserver = repr(datagram).replace("'", "")
-
-        # this will need more checking - it is killing the conn 
-        # once it receives the address
+        
+        # kill connection 
         self.transport.loseConnection()
         reactor.stop()    
 
 def main():
+    from twisted.internet import reactor
     log.startLogging(sys.stdout)
     log.msg("Starting listener")
     reactor.listenMulticast(8005, 
@@ -83,12 +76,10 @@ def main():
                             listenMultiple = True)
     
     reactor.run()
-
     # async **should** be over
     # reactor is closed at this point.
-
     get_file_urls(_fileserver)
-    get_files('teiler-list.txt')
+    #get_files('teiler-list.txt')
 
 if __name__ == '__main__':
     main()

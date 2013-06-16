@@ -43,15 +43,13 @@ def list_dirs():
         dir_list.append(root)
     return dir_list
 
-def make_json(files, directories):
-    """make a json data structure that contains all of the files and 
-    all of the directories that will need to be created"""
-    return { 'files': [repr(x) for x in files], 
-             'directories': [repr(x) for x in directories] }
-
 def make_file_list(files, dirs):
-    file_data = make_json(files, dirs)
     with open('teiler-list.txt', 'w') as f:
-        f.write(json.dumps(file_data))
+        f.write('dirs')
+        for foo in dirs:
+            f.write(foo + '\n')
+        f.write('files')
+        for thing in files:
+            f.write(thing + '\n')
 
                 
