@@ -11,12 +11,15 @@ def main():
     parser.add_argument('action',
                         help="To be the server, type serve; to be the client, type listen",
                         )
+    parser.add_argument('directory',
+                        help="The top level directory from which to serve files, e.g. '~/Downloads'",
+                        )
     args = parser.parse_args()
-    app_runner(args.action)
+    app_runner(args.action, args.directory)
 
-def app_runner(how):
+def app_runner(how, where):
     if how == "serve":
-        server.main()
+        server.main(where)
     elif how == "listen":
         client.main()
     else:

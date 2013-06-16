@@ -8,9 +8,7 @@ from twisted.internet.protocol import DatagramProtocol
 
 from . import utils 
 
-# serves the files in the current directory 
-resource = File('.') # serve the pwd
-factory = Site(resource)
+
 
 # Broadcast a message that the service is alive on this address
 class Broadcaster(DatagramProtocol):
@@ -34,17 +32,23 @@ class Broadcaster(DatagramProtocol):
 
     def stopProtocol(self):
         self._call.stop()
+        
 
-def main():
-    # XXX this should be injected
+def main(serve_dir):
+
     from twisted.internet import reactor
+    
+    resource = File(serve_dir) 
+    factory = Site(resource)
  
     log.startLogging(sys.stdout)
     serve_at = utils.get_live_interface()
-
-    utils.make_file_list(utils.list_files(), utils.list_dirs())
+    # file list needs to be saved where the files are served!
+    utils.make_file_list(utils.list_files(serve_dir), 
+                         utils.list_dirs(serve_dir),
+                         serve_dir)
     
-    log.msg("Starting fileserver on{0}:8888\n".format(serve_at))
+    log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 
 
     log.msg("Broadcasting")
@@ -52,4 +56,4 @@ def main():
     reactor.run()
 
 if __name__ == "__main__":
-    main()
+    main('./')

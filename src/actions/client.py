@@ -27,22 +27,7 @@ def get_file_urls(url):
         save(r.content, 'teiler-list.txt')
     else:
         print "Fileserver not at specified address"
-            
-# def _get_file(handle):
-#     """Download all fo the files specified in the file provided by teiler-list.txt"""
-#     # make sure the path exists into which the file will be downloaded
-#     check_path(handle)
-#     r = requests.get('http://' + _fileserver + '/' + handle)
-#     if r.status_code == 200:
-#         with open(handle, 'rb') as f:
-#             for chuck in r.iter_content(1024):
-#                 f.write(chunk)
-                
-#def get_files(files):
-#    with open('teiler-list.txt', 'r') as f:
-#        for line in f:
-#            _get_file(line)
-            
+          
 def save(stuff, name):
     with open(name, 'w') as f:
         f.write(stuff)

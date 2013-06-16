@@ -22,29 +22,29 @@ def get_live_interface():
     # return the address to broadcast out
     return addresses[0] 
 
-
-def list_files():
+# these should be condensed into one function
+def list_files(home):
     file_list = []
-    for root, dirs, files in os.walk('./'):
+    for root, dirs, files in os.walk(home):
         for name in files:       
             filename = os.path.join(root, name)
-            file_list.append(filename[2:])
+            file_list.append(filename)
     return file_list
 
-def list_dirs():
+def list_dirs(home):
     """get the list of directories that need to exist for the new files"""
     dir_list = []
-    for root, dirs, files in os.walk('./'):
+    for root, dirs, files in os.walk(home):
         # here the root is the directory name 
-        dir_list.append(root[2:])
+        dir_list.append(root)
     return dir_list
 
-def make_file_list(files, dirs):
-    with open('teiler-list.txt', 'w') as f:
-        f.write('**dirs')
+def make_file_list(files, dirs, serve_at):
+    with open(serve_at + '/teiler-list.txt', 'w') as f:
+        f.write('**dirs\n')
         for foo in dirs:
             f.write(foo + '\n')
-        f.write('**files')
+        f.write('**files\n')
         for thing in files:
             f.write(thing + '\n')
 
