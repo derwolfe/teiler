@@ -9,14 +9,22 @@ file server or use SSH.
 How to use
 ----------
 1. Download the source
+
     `git clone https://github.com/derwolfe/teiler.git`
+
 2. Make a virtualenv for the application ** this will be replaced with a distutils install **
+
     `mkvirtualenv teiler`
+
 3. In the directory above the repository
-    `workon teiler && pip install requirements -r teilerpy/requirements.txt`
+
+    `workon teiler && pip install  -r teilerpy/requirements.txt`
 4. Once the above steps are done, to act as a server, use:
+
    `python teilerpy/src/app.py serve` 
+
    or to run in client mode:
+
    `python teilerpy/src/app.py listen`
    
 Implementation
