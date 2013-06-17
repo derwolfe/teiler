@@ -38,10 +38,7 @@ def main(serve_dir):
     serve_at = utils.get_live_interface()
     # this is messy 
     # the program should expect to serve files at a specific location everytime.
-    utils.make_file_list(utils.list_files(serve_dir), 
-                         utils.list_dirs(serve_dir),
-                         serve_dir)
-    
+    utils.make_file_list(serve_dir)
     log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 
     log.msg("Broadcasting")
