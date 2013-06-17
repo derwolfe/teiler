@@ -16,22 +16,24 @@ How to install
 
     `mkvirtualenv teiler`
 
-How to use
----------
-1. In the directory above the repository, execute
+3. Install the dependencies with  
 
     `workon teiler && pip install  -r teilerpy/requirements.txt`
 
-2. The application is set up to run as either a client or a server. 
-   The server broadcasts the files and the client grabs them.
 
-   To run as a server, type
 
-   `python teilerpy/src/app.py serve` 
+How to use
+---------
+The application is set up to run as either a client or a server. 
+The server broadcasts the files and the client grabs them.
 
-   or to run in client mode
+CD into the directory teiler then To run as a server, type
 
-   `python teilerpy/src/app.py listen`
+`python teilerpy/src/app.py serve` 
+
+or to run in client mode
+
+`python teilerpy/src/app.py listen`
    
 Overview of the implementation
 ------------------------------
