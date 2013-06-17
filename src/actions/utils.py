@@ -27,7 +27,7 @@ def get_live_interface():
 # i.e. instead of /home/chris/Downloads/ the file list should use Downloads as root 
 # and all files to should relative to root
 
-def list_files(home):
+def _list_files(home):
     file_list = []
     for root, dirs, files in os.walk(home):
         for name in files:       
@@ -35,7 +35,7 @@ def list_files(home):
             file_list.append(filename)
     return file_list
 
-def list_dirs(home):
+def _list_dirs(home):
     """get the list of directories that need to exist for the new files"""
     dir_list = []
     for root, dirs, files in os.walk(home):
@@ -43,11 +43,16 @@ def list_dirs(home):
         dir_list.append(root)
     return dir_list
 
-def make_file_list(files, dirs, serve_at):
+def make_file_list(serve_at):
     """Creates a formatted file containing the directories and the
     files that need to be created on the host system. Directories are listed 
     first in the **dirs section, followed by files, listed in the **files section
     """
+    os.chdir(serve_at)
+    home = './'
+    files = _list_files(home)
+    dirs = _list_dirs(home)
+
     with open(serve_at + '/teiler-list.txt', 'w') as f:
         f.write('**dirs\n')
         for foo in dirs:
