@@ -8,7 +8,6 @@ file server or use SSH.
 
 How to use
 ----------
-
 1. Download the source
     `git clone https://github.com/derwolfe/teiler.git`
 2. Make a virtualenv for the application ** this will be replaced with a distutils install **
@@ -20,14 +19,11 @@ How to use
    or to run in client mode:
    `python teilerpy/src/app.py listen`
    
-
-
 Implementation
 --------------
 1. a file server
 2. a pinging device to discover the server
 3. some sort of client
-
 
 Design
 ------
