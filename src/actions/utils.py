@@ -52,7 +52,7 @@ def make_file_list(serve_at):
     home = './'
     files = _list_files(home)
     dirs = _list_dirs(home)
-
+    print 'Working directory for application at ' + os.getcwd()
     with open(serve_at + '/teiler-list.txt', 'w') as f:
         f.write('**dirs\n')
         for foo in dirs:
