@@ -1,4 +1,6 @@
-# these should test twisted specific code ONLY
+import os
+import shutil
+
 from zope.interface import implements
 
 from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
@@ -49,16 +51,32 @@ class ClientTests(unittest.TestCase):
 class FileServerTests(unittest.TestCase):
 
     def test_Fileserver(self):
-        self.assertTrue(True)
+        self.assertTrue(False)
 
-class FileWalkerTests(unittest.TestCase):
-   
-    def test_list_files(self):
-        f = utils.list_files()
-        # make dirs in temp
-        self.assertTrue(True)
-        # check they exist
-        # clean them up
+class UtilsTests(unittest.TestCase):
+    
+    def setUp(self):
+        self.home = "./" # use the tests directory
+        self.test_dir = "./test_dir"
+        self.test_file= "./test_dir/test_file"
+        os.chdir(self.home)
+        os.mkdir(self.test_dir)
+        open(self.test_file, 'w').close()
 
-    def test_creates_json():
-        pass
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+
+    def test_lists_files(self):
+        results = utils._list_files(self.test_dir)
+        self.assertTrue(results[0] == self.test_file)
+
+    def test_lists_dirs(self):
+        results = utils._list_dirs(self.test_dir)
+        self.assertTrue(results[0] == self.test_dir)
+
+
+
+        
+        
+
+
