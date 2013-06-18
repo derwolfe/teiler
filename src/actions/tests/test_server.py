@@ -34,6 +34,7 @@ class FakeUdpTransport(object):
         pass
 
 class BroadcastServerTests(unittest.TestCase):
+
     def setUp(self):
         self.protocol = server.Broadcaster('1.1.1.1')
         self.tr = FakeUdpTransport()
@@ -45,8 +46,24 @@ class BroadcastServerTests(unittest.TestCase):
         self.assertTrue(self.tr.msgs[0] == "'1.1.1.1:8888'")
 
 class ClientTests(unittest.TestCase):
-    pass
-        
+
+    # test that it receives messages
+    # test that it shuts down the reactor
+    # test that it sets the gets the fileserver from the message
+    
+    def seUp(self):
+        pass
+        #self.protocol = client.MulticastClientUDP()
+
+    def test_kills_reactor(self):
+        self.assertTrue(False)
+
+    def test_finds_fileserver(self):
+        self.assertTrue(False)
+
+    def test_receives_datagram(self):
+        self.assertTrue(False)
+
 
 class FileServerTests(unittest.TestCase):
 

@@ -46,6 +46,7 @@ class MulticastClientUDP(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         log.msg("Received: " + repr(datagram))
+        # switch to a local instance variable
         global _fileserver
         _fileserver = repr(datagram).replace("'", "")
         # kill connection 
