@@ -27,7 +27,9 @@ How to use
 The application is set up to run as either a client or a server. 
 The server broadcasts the files and the client grabs them.
 
-CD into the directory teiler then To run as a server, type
+CD into the directory `teiler` then
+
+to run as a server, type
 
 `python teilerpy/src/app.py serve` 
 
