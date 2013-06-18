@@ -56,7 +56,7 @@ class FileServerTests(unittest.TestCase):
 class UtilsTests(unittest.TestCase):
     
     def setUp(self):
-        self.home = "./" # use the tests directory
+        self.home = "./"
         self.test_dir = "./test_dir"
         self.test_file= "./test_dir/test_file"
         os.chdir(self.home)
@@ -73,6 +73,11 @@ class UtilsTests(unittest.TestCase):
     def test_lists_dirs(self):
         results = utils._list_dirs(self.test_dir)
         self.assertTrue(results[0] == self.test_dir)
+
+    def test_make_file_list(self):
+        result = utils.make_file_list(self.home).replace("\n", " ")
+        file_list = "**dirs ./ ./test_dir **files ./_trial_marker ./test.log ./test_dir/test_file "
+        self.assertTrue(file_list == result)
 
 
 
