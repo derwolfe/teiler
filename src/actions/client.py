@@ -25,6 +25,7 @@ def get_file_urls(url):
     r = requests.get("http://" + url + '/teiler-list.txt')
     if r.status_code == 200:
         save(r.content, 'teiler-list.txt')
+        # begin processing the file list here
     else:
         print "Fileserver not at specified address"
           
