@@ -96,6 +96,19 @@ class UtilsTests(unittest.TestCase):
         file_list = "d::./test_dir f::./_trial_marker f::./test.log f::./test_dir/test_file "
         self.assertTrue(file_list == result)
 
+    def test_make_files(self):
+        self.assertTrue(False)
+
+    def test_make_dirs(self):
+        self.assertTrue(False)
+
+    def test__make_dir(self):
+        self.assertTrue(False)        
+
+    def test__make_file(self):
+        self.assertTrue(False)
+
+
 
 
         

@@ -10,7 +10,7 @@ from twisted.application.internet import MulticastServer
 import requests
 
 _fileserver = ""
-_file_list = "teiler_list.txt"
+_file_list = "teiler-list.txt"
 
 """
 There are several ways you could go about getting the directory objects.
@@ -23,10 +23,12 @@ variable
 """
 
 def get_file_urls(url):
-    r = requests.get("http://" + url + '/' + _file_list)
+    full_url = "http://" + url + "/" + _file_list
+    r = requests.get(full_url)
     if r.status_code == 200:
         save(r.content, _file_list)
-        # begin processing the file list here
+        utils.make_dirs()
+        utils.make_files()
     else:
         print "Fileserver not at specified address"
           
@@ -56,16 +58,14 @@ class MulticastClientUDP(DatagramProtocol):
         reactor.stop()    
 
 def main():
-
-    log.startLogging(sys.stdout)
+    startLogging(sys.stdout)
     log.msg("Starting listener")
     reactor.listenMulticast(8005, 
                             MulticastClientUDP(),
                             listenMultiple = True)
     reactor.run()
-
     # async **should** be over
-    log.msg("Fileserver located at {0}:8888".format(_fileserver))
+    log.msg("Fileserver located at {0}".format(_fileserver))
     get_file_urls(_fileserver)
 
 

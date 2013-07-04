@@ -58,7 +58,6 @@ def make_file_list(serve_at):
         text = text + "d::" + foo + "\n"
     for thing in files:
         text = text + "f::" + thing + "\n"
-
     return text
     
 
@@ -68,20 +67,28 @@ def save_file_list(text,
     with open(serve_at + "/" + filename, 'w') as f:
         f.write(text)
 
+## NEED TESTS
+def _make_file(line):
+    location = line[:2].replace("\n", "")
+    print location
+
+def _make_dir(line):
+    location = line[:2].replace("\n", "")
+    print location
 
 def make_files(filename):
-    """Find the section of the file list beginning with **files_start. 
-    After this point, create all of the files listed until **files_end.
-    """
     with open(filename, 'r') as f:
         for line in f.readlines():
-            pass
+            if "f::" in line:
+                _make_file(line)
 
 def make_dirs(filename):
     """make the directories listed in the file"""
     with open(filename, 'r') as f:
         for line in f.readlines():
-            pass
+            if "d::" in line:
+                _make_dir(line)
+
 
 
 
