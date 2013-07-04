@@ -7,7 +7,9 @@ from actions import server, client
 # and the server decides to serve
 
 # location from which files should be served
-_app_directory = '/home/chris/blaster'
+_home = os.path.expanduser("~")
+_app_directory = os.path.join(os.path.expanduser("~"), "blaster")
+print _app_directory
 
 def main():
     # get the arguments
