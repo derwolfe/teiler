@@ -7,7 +7,7 @@ from actions import server, client
 # and the server decides to serve
 
 # location from which files should be served
-app_directory = '/home/chris/blaster'
+_app_directory = '/home/chris/blaster'
 
 def main():
     # get the arguments
@@ -16,13 +16,13 @@ def main():
                         help="To be the server, type serve; to be the client, type listen",
                         )
     args = parser.parse_args()
-    app_runner(args.action)
+    _app_runner(args.action)
 
-def app_runner(how):
+def _app_runner(how):
     if how == "serve":
-        if os.path.exists(app_directory) == False:
-            os.mkdir(app_directory)
-        server.main(app_directory)
+        if os.path.exists(_app_directory) == False:
+            os.mkdir(_app_directory)
+        server.main(_app_directory)
     elif how == "listen":
         client.main()
     else:
