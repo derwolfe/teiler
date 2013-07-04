@@ -9,7 +9,8 @@ from twisted.application.internet import MulticastServer
 
 import requests
 
-_fileserver = ''
+_fileserver = ""
+_file_list = "teiler_list.txt"
 
 """
 There are several ways you could go about getting the directory objects.
@@ -22,9 +23,9 @@ variable
 """
 
 def get_file_urls(url):
-    r = requests.get("http://" + url + '/teiler-list.txt')
+    r = requests.get("http://" + url + '/' + _file_list)
     if r.status_code == 200:
-        save(r.content, 'teiler-list.txt')
+        save(r.content, _file_list)
         # begin processing the file list here
     else:
         print "Fileserver not at specified address"

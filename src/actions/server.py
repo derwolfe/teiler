@@ -38,7 +38,8 @@ def main(serve_dir):
     serve_at = utils.get_live_interface()
     # file list work
     file_list = utils.make_file_list(serve_dir)
-    utils.save_file_list(file_list, serve_dir)
+    # file name should be created at startup
+    utils.save_file_list(file_list, serve_dir, "teiler-list.txt")
 
     log.msg("Starting fileserver on{0}:8888".format(serve_at))
     reactor.listenTCP(8888, factory) 

@@ -49,23 +49,43 @@ def make_file_list(serve_at):
     first in the **dirs section, followed by files, listed in the **files section
     """
     os.chdir(serve_at)
-    home = './'
+    home = "./"
     files = _list_files(home)
     dirs = _list_dirs(home)
-    text = '**dirs\n'
-    # don't add the current dir
-    dirs.remove('./')
+    text = "**dirs_start\n"
+    dirs.remove("./")
     for foo in dirs:
-        text = text + foo + '\n'
-    text = text + '**files\n'
+        text = text + foo + "\n"
+    text = text + "**dirs_end\n"
+    text = text + "**files_start\n"
     for thing in files:
-        text = text + thing + '\n'
+        text = text + thing + "\n"
+    text = text + "**files_end\n"
     return text
     
 
-def save_file_list(text, serve_at):
-    with open(serve_at + '/teiler-list.txt', 'w') as f:
+def save_file_list(text, 
+                   serve_at,
+                   filename):
+    with open(serve_at + "/" + filename, 'w') as f:
         f.write(text)
+
+
+def make_files(filename):
+    """Find the section of the file list beginning with **files_start. 
+    After this point, create all of the files listed until **files_end.
+    """
+    with open(filename, 'r') as f:
+        for line in f.readlines():
+            pass
+
+def make_dirs(filename):
+    """make the directories listed in the file"""
+    with open(filename, 'r') as f:
+        for line in f.readlines():
+            pass
+
+
 
 
                 

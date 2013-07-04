@@ -9,7 +9,7 @@ from actions import server, client
 # location from which files should be served
 _home = os.path.expanduser("~")
 _app_directory = os.path.join(os.path.expanduser("~"), "blaster")
-print _app_directory
+
 
 def main():
     # get the arguments
