@@ -93,7 +93,7 @@ class UtilsTests(unittest.TestCase):
 
     def test_make_file_list(self):
         result = utils.make_file_list(self.home).replace("\n", " ")
-        file_list = "**dirs_start ./test_dir **dirs_end **files_start ./_trial_marker ./test.log ./test_dir/test_file **files_end "
+        file_list = "d::./test_dir f::./_trial_marker f::./test.log f::./test_dir/test_file "
         self.assertTrue(file_list == result)
 
 

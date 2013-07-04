@@ -52,15 +52,13 @@ def make_file_list(serve_at):
     home = "./"
     files = _list_files(home)
     dirs = _list_dirs(home)
-    text = "**dirs_start\n"
     dirs.remove("./")
+    text = ""
     for foo in dirs:
-        text = text + foo + "\n"
-    text = text + "**dirs_end\n"
-    text = text + "**files_start\n"
+        text = text + "d::" + foo + "\n"
     for thing in files:
-        text = text + thing + "\n"
-    text = text + "**files_end\n"
+        text = text + "f::" + thing + "\n"
+
     return text
     
 
