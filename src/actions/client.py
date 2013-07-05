@@ -17,7 +17,6 @@ def get_file_urls(url):
     r = requests.get(full_url)
     if r.status_code == 200:
         save(r.content, _file_list)
-        utils.make_dirs()
         utils.make_files()
     else:
         print "Fileserver not at specified address"
