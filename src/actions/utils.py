@@ -22,11 +22,6 @@ def get_live_interface():
     # return the address to broadcast out
     return addresses[0] 
 
-# the following two list functions should be condensed into one function
-# it should provide a relative path instead of an absolute path from the home computer
-# i.e. instead of /home/chris/Downloads/ the file list should use Downloads as root 
-# and all files to should relative to root
-
 def _list_files(home):
     file_list = []
     for root, dirs, files in os.walk(home):
@@ -81,15 +76,8 @@ def make_files(filename):
         for line in f.readlines():
             if "f::" in line:
                 _make_file(line)
-
-def make_dirs(filename):
-    """make the directories listed in the file"""
-    with open(filename, 'r') as f:
-        for line in f.readlines():
-            if "d::" in line:
+            elif "d::" in line:
                 _make_dir(line)
-
-
 
 
 
