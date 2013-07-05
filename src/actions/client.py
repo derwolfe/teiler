@@ -12,16 +12,6 @@ import requests
 _fileserver = ""
 _file_list = "teiler-list.txt"
 
-"""
-There are several ways you could go about getting the directory objects.
-The easiest might be to make teiler-data be a json object. In the json object
-you could have a directory tree containing all of the dirs that need to be 
-created
-
-Further, the client should use some sort of class instead of a global file server
-variable
-"""
-
 def get_file_urls(url):
     full_url = "http://" + url + "/" + _file_list
     r = requests.get(full_url)
