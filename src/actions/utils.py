@@ -65,6 +65,8 @@ def save_file_list(text,
 ## NEED TESTS
 def _make_file(line):
     location = line[:2].replace("\n", "")
+    # at some place you will need to allow for resumption of download
+    # with http/tcp this is done using the range header
     print location
 
 def _make_dir(line):
