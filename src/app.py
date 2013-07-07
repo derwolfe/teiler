@@ -1,6 +1,8 @@
 import argparse
 import os
+import sys
 from actions import server, client
+from twisted.python import log
 
 # the main entry point for the application
 # for simplicity, let's decide that the user decides at runtime to listen
@@ -12,7 +14,7 @@ _app_directory = os.path.join(os.path.expanduser("~"), "blaster")
 
 
 def main():
-    # get the arguments
+    log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
     parser.add_argument('action',
                         help="To be the server, type serve; to be the client, type listen",

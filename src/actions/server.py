@@ -32,7 +32,9 @@ class Broadcaster(DatagramProtocol):
         
 def main(serve_dir):
     from twisted.internet import reactor
+    # this should be at app level!
     log.startLogging(sys.stdout)
+    
     resource = File(serve_dir) 
     factory = Site(resource)
     serve_at = utils.get_live_interface()

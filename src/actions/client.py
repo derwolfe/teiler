@@ -47,15 +47,15 @@ class MulticastClientUDP(DatagramProtocol):
         reactor.stop()    
 
 def main():
-    startLogging(sys.stdout)
     log.msg("Starting listener")
     reactor.listenMulticast(8005, 
                             MulticastClientUDP(),
                             listenMultiple = True)
     reactor.run()
     # async **should** be over
-    log.msg("Fileserver located at {0}".format(_fileserver))
-    get_file_urls(_fileserver)
+    if _fileserver != "":
+        log.msg("Fileserver located at {0}".format(_fileserver))
+        get_file_urls(_fileserver)
 
 
 if __name__ == '__main__':
