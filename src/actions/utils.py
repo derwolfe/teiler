@@ -17,9 +17,9 @@ def get_live_interface():
         test_iface = netifaces.ifaddresses(iface).get(netifaces.AF_INET) 
         if test_iface is not None:
             for i in test_iface:
-                if i['addr'] not in local_network:
+                # you need to make sure it is a local
+                if i['addr'] not in local_network and '192.' in i['addr']:
                     addresses.append(i['addr'])
-    # return the address to broadcast out
     return addresses[0] 
 
 def _list_files(home):
