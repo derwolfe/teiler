@@ -40,8 +40,7 @@ def _list_dirs(home):
 
 def make_file_list(serve_at):
     """Creates a formatted file containing the directories and the
-    files that need to be created on the host system. Directories are listed 
-    first in the **dirs section, followed by files, listed in the **files section
+    files that need to be created on the host system. 
     """
     os.chdir(serve_at)
     home = "./"
