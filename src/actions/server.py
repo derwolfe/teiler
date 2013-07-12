@@ -6,8 +6,6 @@ from twisted.web.static import File
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
 
-from . import utils 
-
 class Broadcaster(DatagramProtocol):
     """
     Broadcast the ip to all of the listeners on the channel
@@ -29,25 +27,13 @@ class Broadcaster(DatagramProtocol):
 
     def stopProtocol(self):
         self._call.stop()
-        
-def main(serve_dir):
-    from twisted.internet import reactor
-    # this should be at app level!
-    log.startLogging(sys.stdout)
-    
-    resource = File(serve_dir) 
-    factory = Site(resource)
-    serve_at = utils.get_live_interface()
-    # file list work
-    file_list = utils.make_file_list(serve_dir)
-    # file name should be created at startup
-    utils.save_file_list(file_list, serve_dir, "teiler-list.txt")
 
-    log.msg("Starting fileserver on{0}:8888".format(serve_at))
-    reactor.listenTCP(8888, factory) 
+def main(serve_dir):
+    from twisted.internet import reactor, thread
+    log.startLogging(sys.stdout)
     log.msg("Broadcasting")
+
     reactor.listenMulticast(8005, Broadcaster(serve_at)) 
     reactor.run()
 
-if __name__ == "__main__":
-    main('./')
+
