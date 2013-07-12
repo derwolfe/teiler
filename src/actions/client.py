@@ -3,7 +3,7 @@ from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from twisted.application.internet import MulticastServer
 
-class MulticastClientUDP(DatagramProtocol):
+class Listener(DatagramProtocol):
     
     def __init__(self):
         self.host = '224.0.0.5'
@@ -22,7 +22,7 @@ class MulticastClientUDP(DatagramProtocol):
 def main():
     log.msg("Starting listener")
     reactor.listenMulticast(8005, 
-                            MulticastClientUDP(),
+                            Listener(),
                             listenMultiple = True)
     reactor.run()
 
