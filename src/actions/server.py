@@ -27,12 +27,11 @@ class Broadcaster(DatagramProtocol):
         self._call.stop()
 
     def datagramReceived(self, datagram, address):
-        """new method to allow listening and receiving. Used to gather peers"""
+        # being developed
         self.sendMessage("heard")
         self.messages.append(datagram)
 
-        print self.messages
-        if self.address == address:
+        if self.address != address:
             if address not in self.peers:
                 self.peers.append(address)
                 log.msg(msg)
