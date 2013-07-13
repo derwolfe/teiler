@@ -9,29 +9,42 @@ class Broadcaster(DatagramProtocol):
     """
     Broadcast the ip to all of the listeners on the channel
     """
-    def __init__(self, msg):
-        self.msg = msg # shouldn't this be passed in
+    def __init__(self):
         self.host = '224.0.0.5'
         self.port = 8005
+        self.peers = []
+        self.messages = []
 
     def startProtocol(self):
         self.transport.joinGroup(self.host)
-        self._call = task.LoopingCall(self.sendHeartbeat)
+        self._call = task.LoopingCall(self.sendMessage)
         self._loop = self._call.start(5)
 
-    def sendHeartbeat(self):
-        message ='{0}'.format(self.msg)
-        self.transport.write(message, (self.host, self.port))
+    def sendMessage(self, msg):
+        self.transport.write(msg, (self.host, self.port))
 
     def stopProtocol(self):
         self._call.stop()
 
+    def datagramReceived(self, datagram, address):
+        """new method to allow listening and receiving. Used to gather peers"""
+        self.sendMessage("heard")
+        self.messages.append(datagram)
+
+        print self.messages
+        if self.address == address:
+            if address not in self.peers:
+                self.peers.append(address)
+                log.msg(msg)
+
 def main(serve_dir):
-    from twisted.internet import reactor, thread
+    from twisted.internet import reactor
     log.startLogging(sys.stdout)
     log.msg("Broadcasting")
 
-    reactor.listenMulticast(8005, Broadcaster(serve_at)) 
+    reactor.listenMulticast(8005, 
+                            Broadcaster(serve_at),
+                            listenMultiple=True) 
     reactor.run()
 
 if __name__ == '__main__':
