@@ -1,9 +1,7 @@
 import sys
-
 from twisted.python import log
-
-from twisted.internet import task
-from twisted.internet.protocol import DatagramProtocol
+from twisted.internet import task, reactor
+from twisted.internet.protocol import DatagramProtocol 
 
 class PeerDiscovery(DatagramProtocol):
     """
@@ -11,28 +9,24 @@ class PeerDiscovery(DatagramProtocol):
     """
     def __init__(self, teiler):
         self.teiler = teiler
-        #self.host = teiler.multiCastAddress
-        #self.port = teiler.multiCastAddress
-        #self.peers = []
-        #self.messages = []
 
     def startProtocol(self):
+        self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
-        self.sendMessage("CONNECT")
-        self._call = task.LoopingCall(self.sendMessage("HERE"))
-        self._loop = self._call.start(5)
+        self.transport.write("CONNECT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        reactor.callLater(5.0, self.sendHeartBeat)
 
-    def sendMessage(self, msg):
-        self.transport.write(msg, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+    def sendHeartBeat(self):
+        self.transport.write("ALIVE", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Heartbeat sent")
+        reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
-        self.sendMessage("EXIT")
-        self._call.stop()
+        self.transport.write("EXIT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("EXIT")
 
     def datagramReceived(self, datagram, address):
-        # being developed
-        #self.sendMessage("HEARD")
-        print "HEARD"
+        log.msg("Sending: HEARD")
         self.teiler.messages.append(datagram)
 
         if self.teiler.address != address:

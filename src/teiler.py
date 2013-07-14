@@ -29,11 +29,17 @@ def main():
     log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
+    multiCastPort = 8006
     teiler = Teiler()
+    teiler.multiCastPort = multiCastPort
+    teiler1 = Teiler()
+    teiler1.multiCastPort = multiCastPort
     log.startLogging(sys.stdout)
     log.msg("Initiating Peer Discovery")
 
-    reactor.listenMulticast(8005, PeerDiscovery(teiler), listenMultiple=True) 
+    broadcaster = PeerDiscovery(teiler)
+    
+    reactor.listenMulticast(multiCastPort, broadcaster, listenMultiple=True) 
     reactor.run()
 
 def _app_runner():
