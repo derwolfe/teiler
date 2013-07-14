@@ -32,8 +32,6 @@ def main():
     multiCastPort = 8006
     teiler = Teiler()
     teiler.multiCastPort = multiCastPort
-    teiler1 = Teiler()
-    teiler1.multiCastPort = multiCastPort
     log.startLogging(sys.stdout)
     log.msg("Initiating Peer Discovery")
 
