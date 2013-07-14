@@ -32,12 +32,8 @@ def main():
     multiCastPort = 8006
     teiler = Teiler()
     teiler.multiCastPort = multiCastPort
-    log.startLogging(sys.stdout)
     log.msg("Initiating Peer Discovery")
-
-    broadcaster = PeerDiscovery(teiler)
-    
-    reactor.listenMulticast(multiCastPort, broadcaster, listenMultiple=True) 
+    reactor.listenMulticast(multiCastPort, PeerDiscovery(teiler), listenMultiple=True) 
     reactor.run()
 
 def _app_runner():
