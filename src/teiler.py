@@ -5,8 +5,8 @@ import utils
 from actions import server
 from twisted.python import log
 from twisted.internet import reactor
+import filetransfer
 from filetransfer import FileReceiverFactory
-
 from peerdiscovery import PeerDiscovery
     
 # the main entry point for the application
@@ -26,6 +26,7 @@ class Teiler:
         self.multiCastAddress = '230.0.0.30'
         self.multiCastPort = 8005
         self.tcpPort = 9988
+        self.downloadPath = "/home/armin/Downloads"
         
 def main():
     log.startLogging(sys.stdout)
@@ -36,14 +37,15 @@ def main():
     multiCastPort = 8006
     teiler = Teiler()
     teiler.multiCastPort = multiCastPort
-    log.msg("Initiating Peer Discovery")
     reactor.listenMulticast(multiCastPort, PeerDiscovery(teiler), listenMultiple=True)
+    log.msg("Initiating Peer Discovery")
     
     #Initialize file transfer service
-    fileReceiver = FileReceiverFactory({})
+    fileReceiver = FileReceiverFactory(teiler)
     reactor.listenTCP(teiler.tcpPort, fileReceiver)
     log.msg("Starting file listener on ", teiler.tcpPort)
     
+    filetransfer.sendFile("/home/armin/temp.txt",port=teiler.tcpPort,address=teiler.address)
     reactor.run()
 
 def _app_runner():

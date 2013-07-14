@@ -1,6 +1,7 @@
-#from binascii import crc32
+from binascii import crc32
 #from optparse import OptionParser
-#import os, json, pprint, datetime
+import os, json
+#, pprint, datetime
 
 from twisted.protocols import basic
 #from twisted.internet import protocol
@@ -8,8 +9,8 @@ from twisted.protocols import basic
 from twisted.internet.protocol import ServerFactory
 from twisted.internet.protocol import ClientFactory
 from twisted.protocols.basic import FileSender, LineReceiver
-#from twisted.internet.defer import Deferred
-#from twisted.internet import reactor
+from twisted.internet.defer import Deferred
+from twisted.internet import reactor
 
 class FileReceiverProtocol(LineReceiver):
     """ File Receiver """
@@ -29,13 +30,15 @@ class FileReceiverProtocol(LineReceiver):
     #        print '-'*80
     #        pp.pprint(kargs)
 
-    def __init__(self):
+    def __init__(self, teiler):
         """ """
         #self.session = FileIOProtocol.Session()
         #self.status = FileIOProtocol.Status()
         self.outfile = None
         self.remain = 0
         self.crc = 0
+        self.teiler = teiler
+        
 
     def lineReceived(self, line):
         """ """
@@ -47,7 +50,7 @@ class FileReceiverProtocol(LineReceiver):
                                                    'not given by client')
         
         # Create the upload directory if not already present
-        uploaddir = file_path
+        uploaddir = self.teiler.downloadPath
         print " * Using upload dir:",uploaddir
         if not os.path.isdir(uploaddir):
             os.makedirs(uploaddir)
@@ -102,13 +105,14 @@ class FileReceiverProtocol(LineReceiver):
         else:
             print '\n--> finished saving upload@' + self.outfilename
             client = self.instruction.get('client', 'anonymous')
-            self.status.update( crc           = self.crc,
-                                file_size     = self.size,
-                                client        = client,
-                                new_file      = self.outfilename,
-                                original_file = self.original_fname,
-                                file_metadata = fileinfo(self.outfilename),
-                                upload_time   = datetime.datetime.now() )
+            #self.status.update( crc           = self.crc,
+            #                    file_size     = self.size,
+            #                    client        = client,
+            #                    new_file      = self.outfilename,
+            #                    original_file = self.original_fname,
+            #                    file_metadata = fileinfo(self.outfilename),
+            #                    upload_time   = datetime.datetime.now() )
+
 def fileinfo(fname):
     """ when "file" tool is available, return it's output on "fname" """
     return ( os.system('file 2> /dev/null')!=0 and \
@@ -120,9 +124,15 @@ class FileReceiverFactory(ServerFactory):
     """ file receiver factory """
     protocol = FileReceiverProtocol
 
-    def __init__(self, db, options={}):
-        self.db = db
-        self.options = options
+    def __init__(self, teiler):
+        self.teiler = teiler
+        #pass
+        
+    def buildProtocol(self, addr):
+        print ' + building protocol'
+        p = self.protocol(self.teiler)
+        p.factory = self
+        return p
 
 class FileSenderClient(basic.LineReceiver):
     """ file sender """
