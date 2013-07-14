@@ -14,19 +14,20 @@ class PeerDiscovery(DatagramProtocol):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
         self.transport.write("CONNECT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Sent CONNECT")
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def sendHeartBeat(self):
-        self.transport.write("ALIVE", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("Heartbeat sent")
+        self.transport.write("HEARTBEAT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Sent HEARTBEAT")
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
         self.transport.write("EXIT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("EXIT")
+        log.msg("Sent EXIT")
 
     def datagramReceived(self, datagram, address):
-        log.msg("Sending: HEARD")
+        log.msg("Received datagram")
         self.teiler.messages.append(datagram)
 
         if self.teiler.address != address:
