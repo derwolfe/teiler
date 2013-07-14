@@ -47,6 +47,8 @@ def main():
     
     filetransfer.sendFile("/home/armin/temp.txt",port=teiler.tcpPort,address=teiler.address)
     reactor.run()
+    #while True:
+    #    pass
 
 def _app_runner():
     if os.path.exists(_app_directory) == False:

@@ -11,35 +11,17 @@ from twisted.internet.protocol import ClientFactory
 from twisted.protocols.basic import FileSender, LineReceiver
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
+import utils
 
 class FileReceiverProtocol(LineReceiver):
     """ File Receiver """
 
-    #class Session(object):
-    #    """ Session object, just a demo """
-    #    def is_invalid(self):
-    #        return False
-    #
-    #    def is_stale(self):
-    #        return False
-
-    #class Status(object):
-    #    """ Status object.. just a demo """
-    #    def update(self, **kargs):
-    #        """ """
-    #        print '-'*80
-    #        pp.pprint(kargs)
-
     def __init__(self, teiler):
-        """ """
-        #self.session = FileIOProtocol.Session()
-        #self.status = FileIOProtocol.Status()
         self.outfile = None
         self.remain = 0
         self.crc = 0
         self.teiler = teiler
         
-
     def lineReceived(self, line):
         """ """
         print ' ~ lineReceived:\n\t', line
@@ -55,7 +37,7 @@ class FileReceiverProtocol(LineReceiver):
         if not os.path.isdir(uploaddir):
             os.makedirs(uploaddir)
 
-        self.outfilename = os.path.join(uploaddir, 'data.out')
+        self.outfilename = os.path.join(uploaddir, utils.getFilenameFromPath(self.original_fname))
 
         print ' * Receiving into file@',self.outfilename
         try:
@@ -103,15 +85,8 @@ class FileReceiverProtocol(LineReceiver):
 
         # Success uploading - tmpfile will be saved to disk.
         else:
-            print '\n--> finished saving upload@' + self.outfilename
+            print '\n--> finished saving upload@ ' + self.outfilename
             client = self.instruction.get('client', 'anonymous')
-            #self.status.update( crc           = self.crc,
-            #                    file_size     = self.size,
-            #                    client        = client,
-            #                    new_file      = self.outfilename,
-            #                    original_file = self.original_fname,
-            #                    file_metadata = fileinfo(self.outfilename),
-            #                    upload_time   = datetime.datetime.now() )
 
 def fileinfo(fname):
     """ when "file" tool is available, return it's output on "fname" """
@@ -119,14 +94,12 @@ def fileinfo(fname):
              os.path.exists(fname) and \
              os.popen('file "'+fname+'"').read().strip().split(':')[1] )
 
-
 class FileReceiverFactory(ServerFactory):
     """ file receiver factory """
     protocol = FileReceiverProtocol
 
     def __init__(self, teiler):
         self.teiler = teiler
-        #pass
         
     def buildProtocol(self, addr):
         print ' + building protocol'
@@ -201,7 +174,7 @@ class FileSenderClient(basic.LineReceiver):
             self.controller.completed.callback(self.result)
         else:
             self.controller.completed.errback(reason)
-        reactor.stop()
+        #reactor.stop()
 
 class FileSenderClientFactory(ClientFactory):
     """ file sender factory """

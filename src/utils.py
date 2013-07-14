@@ -2,6 +2,7 @@ import os
 import netifaces
 import uuid
 import M2Crypto
+import ntpath
 """
 The module is intended to be an abstraction that helps the user find the
 local ip address that will be used for broadcasting. As windows, linux/mac 
@@ -83,5 +84,9 @@ def make_files(filename):
 
 def generateSessionID():
     return uuid.UUID(bytes = M2Crypto.m2.rand_bytes(16))
+
+def getFilenameFromPath(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
                 
