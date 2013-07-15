@@ -13,10 +13,6 @@ from peerdiscovery import PeerDiscovery
 # for simplicity, let's decide that the user decides at runtime to listen
 # and the server decides to serve
 
-# location from which files should be served
-_home = os.path.expanduser("~")
-_app_directory = os.path.join(os.path.expanduser("~"), "blaster")
-
 class Teiler:
     def __init__(self):
         self.address = utils.getLiveInterface()
@@ -45,15 +41,8 @@ def main():
     reactor.listenTCP(teiler.tcpPort, fileReceiver)
     log.msg("Starting file listener on ", teiler.tcpPort)
     
-    filetransfer.sendFile("/home/armin/temp.txt",port=teiler.tcpPort,address=teiler.address)
+    filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
     reactor.run()
-    #while True:
-    #    pass
-
-def _app_runner():
-    if os.path.exists(_app_directory) == False:
-            os.mkdir(_app_directory)
-    server.main()
     
 if __name__  == '__main__':
     main()
