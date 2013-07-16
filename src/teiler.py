@@ -16,7 +16,8 @@ from twisted.internet import reactor
 import filetransfer
 from filetransfer import FileReceiverFactory
 from peerdiscovery import PeerDiscovery
-from peerlist import TeilerPeer, TeilerPeerList        
+from peerlist import TeilerPeer, TeilerPeerList
+        
 # Class to maintain the state of the program
 class TeilerState():
     def __init__(self):
@@ -65,9 +66,6 @@ class TeilerWindow(QWidget):
         # Create the QVBoxLayout that lays out the whole form
         self.teiler.peerList.setAcceptDrops(True)
         self.teiler.peerList.setDragEnabled(True)
-        #self.peerListWidget.addItem("Peer 1")
-        #self.peerListWidget.addItem("Peer 2")
-        #self.peerListWidget.addItem("Peer 3")
 
         layout = QVBoxLayout()
         layout.setContentsMargins(QMargins(0, 0, 0, 0))

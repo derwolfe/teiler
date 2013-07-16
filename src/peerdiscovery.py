@@ -36,16 +36,12 @@ class PeerDiscovery(DatagramProtocol):
         message = json.dumps(Message(heartbeatMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
         self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
-        #self.transport.write("HEARTBEAT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        #log.msg("Sent HEARTBEAT")
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
         message = json.dumps(Message(exitMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
         self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
-        #self.transport.write("EXIT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        #log.msg("Sent EXIT")
 
     def datagramReceived(self, datagram, address):
         log.msg("Decoding: {0}".format(datagram))
@@ -53,10 +49,7 @@ class PeerDiscovery(DatagramProtocol):
         peerName = message['name']
         peerAddress = message['address']
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
-        #log.msg("Received datagram %s" % datagram)
-        #self.teiler.messages.append(datagram)
 
-        #if self.teiler.address != address:
         log.msg("Does the list contain? {0}".format(self.teiler.peerList.contains(peerName)))    
         if not self.teiler.peerList.contains(peerName):
             newPeer = TeilerPeer(peerAddress, peerName)

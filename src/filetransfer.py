@@ -174,7 +174,6 @@ class FileSenderClient(basic.LineReceiver):
             self.controller.completed.callback(self.result)
         else:
             self.controller.completed.errback(reason)
-        #reactor.stop()
 
 class FileSenderClientFactory(ClientFactory):
     """ file sender factory """
@@ -202,4 +201,3 @@ def sendFile(path, address='localhost', port=1234,):
     f = FileSenderClientFactory(path, controller)
     reactor.connectTCP(address, port, f)
     return controller.completed
-
