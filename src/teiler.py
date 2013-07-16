@@ -16,13 +16,14 @@ from twisted.internet import reactor
 import filetransfer
 from filetransfer import FileReceiverFactory
 from peerdiscovery import PeerDiscovery
-
+from peerlist import TeilerPeer, TeilerPeerList        
 # Class to maintain the state of the program
 class TeilerState():
     def __init__(self):
         self.address = utils.getLiveInterface()
         self.sessionID = utils.generateSessionID()
-        self.peers = []
+        self.name = "name@%s" % self.address
+        self.peerList = TeilerPeerList()
         self.messages = []
         self.multiCastAddress = '230.0.0.30'
         self.multiCastPort = 8005
@@ -32,10 +33,11 @@ class TeilerState():
 # Class for the GUI
 class TeilerWindow(QWidget):
 
-    def __init__(self):
+    def __init__(self, teiler):
         # Initialize the object as a QWidget and
         # set its title and minimum width
         QWidget.__init__(self)
+        self.teiler = teiler
         self.setWindowTitle('BlastShare')
         self.setMinimumSize(240, 480)
 
@@ -61,12 +63,11 @@ class TeilerWindow(QWidget):
         fileMenu.addAction(exitAction)
 
         # Create the QVBoxLayout that lays out the whole form
-        self.peerList = QListWidget(self)
-        self.peerList.setAcceptDrops(True)
-        self.peerList.setDragEnabled(True)
-        self.peerList.addItem("Peer 1")
-        self.peerList.addItem("Peer 2")
-        self.peerList.addItem("Peer 3")
+        self.teiler.peerList.setAcceptDrops(True)
+        self.teiler.peerList.setDragEnabled(True)
+        #self.peerListWidget.addItem("Peer 1")
+        #self.peerListWidget.addItem("Peer 2")
+        #self.peerListWidget.addItem("Peer 3")
 
         layout = QVBoxLayout()
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
@@ -76,7 +77,7 @@ class TeilerWindow(QWidget):
         statusBar.showMessage('Ready')
         
         layout.addWidget(menubar)
-        layout.addWidget(self.peerList)
+        layout.addWidget(self.teiler.peerList)
         layout.addWidget(statusBar)
 
     def run(self):
@@ -109,7 +110,7 @@ def main():
     
     #filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
     # Create an instance of the application window and run it
-    app = TeilerWindow()
+    app = TeilerWindow(teiler)
     app.run()
 
 if __name__  == '__main__':

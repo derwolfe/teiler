@@ -1,7 +1,21 @@
-import sys
+import sys, json
 from twisted.python import log
 from twisted.internet import task, reactor
 from twisted.internet.protocol import DatagramProtocol 
+from peerlist import TeilerPeer
+
+connectMsg = "CONNECT"
+heartbeatMsg = "HEARTBEAT"
+exitMsg = "EXIT"
+
+''' Class for message object '''
+class Message():
+    def __init__(self, message, name, address, tcpPort, sessionID):
+        self.message = str(message)
+        self.name = str(name)
+        self.address = str(address)
+        self.tcpPort = str(tcpPort)
+        self.sessionID = str(sessionID)
 
 class PeerDiscovery(DatagramProtocol):
     """
@@ -13,25 +27,39 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
-        self.transport.write("CONNECT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("Sent CONNECT")
+        message = json.dumps(Message(connectMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
+        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Sent {0} message: {1}".format(connectMsg, message))
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def sendHeartBeat(self):
-        self.transport.write("HEARTBEAT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("Sent HEARTBEAT")
+        message = json.dumps(Message(heartbeatMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
+        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
+        #self.transport.write("HEARTBEAT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        #log.msg("Sent HEARTBEAT")
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
-        self.transport.write("EXIT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("Sent EXIT")
+        message = json.dumps(Message(exitMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
+        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        log.msg("Sent {0} message: {1}".format(exitMsg, message))
+        #self.transport.write("EXIT", (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        #log.msg("Sent EXIT")
 
     def datagramReceived(self, datagram, address):
-        log.msg("Received datagram")
-        self.teiler.messages.append(datagram)
+        log.msg("Decoding: {0}".format(datagram))
+        message = json.loads(datagram)
+        peerName = message['name']
+        peerAddress = message['address']
+        log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
+        #log.msg("Received datagram %s" % datagram)
+        #self.teiler.messages.append(datagram)
 
-        if self.teiler.address != address:
-            if address not in self.teiler.peers:
-                self.teiler.peers.append(address)
-                log.msg(address)
-                
+        #if self.teiler.address != address:
+        log.msg("Does the list contain? {0}".format(self.teiler.peerList.contains(peerName)))    
+        if not self.teiler.peerList.contains(peerName):
+            newPeer = TeilerPeer(peerAddress, peerName)
+            self.teiler.peerList.addItem(newPeer)
+            log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
+            
