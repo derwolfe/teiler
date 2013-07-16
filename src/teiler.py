@@ -10,7 +10,6 @@ import qt4reactor
 qt_app = QApplication(sys.argv)
 qt4reactor.install()
 
-from actions import server
 from twisted.python import log
 from twisted.internet import reactor
 import filetransfer
