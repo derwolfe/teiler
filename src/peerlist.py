@@ -1,6 +1,6 @@
 # from PySide import QtCore
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 # Class to represent a peer on the network and the gui
 class TeilerPeer(QListWidgetItem):
