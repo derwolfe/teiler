@@ -91,7 +91,7 @@ def quitApp():
 
 def download_path_exists():
     downloadPath = os.path.join(os.path.expanduser("~"), "blaster")
-    if os.path.exists() == False:
+    if os.path.exists(downloadPath) == False:
         os.mkdir(downloadPath)
 
 
