@@ -17,6 +17,15 @@ class Message():
         self.tcpPort = str(tcpPort)
         self.sessionID = str(sessionID)
 
+    def serialize(self):
+        return json.dumps({
+                "message": self.message,
+                "name": self.name,
+                "address" : self.address,
+                "tcpPort" : self.tcpPort,
+                "sesionID" : self.sessionID
+                })
+
 class PeerDiscovery(DatagramProtocol):
     """
     Broadcast the ip to all of the listeners on the channel
@@ -27,33 +36,36 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
-        message = json.dumps(Message(dict(connectMsg,
+        message = Message(connectMsg,
                                      self.teiler.name, 
                                      self.teiler.address, 
                                      self.teiler.tcpPort, 
-                                     self.teiler.sessionID)) 
+                                     self.teiler.sessionID).serialize()
+
         self.transport.write(message, (self.teiler.multiCastAddress, 
                                        self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(connectMsg, message))      
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def sendHeartBeat(self):
-        message = json.dumps(Message(dict(heartbeatMsg, 
+        message = Message(heartbeatMsg, 
                                      self.teiler.name, 
                                      self.teiler.address, 
                                      self.teiler.tcpPort, 
-                                     self.teiler.sessionID)) 
+                                     self.teiler.sessionID).serialize()
+
         self.transport.write(message, 
                              (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
-        message = json.dumps(Message(dict(exitMsg, 
+        message = Message(exitMsg, 
                                      self.teiler.name, 
                                      self.teiler.address, 
                                      self.teiler.tcpPort, 
-                                     self.teiler.sessionID)) 
+                                     self.teiler.sessionID).serialize()
+
         self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
 
