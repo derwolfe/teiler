@@ -47,7 +47,7 @@ class PeerDiscovery(DatagramProtocol):
                                        self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(connectMsg, message))      
         
-        self._call = task.LoopingCall(self.sendHeartbeat)
+        self._call = task.LoopingCall(self.sendHeartBeat)
         self._loop = self._call.start(5)
 
     def sendHeartBeat(self):
