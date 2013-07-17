@@ -46,7 +46,9 @@ class PeerDiscovery(DatagramProtocol):
         self.transport.write(message, (self.teiler.multiCastAddress, 
                                        self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(connectMsg, message))      
-        reactor.callLater(5.0, self.sendHeartBeat)
+        
+        self._call = task.LoopingCall(self.sendHeartbeat)
+        self._loop = self._call.start(5)
 
     def sendHeartBeat(self):
         message = Message(heartbeatMsg, 
@@ -60,7 +62,6 @@ class PeerDiscovery(DatagramProtocol):
                              (self.teiler.multiCastAddress, 
                               self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
-        reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
         message = Message(exitMsg, 
@@ -70,7 +71,8 @@ class PeerDiscovery(DatagramProtocol):
                           self.teiler.sessionID
                           ).serialize()
 
-        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        self.transport.write(message, 
+                (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
 
     def datagramReceived(self, datagram, address):
