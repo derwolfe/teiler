@@ -98,7 +98,9 @@ def main():
     multiCastPort = 8006
     teiler = TeilerState()
     teiler.multiCastPort = multiCastPort
-    reactor.listenMulticast(multiCastPort, PeerDiscovery(teiler), listenMultiple=True)
+    reactor.listenMulticast(multiCastPort, 
+                            PeerDiscovery(teiler), 
+                            listenMultiple=True)
     log.msg("Initiating Peer Discovery")
     
     # Initialize file transfer service
