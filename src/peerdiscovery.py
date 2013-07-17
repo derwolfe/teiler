@@ -27,19 +27,33 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
-        message = json.dumps(Message(connectMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
-        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
-        log.msg("Sent {0} message: {1}".format(connectMsg, message))
+        message = json.dumps(Message(dict(connectMsg,
+                                     self.teiler.name, 
+                                     self.teiler.address, 
+                                     self.teiler.tcpPort, 
+                                     self.teiler.sessionID)) 
+        self.transport.write(message, (self.teiler.multiCastAddress, 
+                                       self.teiler.multiCastPort))
+        log.msg("Sent {0} message: {1}".format(connectMsg, message))      
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def sendHeartBeat(self):
-        message = json.dumps(Message(heartbeatMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
-        self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
+        message = json.dumps(Message(dict(heartbeatMsg, 
+                                     self.teiler.name, 
+                                     self.teiler.address, 
+                                     self.teiler.tcpPort, 
+                                     self.teiler.sessionID)) 
+        self.transport.write(message, 
+                             (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
         reactor.callLater(5.0, self.sendHeartBeat)
 
     def stopProtocol(self):
-        message = json.dumps(Message(exitMsg, self.teiler.name, self.teiler.address, self.teiler.tcpPort, self.teiler.sessionID).__dict__) 
+        message = json.dumps(Message(dict(exitMsg, 
+                                     self.teiler.name, 
+                                     self.teiler.address, 
+                                     self.teiler.tcpPort, 
+                                     self.teiler.sessionID)) 
         self.transport.write(message, (self.teiler.multiCastAddress, self.teiler.multiCastPort))
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
 
