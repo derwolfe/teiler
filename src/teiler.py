@@ -28,7 +28,7 @@ class TeilerState():
         self.multiCastAddress = '230.0.0.30'
         self.multiCastPort = 8005
         self.tcpPort = 9988
-        self.downloadPath = "/home/armin/Downloads"
+
 
 # Class for the GUI
 class TeilerWindow(QWidget):
@@ -89,6 +89,12 @@ def quitApp():
     reactor.stop()
     qApp.quit()
 
+def download_path_exists():
+    downloadPath = os.path.join(os.path.expanduser("~"), "blaster")
+    if os.path.exists() == False:
+        os.mkdir(downloadPath)
+
+
 def main():
     log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
@@ -117,4 +123,5 @@ def main():
     app.run()
 
 if __name__ == '__main__':
+    download_path_exists()
     main()
