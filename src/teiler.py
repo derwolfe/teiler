@@ -40,6 +40,7 @@ class TeilerWindow(QWidget):
         self.teiler = teiler
         self.setWindowTitle('BlastShare')
         self.setMinimumSize(240, 480)
+        self.connect(self.teiler.peerList, SIGNAL("dropped"), self.sendFileToPeers)
 
         shareFilesAction = QAction(QIcon('exit.png'), '&Share File(s)', self)
         shareFilesAction.setShortcut('Ctrl+O')
@@ -63,8 +64,8 @@ class TeilerWindow(QWidget):
         fileMenu.addAction(exitAction)
 
         # Create the QVBoxLayout that lays out the whole form
-        self.teiler.peerList.setAcceptDrops(True)
-        self.teiler.peerList.setDragEnabled(True)
+        # self.teiler.peerList.setAcceptDrops(True)
+        # self.teiler.peerList.setDragEnabled(True)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
@@ -76,6 +77,9 @@ class TeilerWindow(QWidget):
         layout.addWidget(menubar)
         layout.addWidget(self.teiler.peerList)
         layout.addWidget(statusBar)
+
+    def sendFileToPeers(self, fileName):
+        log.msg("OMG Dropped {0}".format(fileName))
 
     def run(self):
         self.show()
@@ -97,18 +101,18 @@ def main():
     reactor.listenMulticast(multiCastPort, PeerDiscovery(teiler), listenMultiple=True)
     log.msg("Initiating Peer Discovery")
     
-    #Initialize file transfer service
+    # Initialize file transfer service
     fileReceiver = FileReceiverFactory(teiler)
     reactor.listenTCP(teiler.tcpPort, fileReceiver)
     log.msg("Starting file listener on ", teiler.tcpPort)
     
-    #qt4reactor requires runReturn() in order to work
+    # qt4reactor requires runReturn() in order to work
     reactor.runReturn()
     
-    #filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
+    # filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
     # Create an instance of the application window and run it
     app = TeilerWindow(teiler)
     app.run()
 
-if __name__  == '__main__':
+if __name__ == '__main__':
     main()
