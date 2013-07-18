@@ -14,7 +14,7 @@ from twisted.internet import reactor
 import utils
 
 class FileReceiverProtocol(LineReceiver):
-    """ File Receiver """
+    """protocol that will be used to transfer files/raw data."""
 
     def __init__(self, teiler):
         self.outfile = None
