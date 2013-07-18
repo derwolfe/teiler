@@ -1,0 +1,12 @@
+*.[oa]
+*~
+*.pyc
+*.pyo
+*.class
+.project
+.pydevproject
+*.cache
+_trial_temp
+MANIFEST
+dist/
+build/
