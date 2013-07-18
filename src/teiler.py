@@ -5,7 +5,7 @@ import utils
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
  
-import qt4reactor
+from qtreactor import qt4reactor
 
 qt_app = QApplication(sys.argv)
 qt4reactor.install()
