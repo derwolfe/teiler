@@ -1,13 +1,15 @@
 import os
 import netifaces
-
+import uuid
+import M2Crypto
+import ntpath
 """
 The module is intended to be an abstraction that helps the user find the
 local ip address that will be used for broadcasting. As windows, linux/mac 
 handle their interfaces differently, we want the correct IP address found and used.
 """
 
-def get_live_interface():
+def getLiveInterface():
     """will return a list of possible IPv4 addresses"""
     addresses = []
     local_network = ['127.0.0.1', '127.0.1.1', '127.1.1.1']
@@ -80,6 +82,11 @@ def make_files(filename):
             elif "d::" in line:
                 _make_dir(line)
 
+def generateSessionID():
+    return uuid.UUID(bytes = M2Crypto.m2.rand_bytes(16))
 
+def getFilenameFromPath(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
                 
