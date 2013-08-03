@@ -1,3 +1,13 @@
+"""
+This module is resposible for peer discovery over UDP only.
+
+The process is simple. 
+1) Start up the client and broadcast a UDP datagram on a defined interval.
+2) Listen for other packets
+3) When another packet is heard, pull it into the list of the peers. But, if the peer is already in the list, do nothing.
+4) On disconnect, the client sends an exit message, letting the other users know that they are no longer online; making it safe for the client to disconnect
+"""
+
 import sys, json
 from twisted.python import log
 from twisted.internet import task, reactor
@@ -84,6 +94,8 @@ class PeerDiscovery(DatagramProtocol):
 
         log.msg("Does the list contain? {0}".format(self.teiler.peerList.contains(peerName)))    
         if not self.teiler.peerList.contains(peerName):
+            # this is coupled to the GUI directly, it should just
+            # add a new peer class, and then the gui should access it
             newPeer = TeilerPeer(peerAddress, peerName)
             self.teiler.peerList.addItem(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
