@@ -7,7 +7,7 @@ from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
 from twisted.trial import unittest
 
 # classes to test
-from ..peerdiscovery import Message, Peer, PeerDiscovery
+from ..peerdiscovery import Message, Peer, PeerDiscovery, connectMsg, heartbeatMsg, exitMsg
 
 class FakeUdpTransport(object):
     """ Instead of connecting through the network, this transport 
@@ -39,8 +39,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.transport = self.tr
         
     def test_sends_connect_on_start(self):
-        self.protocol.sendHeartbeat()
-        self.assertTrue(self.tr.msgs[0] == "'1.1.1.1:8888'")
+        self.assertTrue(False)
 
     def test_sends_hearbeat_on_interval(self):
         self.assertTrue(False)

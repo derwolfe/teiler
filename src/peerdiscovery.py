@@ -13,7 +13,7 @@ The process is simple.
 
 import sys, json
 from twisted.python import log
-from twisted.internet import task, reactor
+from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol 
 
 connectMsg = "CONNECT"
@@ -21,13 +21,19 @@ heartbeatMsg = "HEARTBEAT"
 exitMsg = "EXIT"
 
 class Message(object):
-    """mesage to be sent across the wire"""
-    def __init__(self, message, name, address, tcpPort, sessionID):
+    """Contains basic location information for clients to use
+    to initiate a connection with this peer. Basically, just the user is,
+    what ip they are using, and what port to connect on
+    """
+    def __init__(self, message, name, address, tcpPort)
         self.message = str(message)
         self.name = str(name)
         self.address = str(address)
         self.tcpPort = str(tcpPort)
-        self.sessionID = str(sessionID)
+        # is this session id being used to transfer a file over a TCP socket, or to differentiate
+        # a set of peers from another? This seems like a token that should be PROVIDED after the connection
+        # has been established
+        # self.sessionID = str(sessionID)
 
     def serialize(self):
         return json.dumps({
@@ -35,16 +41,15 @@ class Message(object):
                 "name": self.name,
                 "address" : self.address,
                 "tcpPort" : self.tcpPort,
-                "sesionID" : self.sessionID
                 })
 
 class Peer(object):
-    """Another computer running the program on the network is a peer. This will 
-    save all of the relevant information with which to find another peer."""
-    def __init__(self, name, address):
+    """Meant to store information for the TCP based protocols to use, such as the 
+    IP address, and port"""
+    def __init__(self, name, address, port):
         self.name = name
         self.address = address
-
+        self.port = port
 
 class PeerDiscovery(DatagramProtocol):
     """
@@ -59,20 +64,16 @@ class PeerDiscovery(DatagramProtocol):
         """Set up a list into which peers can be placed."""
         self.peers = []
 
+    def sendMessage(self, message):
+        self.transport.write(message, self.multiCastAddress, self.multiCastPort)
+
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.teiler.multiCastAddress)
-        message = Message(connectMsg,
-                          self.teiler.name, 
-                          self.teiler.address, 
-                          self.teiler.tcpPort, 
-                          self.teiler.sessionID
-                          ).serialize()
-        
-        self.transport.write(message, (self.teiler.multiCastAddress, 
-                                       self.teiler.multiCastPort))
-        log.msg("Sent {0} message: {1}".format(connectMsg, message))      
-        
+        log.msg("Sent message: {0}".format(message))      
+        # you could send the connect message first THEN send the heart beat if need be
+        # using self.sendMessage(self.sendMessage...)
+        # then set up the looping call to use an arg with self.sendMessage, (hbMessage))
         self._call = task.LoopingCall(self.sendHeartBeat)
         self._loop = self._call.start(5)
 
@@ -83,11 +84,9 @@ class PeerDiscovery(DatagramProtocol):
                           self.teiler.tcpPort, 
                           self.teiler.sessionID
                           ).serialize()
-
-        self.transport.write(message, 
-                             (self.teiler.multiCastAddress, 
-                              self.teiler.multiCastPort))
+        self.sendMessage(message)
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
+
 
     def stopProtocol(self):
         message = Message(exitMsg, 
@@ -96,20 +95,20 @@ class PeerDiscovery(DatagramProtocol):
                           self.teiler.tcpPort, 
                           self.teiler.sessionID
                           ).serialize()
-
-        self.transport.write(message, 
-                             (self.teiler.multiCastAddress, 
-                              self.teiler.multiCastPort))
+        self.sendMessage(message)
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
 
     def datagramReceived(self, datagram, address):
+        """Handles how datagrams are read when they are received. Here, as this is a json
+        serialised message, we are pulling out the peer information and placing it in a 
+        list. """
         log.msg("Decoding: {0}".format(datagram))
         msg = json.loads(datagram)
         name = msg['name']
         address = msg['address']
         log.msg("Peer: Address: {0} Name: {1}".format(address, name))
 
-        if peerName not in self.peers:
+        if peerName not in self.peers and not self.:
             newPeer = Peer(name, address)
             self.peers.append(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))

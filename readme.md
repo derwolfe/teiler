@@ -1,10 +1,11 @@
 Teiler
 ======
+** this is not usable software at the moment **
+
 Basically, make it simple to share files amongst different computers behind the same router.
 
 It is meant to solve the problem of having a friend come over to your house who wants to share a large
-set of files with you. He uses Windows, you use linux. Neither of you has any idea how to start up a 
-file server or use SSH. 
+set of files with you. He uses Windows, you use linux. Neither of you has any idea how to start up a file server or use SSH. 
 
 How to install
 --------------
