@@ -52,15 +52,18 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_received_message_from_self_dont_add(self):
         #fake datagram...
-        dg = Message("test", "bob", "192.168.1.1", "9128").serialize()
-        # should make a unique name for each...session!
+        dg = Message("test", "test", "192.168.1.1", "9128").serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
-        #for x in self.protocol.peers:
-        #    print x.name
-        self.assertTrue(self.protocol.peers[0].name == 'bob')
+        self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        pass
+        # not the username in the message is different - this will be changed to using a 
+        # session OR a hash of Id and name...somethign different
+        dg = Message("test", "bob", "192.168.1.1", "9128").serialize()
+        self.protocol.datagramReceived(dg, "192.168.1.1")
+        self.assertTrue(len(self.protocol.peers) == 1)
+        self.assertTrue(self.protocol.peers[0].name == 'bob')
+
         
     def test_sends_connect_on_start(self):
         self.protocol.startProtocol()

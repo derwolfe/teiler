@@ -124,4 +124,6 @@ class PeerDiscovery(DatagramProtocol):
             
     def isPeer(self, name):
         """check if a peer is in the peers list"""
+        if name == self.name: # sessionID would be better
+            return False
         return [x for x in self.peers if x.name == name] is not None # helps it be boolean
