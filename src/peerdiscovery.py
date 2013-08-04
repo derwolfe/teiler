@@ -29,7 +29,15 @@ class Message(object):
         self.name = str(name)
         self.address = str(tcpAddress)
         self.tcpPort = str(tcpPort)
-        #self.sessionID = str(sessionID)
+
+    # def fromJson(self, jsonMessage):
+    #     """create a message FROM json"""
+    #     js = json.loads(jsonMessage)
+    #     self.message = js['message']
+    #     self.name = js['name']
+    #     self.address = js['address']
+    #     self.tcpPort = js['tcpPort']
+    #     #retun self
 
     def serialize(self):
         return json.dumps({
@@ -37,17 +45,27 @@ class Message(object):
             "name": self.name,
             "address" : self.address,
             "tcpPort" : self.tcpPort,
-            #"sessionId" : self.sessionId
             })
+
+    #def deserialize(self):
+    #    return self.name, self.address, self.tcpPort, self.message
 
 class Peer(object):
     """Meant to store information for the TCP based protocols to use, such as the 
-    IP address, and port"""
+    IP address, and port
+    
+    Each peer needs some sort of unique identifier. For now, the combination of port, address,
+    and name should suffice.
+    """
     def __init__(self, name, address, port):
+        self.id = make_id(name, address, port)
         self.name = name
         self.address = address
         self.tcpPort = port
-        #self.sessionId = sessionId
+
+def make_id(name, address, port):
+    return name + '_' + address + '_' + port
+
 
 class PeerDiscovery(DatagramProtocol):
     """
@@ -64,6 +82,7 @@ class PeerDiscovery(DatagramProtocol):
         """
         self.peers = []
         self.reactor = reactor
+        self.id = make_id(name, address, port)
         self.name = name
         # datagram connection infomation
         self.multiCastAddress = address
@@ -79,14 +98,12 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.multiCastAddress)
-        # you could send the connect message first THEN send the heart beat if need be
-        # using self.sendMessage(self.sendMessage...)
-        # then set up the looping call to use an arg with self.sendMessage, (hbMessage))
-        # once started, keep resending the messages every 5 seconds
+
         self._call = task.LoopingCall(self.sendHeartBeat)
         self._loop = self._call.start(5)
 
     def sendHeartBeat(self):
+        """Sends message alerting other peers to your presence."""
         message = Message(heartbeatMsg, 
                           self.name, 
                           self.tcpAddress, 
@@ -112,18 +129,27 @@ class PeerDiscovery(DatagramProtocol):
         list. """
         log.msg("Decoding: " + datagram)
         msg = json.loads(datagram)
+
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
+        peerId = make_id(peerName, peerAddress, peerPort)
+
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
 
-        if self.isPeer(peerName):
+        if self.isPeer(peerId) == False:
             newPeer = Peer(peerName, peerAddress, peerPort)
             self.peers.append(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
             
-    def isPeer(self, name):
-        """check if a peer is in the peers list"""
-        if name == self.name: # sessionID would be better
-            return False
-        return [x for x in self.peers if x.name == name] is not None # helps it be boolean
+    def isPeer(self, id):
+        """Convenience method to make it easy to tell whether or not a peer is already a 
+        peer. """
+        if id == self.id:
+            return True # peer is peer to self.
+        for p in self.peers:
+            if p.id == id:
+                return True
+        return False
+
+        

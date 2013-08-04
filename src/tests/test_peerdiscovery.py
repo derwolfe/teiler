@@ -8,7 +8,7 @@ from twisted.trial import unittest
 from twisted.internet import task
 
 # classes to test
-from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg
+from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, make_id
 
 class FakeUdpTransport(object):
     """ Instead of connecting through the network, this transport 
@@ -51,19 +51,14 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
 
     def test_received_message_from_self_dont_add(self):
-        #fake datagram...
-        dg = Message("test", "test", "192.168.1.1", "9128").serialize()
+        dg = Message("test", "test", "1.1.1.1", "9203").serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        # not the username in the message is different - this will be changed to using a 
-        # session OR a hash of Id and name...somethign different
-        dg = Message("test", "bob", "192.168.1.1", "9128").serialize()
-        self.protocol.datagramReceived(dg, "192.168.1.1")
-        self.assertTrue(len(self.protocol.peers) == 1)
+        dg = Message("testre", "bob", "192.168.1.2", "9128").serialize()
+        self.protocol.datagramReceived(dg, ("192.168.1.1", "9123"))
         self.assertTrue(self.protocol.peers[0].name == 'bob')
-
         
     def test_sends_connect_on_start(self):
         self.protocol.startProtocol()
