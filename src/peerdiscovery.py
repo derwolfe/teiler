@@ -15,7 +15,6 @@ import sys, json
 from twisted.python import log
 from twisted.internet import task, reactor
 from twisted.internet.protocol import DatagramProtocol 
-from peerlist import TeilerPeer
 
 connectMsg = "CONNECT"
 heartbeatMsg = "HEARTBEAT"
@@ -39,11 +38,24 @@ class Message(object):
                 "sesionID" : self.sessionID
                 })
 
+class Peer(object):
+    """Another computer running the program on the network is a peer. This will 
+    save all of the relevant information with which to find another peer."""
+    def __init__(self, name, address):
+        self.name = name
+        self.address = address
+
+
 class PeerDiscovery(DatagramProtocol):
     """
-    UDP protocol used to find others running the same program.
+    UDP protocol used to find others running the same program. 
+    The protocol will do several things, on program start, a connection
+    message will be sent; basically announcing itself as a node to the network.
+    Then the protocol will regularly send a heartbeat message at a defined interval.
+    Once the peer has decided to disconnect, it will send an exit message to alert 
+    the other nodes of its demise.
     """
-    def __init__(self, teiler):
+    def __init__(self):
         """Set up a list into which peers can be placed."""
         self.peers = []
 
@@ -92,14 +104,13 @@ class PeerDiscovery(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         log.msg("Decoding: {0}".format(datagram))
-        message = json.loads(datagram)
-        peerName = message['name']
-        peerAddress = message['address']
-        log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
+        msg = json.loads(datagram)
+        name = msg['name']
+        address = msg['address']
+        log.msg("Peer: Address: {0} Name: {1}".format(address, name))
 
-        log.msg("Does the list contain? {0}".format(self.teiler.peerList.contains(peerName)))    
         if peerName not in self.peers:
-            newPeer = TeilerPeer(peerAddress, peerName)
+            newPeer = Peer(name, address)
             self.peers.append(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
             
