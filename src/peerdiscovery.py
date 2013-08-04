@@ -16,7 +16,6 @@ from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol 
 
-#connectMsg = "CONNECT"
 heartbeatMsg = "HEARTBEAT"
 exitMsg = "EXIT"
 
@@ -30,18 +29,16 @@ class Message(object):
         self.name = str(name)
         self.address = str(tcpAddress)
         self.tcpPort = str(tcpPort)
-        # is this session id being used to transfer a file over a TCP socket, or to differentiate
-        # a set of peers from another? This seems like a token that should be PROVIDED after the connection
-        # has been established
-        # self.sessionID = str(sessionID)
+        #self.sessionID = str(sessionID)
 
     def serialize(self):
         return json.dumps({
-                "message": self.message,
-                "name": self.name,
-                "address" : self.address,
-                "tcpPort" : self.tcpPort,
-                })
+            "message": self.message,
+            "name": self.name,
+            "address" : self.address,
+            "tcpPort" : self.tcpPort,
+            #"sessionId" : self.sessionId
+            })
 
 class Peer(object):
     """Meant to store information for the TCP based protocols to use, such as the 
@@ -49,7 +46,8 @@ class Peer(object):
     def __init__(self, name, address, port):
         self.name = name
         self.address = address
-        self.port = port
+        self.tcpPort = port
+        #self.sessionId = sessionId
 
 class PeerDiscovery(DatagramProtocol):
     """
@@ -81,7 +79,6 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.multiCastAddress)
-   
         # you could send the connect message first THEN send the heart beat if need be
         # using self.sendMessage(self.sendMessage...)
         # then set up the looping call to use an arg with self.sendMessage, (hbMessage))
@@ -96,31 +93,35 @@ class PeerDiscovery(DatagramProtocol):
                           self.tcpPort, 
                           ).serialize()
         self.sendMessage(message)
-        log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
+        log.msg("Sent " + message)
 
 
     def stopProtocol(self):
+        """Gracefully tell peers to remove you."""
         message = Message(exitMsg, 
                           self.name, 
                           self.tcpAddress, 
                           self.tcpPort, 
                           ).serialize()
         self.sendMessage(message)
-        log.msg("Sent {0} message: {1}".format(exitMsg, message))
+        log.msg("Exit " + message)
 
     def datagramReceived(self, datagram, address):
         """Handles how datagrams are read when they are received. Here, as this is a json
         serialised message, we are pulling out the peer information and placing it in a 
         list. """
-        log.msg("Decoding: {0}".format(datagram))
+        log.msg("Decoding: " + datagram)
         msg = json.loads(datagram)
-        name = msg['name']
-        address = msg['address']
-        log.msg("Peer: Address: {0} Name: {1}".format(address, name))
+        peerName = msg['name']
+        peerAddress = msg['address']
+        peerPort = msg['tcpPort']
+        log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
 
-        if peerName not in self.peers:
-            newPeer = Peer(name, address)
+        if self.isPeer(peerName):
+            newPeer = Peer(peerName, peerAddress, peerPort)
             self.peers.append(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
             
-    
+    def isPeer(self, name):
+        """check if a peer is in the peers list"""
+        return [x for x in self.peers if x.name == name] is not None # helps it be boolean
