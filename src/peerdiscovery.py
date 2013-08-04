@@ -16,7 +16,7 @@ from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol 
 
-connectMsg = "CONNECT"
+#connectMsg = "CONNECT"
 heartbeatMsg = "HEARTBEAT"
 exitMsg = "EXIT"
 
@@ -25,10 +25,10 @@ class Message(object):
     to initiate a connection with this peer. Basically, just the user is,
     what ip they are using, and what port to connect on
     """
-    def __init__(self, message, name, address, tcpPort)
+    def __init__(self, message, name, tcpAddress, tcpPort):
         self.message = str(message)
         self.name = str(name)
-        self.address = str(address)
+        self.address = str(tcpAddress)
         self.tcpPort = str(tcpPort)
         # is this session id being used to transfer a file over a TCP socket, or to differentiate
         # a set of peers from another? This seems like a token that should be PROVIDED after the connection
@@ -60,29 +60,40 @@ class PeerDiscovery(DatagramProtocol):
     Once the peer has decided to disconnect, it will send an exit message to alert 
     the other nodes of its demise.
     """
-    def __init__(self):
-        """Set up a list into which peers can be placed."""
+    def __init__(self, reactor, name, address, port, tcpAddress, tcpPort):
+        """Set up an instance of the PeerDiscovery protocol by creating the message 
+        information needed to broadcast other instances of the protocol running on the same network
+        """
         self.peers = []
+        self.reactor = reactor
+        self.name = name
+        # datagram connection infomation
+        self.multiCastAddress = address
+        self.multiCastPort = port
+        # information that will be broadcast in the message
+        self.tcpAddress = tcpAddress
+        self.tcpPort = tcpPort
+        
 
     def sendMessage(self, message):
-        self.transport.write(message, self.multiCastAddress, self.multiCastPort)
+        self.transport.write(message, (self.multiCastAddress, self.multiCastPort))
 
     def startProtocol(self):
         self.transport.setTTL(5)
-        self.transport.joinGroup(self.teiler.multiCastAddress)
-        log.msg("Sent message: {0}".format(message))      
+        self.transport.joinGroup(self.multiCastAddress)
+   
         # you could send the connect message first THEN send the heart beat if need be
         # using self.sendMessage(self.sendMessage...)
         # then set up the looping call to use an arg with self.sendMessage, (hbMessage))
+        # once started, keep resending the messages every 5 seconds
         self._call = task.LoopingCall(self.sendHeartBeat)
         self._loop = self._call.start(5)
 
     def sendHeartBeat(self):
         message = Message(heartbeatMsg, 
-                          self.teiler.name, 
-                          self.teiler.address, 
-                          self.teiler.tcpPort, 
-                          self.teiler.sessionID
+                          self.name, 
+                          self.tcpAddress, 
+                          self.tcpPort, 
                           ).serialize()
         self.sendMessage(message)
         log.msg("Sent {0} message: {1}".format(heartbeatMsg, message))
@@ -90,10 +101,9 @@ class PeerDiscovery(DatagramProtocol):
 
     def stopProtocol(self):
         message = Message(exitMsg, 
-                          self.teiler.name, 
-                          self.teiler.address, 
-                          self.teiler.tcpPort, 
-                          self.teiler.sessionID
+                          self.name, 
+                          self.tcpAddress, 
+                          self.tcpPort, 
                           ).serialize()
         self.sendMessage(message)
         log.msg("Sent {0} message: {1}".format(exitMsg, message))
@@ -108,8 +118,9 @@ class PeerDiscovery(DatagramProtocol):
         address = msg['address']
         log.msg("Peer: Address: {0} Name: {1}".format(address, name))
 
-        if peerName not in self.peers and not self.:
+        if peerName not in self.peers:
             newPeer = Peer(name, address)
             self.peers.append(newPeer)
             log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
             
+    
