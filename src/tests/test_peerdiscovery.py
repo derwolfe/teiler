@@ -8,7 +8,7 @@ from twisted.trial import unittest
 from twisted.internet import task
 
 # classes to test
-from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, make_id
+from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, makeId
 
 class FakeUdpTransport(object):
     """ Instead of connecting through the network, this transport 
@@ -64,6 +64,12 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.startProtocol()
         self.protocol.reactor.advance(5)
         self.assertTrue(len(self.protocol.transport.msgs) > 0)
+
+    def test_isPeer(self):
+        p = Peer("jeff", "192.168.1.1", "2000")
+        id = makeId(p.name, p.address, p.tcpPort)
+        self.protocol.peers.append(p)
+        self.assertTrue(self.protocol.isPeer(id))
 
     # def test_sends_hearbeat_on_interval(self):
     #     self.assertTrue(False)

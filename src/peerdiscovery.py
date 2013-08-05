@@ -30,15 +30,6 @@ class Message(object):
         self.address = str(tcpAddress)
         self.tcpPort = str(tcpPort)
 
-    # def fromJson(self, jsonMessage):
-    #     """create a message FROM json"""
-    #     js = json.loads(jsonMessage)
-    #     self.message = js['message']
-    #     self.name = js['name']
-    #     self.address = js['address']
-    #     self.tcpPort = js['tcpPort']
-    #     #retun self
-
     def serialize(self):
         return json.dumps({
             "message": self.message,
@@ -47,8 +38,6 @@ class Message(object):
             "tcpPort" : self.tcpPort,
             })
 
-    #def deserialize(self):
-    #    return self.name, self.address, self.tcpPort, self.message
 
 class Peer(object):
     """Meant to store information for the TCP based protocols to use, such as the 
@@ -58,12 +47,12 @@ class Peer(object):
     and name should suffice.
     """
     def __init__(self, name, address, port):
-        self.id = make_id(name, address, port)
+        self.id = makeId(name, address, port)
         self.name = name
         self.address = address
         self.tcpPort = port
 
-def make_id(name, address, port):
+def makeId(name, address, port):
     return name + '_' + address + '_' + port
 
 
@@ -78,11 +67,12 @@ class PeerDiscovery(DatagramProtocol):
     """
     def __init__(self, reactor, name, address, port, tcpAddress, tcpPort):
         """Set up an instance of the PeerDiscovery protocol by creating the message 
-        information needed to broadcast other instances of the protocol running on the same network
+        information needed to broadcast other instances of the protocol running on the 
+        same network.
         """
         self.peers = []
         self.reactor = reactor
-        self.id = make_id(name, address, port)
+        self.id = makeId(name, address, port)
         self.name = name
         # datagram connection infomation
         self.multiCastAddress = address
@@ -90,7 +80,6 @@ class PeerDiscovery(DatagramProtocol):
         # information that will be broadcast in the message
         self.tcpAddress = tcpAddress
         self.tcpPort = tcpPort
-        
 
     def sendMessage(self, message):
         self.transport.write(message, (self.multiCastAddress, self.multiCastPort))
@@ -98,7 +87,6 @@ class PeerDiscovery(DatagramProtocol):
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.multiCastAddress)
-
         self._call = task.LoopingCall(self.sendHeartBeat)
         self._loop = self._call.start(5)
 
@@ -111,7 +99,6 @@ class PeerDiscovery(DatagramProtocol):
                           ).serialize()
         self.sendMessage(message)
         log.msg("Sent " + message)
-
 
     def stopProtocol(self):
         """Gracefully tell peers to remove you."""
@@ -126,17 +113,14 @@ class PeerDiscovery(DatagramProtocol):
     def datagramReceived(self, datagram, address):
         """Handles how datagrams are read when they are received. Here, as this is a json
         serialised message, we are pulling out the peer information and placing it in a 
-        list. """
+        list."""
         log.msg("Decoding: " + datagram)
         msg = json.loads(datagram)
-
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
-        peerId = make_id(peerName, peerAddress, peerPort)
-
+        peerId = makeId(peerName, peerAddress, peerPort)
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
-
         if self.isPeer(peerId) == False:
             newPeer = Peer(peerName, peerAddress, peerPort)
             self.peers.append(newPeer)
@@ -146,7 +130,7 @@ class PeerDiscovery(DatagramProtocol):
         """Convenience method to make it easy to tell whether or not a peer is already a 
         peer. """
         if id == self.id:
-            return True # peer is peer to self.
+            return True # don't include yourself.
         for p in self.peers:
             if p.id == id:
                 return True
