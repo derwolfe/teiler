@@ -51,6 +51,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
 
     def test_received_message_from_self_dont_add(self):
+        """The new peer should not be added as it is equal to the host."""
         dg = Message("test", "test", "1.1.1.1", "9203").serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
@@ -61,9 +62,12 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.peers[0].name == 'bob')
         
     def test_sends_connect_on_start(self):
-        self.protocol.startProtocol()
-        self.protocol.reactor.advance(5)
-        self.assertTrue(len(self.protocol.transport.msgs) > 0)
+        # FIXME being problematic...why isn't it calling?
+        self.assertTrue(False)
+        #self.protocol.startProtocol()
+        # failing at the first looping call
+        #self.protocol.reactor.advance(5)
+        #self.assertTrue(len(self.protocol.transport.msgs) > 0)
 
     def test_isPeer(self):
         p = Peer("jeff", "192.168.1.1", "2000")
@@ -71,11 +75,6 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.peers.append(p)
         self.assertTrue(self.protocol.isPeer(id))
 
-    # def test_sends_hearbeat_on_interval(self):
-    #     self.assertTrue(False)
-
     # def test_sends_exit_message_on_exit(self):
     #     self.assertTrue(False)
 
-    # def test_decodes_received_datagram(self):
-    #     self.assertTrue(False)

@@ -86,9 +86,10 @@ class PeerDiscovery(DatagramProtocol):
 
     def startProtocol(self):
         self.transport.setTTL(5)
+        print self.reactor
         self.transport.joinGroup(self.multiCastAddress)
-        self._call = task.LoopingCall(self.sendHeartBeat)
-        self._loop = self._call.start(5)
+        self.loop = task.LoopingCall(self.sendHeartBeat)
+        self.loop.start(5)
 
     def sendHeartBeat(self):
         """Sends message alerting other peers to your presence."""
@@ -108,6 +109,7 @@ class PeerDiscovery(DatagramProtocol):
                           self.tcpPort, 
                           ).serialize()
         self.sendMessage(message)
+        self.loop.stop()
         log.msg("Exit " + message)
 
     def datagramReceived(self, datagram, address):
@@ -115,11 +117,13 @@ class PeerDiscovery(DatagramProtocol):
         serialised message, we are pulling out the peer information and placing it in a 
         list."""
         log.msg("Decoding: " + datagram)
+
         msg = json.loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
         peerId = makeId(peerName, peerAddress, peerPort)
+
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
         if self.isPeer(peerId) == False:
             newPeer = Peer(peerName, peerAddress, peerPort)
