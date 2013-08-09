@@ -11,7 +11,7 @@ The process is simple.
     client to disconnect
 """
 
-import sys, json
+import json
 from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol 
