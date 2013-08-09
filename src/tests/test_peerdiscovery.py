@@ -80,6 +80,14 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.peers.append(p)
         self.assertTrue(self.protocol.isPeer(id))
 
-    # def test_sends_exit_message_on_exit(self):
-    #     self.assertTrue(False)
+    def test_sends_exit_message_on_exit(self):
+        # check that stop protocol sends an exit message
+        self.protocol.startProtocol() # needed to get a loop object to cancel!
+        self.protocol.stopProtocol() # 
+        self.assertTrue('EXIT' in self.protocol.transport.msgs[1])
 
+    def test_kills_looping_call(self):
+        self.protocol.startProtocol() # loop started, could this be mocked?
+        self.assertTrue(self.protocol.loop.running == True)
+        self.protocol.stopProtocol()
+        self.assertTrue(self.protocol.loop.running == False)
