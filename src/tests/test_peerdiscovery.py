@@ -67,11 +67,11 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.datagramReceived(dg, ("192.168.1.1", "9123"))
         self.assertTrue(self.protocol.peers[0].name == 'bob')
         
-    def test_sends_connect_on_start(self):
+    def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()
         self.protocol.reactor.advance(10)
         # there should be two messages delivered over the interval of 10 seconds
-        self.protocol.stopProtocol() # this keeps the reactor clean!
+        self.protocol.stopProtocol() # this keeps the reactor clean
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
         
     def test_isPeer(self):
@@ -82,12 +82,12 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_sends_exit_message_on_exit(self):
         # check that stop protocol sends an exit message
-        self.protocol.startProtocol() # needed to get a loop object to cancel!
+        self.protocol.startProtocol() # needed to get a loop object to cancel
         self.protocol.stopProtocol() # 
         self.assertTrue('EXIT' in self.protocol.transport.msgs[1])
 
     def test_kills_looping_call(self):
         self.protocol.startProtocol() # loop started, could this be mocked?
-        self.assertTrue(self.protocol.loop.running == True)
+        self.assertTrue(self.protocol.loop.running == True) 
         self.protocol.stopProtocol()
         self.assertTrue(self.protocol.loop.running == False)
