@@ -68,14 +68,11 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.peers[0].name == 'bob')
         
     def test_sends_connect_on_start(self):
-        # FIXME being problematic...why isn't it calling?
         self.protocol.startProtocol()
-        # failing at the first looping call
         self.protocol.reactor.advance(10)
         # there should be two messages delivered over the interval of 10 seconds
         self.protocol.stopProtocol() # this keeps the reactor clean!
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
-
         
     def test_isPeer(self):
         p = Peer("jeff", "192.168.1.1", "2000")
