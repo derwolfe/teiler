@@ -86,7 +86,6 @@ class PeerDiscovery(DatagramProtocol):
 
     def startProtocol(self):
         self.transport.setTTL(5)
-        print self.reactor
         self.transport.joinGroup(self.multiCastAddress)
         self.loop = task.LoopingCall(self.sendHeartBeat)
         self.loop.start(5)

@@ -10,6 +10,9 @@ from twisted.internet import task
 # classes to test
 from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, makeId
 
+#from twisted import internet
+#internet.base.DelayedCall.debug = True 
+
 class FakeUdpTransport(object):
     """ Instead of connecting through the network, this transport 
     writes the broadcast messages to a variable that can be 
@@ -46,6 +49,9 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
 
+    def tearDown(self):
+        self.protocol.reactor.delayedCalls = []
+    
     def test_writes_message(self):
         self.protocol.sendMessage('bob')
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
@@ -63,12 +69,14 @@ class PeerDiscoveryTests(unittest.TestCase):
         
     def test_sends_connect_on_start(self):
         # FIXME being problematic...why isn't it calling?
-        self.assertTrue(False)
-        #self.protocol.startProtocol()
+        self.protocol.startProtocol()
         # failing at the first looping call
-        #self.protocol.reactor.advance(5)
-        #self.assertTrue(len(self.protocol.transport.msgs) > 0)
+        self.protocol.reactor.advance(10)
+        # there should be two messages delivered over the interval of 10 seconds
+        self.protocol.stopProtocol() # this keeps the reactor clean!
+        self.assertTrue(len(self.protocol.transport.msgs) == 2)
 
+        
     def test_isPeer(self):
         p = Peer("jeff", "192.168.1.1", "2000")
         id = makeId(p.name, p.address, p.tcpPort)
