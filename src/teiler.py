@@ -52,7 +52,8 @@ class TeilerWindow(QWidget):
         self.teiler = teiler
         self.setWindowTitle('BlastShare')
         self.setMinimumSize(240, 480)
-        self.connect(self.teiler.peerList, SIGNAL("dropped"), self.sendFileToPeers)
+        self.connect(self.teiler.peerList, 
+                     SIGNAL("dropped"), self.sendFileToPeers)
 
         shareFilesAction = QAction(QIcon('exit.png'), '&Share File(s)', self)
         shareFilesAction.setShortcut('Ctrl+O')
@@ -108,26 +109,27 @@ def download_path_exists():
 
 def main():
     log.startLogging(sys.stdout)
+
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
-    multiCastPort = '8006'
 
-    # Initialize peer discovery using UDP multicast
     config = TeilerConfig(utils.getLiveInterface(),
-                         utils.generateSessionID(),
-                         'me',
-                         TeilerPeerList(),
-                         '230.0.0.30',
-                         multiCastPort,
-                         '998', 
+                          utils.generateSessionID(),
+                          'me',
+                          TeilerPeerList(),
+                          '230.0.0.30',
+                          '8006',
+                          '998', 
                           os.path.join(os.path.expanduser("~"), "blaster"))
                          
-    reactor.listenMulticast(multiCastPort, 
+    reactor.listenMulticast(config.multiCastPort, 
                             PeerDiscovery(config), 
                             listenMultiple=True)
+
     log.msg("Initiating Peer Discovery")
     fileReceiver = FileReceiverFactory(config)
     reactor.listenTCP(config.tcpPort, fileReceiver)
+
     log.msg("Starting file listener on ", config.tcpPort)
     
     # qt4reactor requires runReturn() in order to work
