@@ -66,10 +66,20 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        dg = Message("tester", "bob", "192.168.1.2", 8000).serialize()
-        self.protocol.datagramReceived(dg, ("192.168.1.1", 8000))
+        dg = Message(heartbeatMsg, "bob", "192.168.1.2", 1232).serialize()
+        self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
+        self.assertTrue(len(self.protocol.peers) > 0)
         self.assertTrue(self.protocol.peers[0].name == 'bob')
-        
+
+    # def test_remove_peer_on_receipt_of_exit_message(self):
+    #     # a peer with these details should exist
+    #     # this is a datagram, not a message!
+    #     #dg = Message(exitMsg, "bob", "192.168.1.1", 8000)
+    #     peer = Peer("bob", "192.168.1.1", 8000)
+    #     self.protocol.peers.append(peer)
+    #     #self.protocol.datagramReceived(dg, "192.168.1.1")
+    #     self.assertTrue(len(self.protocol.peers) == 0)
+
     def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()
         self.protocol.reactor.advance(10)

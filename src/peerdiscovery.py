@@ -130,14 +130,23 @@ class PeerDiscovery(DatagramProtocol):
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
+        peerMsg = msg['message']
         peerId = makeId(peerName, peerAddress, peerPort)
 
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
 
-        if self.isPeer(peerId) == False:
-            newPeer = Peer(peerName, peerAddress, peerPort)
-            self.peers.append(newPeer)
-            log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
+        # FIXME what about handling the exitMsg?
+        if peerMsg == exitMsg:
+            if self.isPeer(peerId):
+                log.msg('dropping a peer')                
+                # write a remove fxn
+                #self.peers.remove(peerId)
+        elif peerMsg == heartbeatMsg:
+            # check for conn"
+            if self.isPeer(peerId) == False:
+                newPeer = Peer(peerName, peerAddress, peerPort)
+                self.peers.append(newPeer)
+                log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
             
     def isPeer(self, id):
         """Convenience method to make it easy to tell whether or not a peer is already a 
