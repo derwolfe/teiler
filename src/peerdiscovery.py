@@ -69,7 +69,8 @@ class PeerDiscovery(DatagramProtocol):
     the other nodes of its demise.
     """
     def __init__(self, 
-                 reactor, 
+                 reactor,
+                 peers,
                  name, 
                  multiCastAddress, 
                  multiCastPort, 
@@ -79,7 +80,7 @@ class PeerDiscovery(DatagramProtocol):
         the message information needed to broadcast other instances 
         of the protocol running on the same network.
         """
-        self.peers = []
+        self.peers = peers # your list needs to implement append
         self.id = makeId(name, tcpAddress, tcpPort)
         self.reactor = reactor
         self.name = name
