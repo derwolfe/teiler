@@ -53,7 +53,7 @@ class Peer(object):
         self.tcpPort = port
 
 def makeId(name, address, port):
-    return name #+ '_' + address + '_' + port
+    return name + '_' + address + '_' + str(port)
 
 
 class PeerDiscovery(DatagramProtocol):
