@@ -143,9 +143,7 @@ class PeerDiscovery(DatagramProtocol):
         if peerMsg == exitMsg:
             if self.isPeer(peerId):
                 log.msg('dropping a peer')
-                # might make more sense to use a dict with ID of the key!
-                # write a remove fxn
-                del self.peers[peerId]
+                self.removePeer(peerId)
 
         elif peerMsg == heartbeatMsg:
             # check for conn"
@@ -159,11 +157,8 @@ class PeerDiscovery(DatagramProtocol):
         """Convenience method to make it easy to tell whether or not a peer 
         is already a peer. """
         return id in self.peers # for use with default dict
-        # if id == self.id:
-        #     return True # don't include yourself.
-        # for p in self.peers:
-        #     if p.id == id:
-        #         return True
-        # return False
+
+    def removePeer(self, id):
+        del self.peers[id]
 
         
