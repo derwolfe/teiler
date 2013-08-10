@@ -12,7 +12,7 @@ qt4reactor.install()
 
 from twisted.python import log
 from twisted.internet import reactor
-import filetransfer
+
 from filetransfer import FileReceiverFactory
 from peerdiscovery import PeerDiscovery
 from peerlist import TeilerPeer, TeilerPeerList
@@ -23,28 +23,27 @@ class TeilerConfig():
     """
     def __init__(self, 
                  address, 
-                 sessionID, 
-                 name, 
-                 peerList, 
-                 multicast, 
-                 multicastPort, 
+                 sessionID,
+                 name,
+                 peerList,
+                 multiCastAddress,
+                 multicastPort,
                  tcpPort,
-                 downloadPath
-             ):
+                 downloadPath):
         self.address = address
         self.sessionID = sessionID
         self.name = name
-        self.peerList = peerList # could take PeerList, normal list
-        self.multiCastAddress = multicast
-        self.multiCastPort = multicastPort
+        self.peerList = peerList
+        self.multiCastAddress = multiCastAddress
+        self.multiCastPort = multiCastPort
         self.tcpPort = tcpPort
         self.downloadPath = downloadPath
         self.messages = []
 
 
-# Class for the GUI
-class TeilerWindow(QWidget):
 
+class TeilerWindow(QWidget):
+    """The main front end for the application."""
     def __init__(self, teiler):
         # Initialize the object as a QWidget and
         # set its title and minimum width
@@ -109,19 +108,18 @@ def download_path_exists():
 
 def main():
     log.startLogging(sys.stdout)
-
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
 
     config = TeilerConfig(utils.getLiveInterface(),
                           utils.generateSessionID(),
-                          'me',
+                          utils.getUsername(),
                           TeilerPeerList(),
                           '230.0.0.30',
                           '8006',
                           '998', 
                           os.path.join(os.path.expanduser("~"), "blaster"))
-                         
+
     reactor.listenMulticast(config.multiCastPort, 
                             PeerDiscovery(config), 
                             listenMultiple=True)
@@ -129,12 +127,9 @@ def main():
     log.msg("Initiating Peer Discovery")
     fileReceiver = FileReceiverFactory(config)
     reactor.listenTCP(config.tcpPort, fileReceiver)
-
     log.msg("Starting file listener on ", config.tcpPort)
-    
     # qt4reactor requires runReturn() in order to work
     reactor.runReturn()
-    
     # filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
     # Create an instance of the application window and run it
     app = TeilerWindow(config)
