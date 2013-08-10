@@ -41,7 +41,7 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def setUp(self):
         self.clock = task.Clock()
-        self.protocol = PeerDiscovery(self.clock, "test", "1.1.1.1", "9203", "1.1.1.1", "8000")
+        self.protocol = PeerDiscovery(self.clock, "test", "1.1.1.1", 9203, "1.1.1.1", 8000)
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
 
@@ -49,15 +49,15 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.sendMessage('bob')
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
 
-    def test_received_message_from_self_dont_add(self):
+    def test_received_message_from_self_do_not_add(self):
         """The new peer should not be added as it is equal to the host."""
-        dg = Message("test", "test", "1.1.1.1", "9203").serialize()
+        dg = Message("test", "test", "1.1.1.1", 8000).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        dg = Message("tester", "bob", "192.168.1.2", "9128").serialize()
-        self.protocol.datagramReceived(dg, ("192.168.1.1", "9123"))
+        dg = Message("tester", "bob", "192.168.1.2", 8000).serialize()
+        self.protocol.datagramReceived(dg, ("192.168.1.1", 8000))
         self.assertTrue(self.protocol.peers[0].name == 'bob')
         
     def test_sends_messages_on_loop(self):
@@ -68,7 +68,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
         
     def test_different_peer_is_added(self):
-        p = Peer("jeff", "192.168.1.1", "2000")
+        p = Peer("jeff", "192.168.1.1", 8000)
         id = makeId(p.name, p.address, p.tcpPort)
         self.protocol.peers.append(p)
         self.assertTrue(self.protocol.isPeer(id))

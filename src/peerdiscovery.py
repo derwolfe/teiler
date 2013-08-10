@@ -52,6 +52,9 @@ class Peer(object):
         self.address = address
         self.tcpPort = port
 
+    def __str__(self):
+        return self.id
+
 def makeId(name, address, port):
     return name + '_' + address + '_' + str(port)
 
