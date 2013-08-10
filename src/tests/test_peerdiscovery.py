@@ -41,7 +41,16 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def setUp(self):
         self.clock = task.Clock()
-        self.protocol = PeerDiscovery(self.clock, "test", "1.1.1.1", 9203, "1.1.1.1", 8000)
+        self.myAddr = "1.1.1.1"
+        self.myAddrPort = 9203
+        self.myUdpPort = 8000
+        self.user = "test"
+        self.protocol = PeerDiscovery(self.clock, 
+                                      self.user, 
+                                      self.myAddr, 
+                                      self.myAddrPort, 
+                                      self.myAddr, 
+                                      self.myUdpPort)
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
 
@@ -51,7 +60,7 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_received_message_from_self_do_not_add(self):
         """The new peer should not be added as it is equal to the host."""
-        dg = Message("test", "test", "1.1.1.1", 8000).serialize()
+        dg = Message(self.user, self.user, self.myAddr, self.myUdpPort).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
 
