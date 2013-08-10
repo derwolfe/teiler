@@ -133,6 +133,7 @@ class PeerDiscovery(DatagramProtocol):
         peerId = makeId(peerName, peerAddress, peerPort)
 
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
+
         if self.isPeer(peerId) == False:
             newPeer = Peer(peerName, peerAddress, peerPort)
             self.peers.append(newPeer)
