@@ -17,17 +17,29 @@ from filetransfer import FileReceiverFactory
 from peerdiscovery import PeerDiscovery
 from peerlist import TeilerPeer, TeilerPeerList
         
-# Class to maintain the state of the program
-class TeilerState():
-    def __init__(self):
-        self.address = utils.getLiveInterface()
-        self.sessionID = utils.generateSessionID()
-        self.name = "name@%s" % self.address
-        self.peerList = TeilerPeerList()
+
+class TeilerConfig():
+    """ Class to hold on to all instance variables used for state. 
+    """
+    def __init__(self, 
+                 address, 
+                 sessionID, 
+                 name, 
+                 peerList, 
+                 multicast, 
+                 multicastPort, 
+                 tcpPort,
+                 downloadPath
+             ):
+        self.address = address
+        self.sessionID = sessionID
+        self.name = name
+        self.peerList = peerList # could take PeerList, normal list
+        self.multiCastAddress = multicast
+        self.multiCastPort = multicastPort
+        self.tcpPort = tcpPort
+        self.downloadPath = downloadPath
         self.messages = []
-        self.multiCastAddress = '230.0.0.30'
-        self.multiCastPort = 8005
-        self.tcpPort = 9988
 
 
 # Class for the GUI
@@ -99,27 +111,34 @@ def main():
     log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
-    
+    multiCastPort = '8006'
     # Initialize peer discovery using UDP multicast
-    multiCastPort = 8006
-    teiler = TeilerState()
-    teiler.multiCastPort = multiCastPort
+    config = TeilerConfig(utils.getLiveInterface(),
+                         utils.generateSessionID(),
+                         'me',
+                         TeilerPeerList(),
+                         '230.0.0.30',
+                         multiCastPort,
+                         '998', 
+                         '~/downloads/') # should be os.expandPath(user...)
+                         
     reactor.listenMulticast(multiCastPort, 
-                            PeerDiscovery(teiler), 
+                            PeerDiscovery(config), 
                             listenMultiple=True)
+
     log.msg("Initiating Peer Discovery")
     
     # Initialize file transfer service
-    fileReceiver = FileReceiverFactory(teiler)
-    reactor.listenTCP(teiler.tcpPort, fileReceiver)
-    log.msg("Starting file listener on ", teiler.tcpPort)
+    fileReceiver = FileReceiverFactory(config)
+    reactor.listenTCP(config.tcpPort, fileReceiver)
+    log.msg("Starting file listener on ", config.tcpPort)
     
     # qt4reactor requires runReturn() in order to work
     reactor.runReturn()
     
     # filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
     # Create an instance of the application window and run it
-    app = TeilerWindow(teiler)
+    app = TeilerWindow(config)
     app.run()
 
 if __name__ == '__main__':
