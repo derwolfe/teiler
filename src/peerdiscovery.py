@@ -74,10 +74,8 @@ class PeerDiscovery(DatagramProtocol):
         self.reactor = reactor
         self.id = makeId(name, address, port)
         self.name = name
-        # datagram connection infomation
         self.multiCastAddress = address
         self.multiCastPort = port
-        # information that will be broadcast in the message
         self.tcpAddress = tcpAddress
         self.tcpPort = tcpPort
 
