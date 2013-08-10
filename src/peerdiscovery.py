@@ -53,7 +53,7 @@ class Peer(object):
         self.tcpPort = port
 
 def makeId(name, address, port):
-    return name + '_' + address + '_' + port
+    return name #+ '_' + address + '_' + port
 
 
 class PeerDiscovery(DatagramProtocol):
@@ -65,22 +65,29 @@ class PeerDiscovery(DatagramProtocol):
     Once the peer has decided to disconnect, it will send an exit message to alert 
     the other nodes of its demise.
     """
-    def __init__(self, reactor, name, address, port, tcpAddress, tcpPort):
-        """Set up an instance of the PeerDiscovery protocol by creating the message 
-        information needed to broadcast other instances of the protocol running on the 
-        same network.
+    def __init__(self, 
+                 reactor, 
+                 name, 
+                 multiCastAddress, 
+                 multiCastPort, 
+                 tcpAddress, 
+                 tcpPort):
+        """Set up an instance of the PeerDiscovery protocol by creating 
+        the message information needed to broadcast other instances 
+        of the protocol running on the same network.
         """
         self.peers = []
+        self.id = makeId(name, tcpAddress, tcpPort)
         self.reactor = reactor
-        self.id = makeId(name, address, port)
         self.name = name
-        self.multiCastAddress = address
-        self.multiCastPort = port
+        self.multiCastAddress = multiCastAddress
+        self.multiCastPort = multiCastPort
         self.tcpAddress = tcpAddress
         self.tcpPort = tcpPort
 
     def sendMessage(self, message):
-        self.transport.write(message, (self.multiCastAddress, self.multiCastPort))
+        self.transport.write(message, 
+                             (self.multiCastAddress, self.multiCastPort))
 
     def startProtocol(self):
         self.transport.setTTL(5)
@@ -110,9 +117,9 @@ class PeerDiscovery(DatagramProtocol):
         log.msg("Exit " + message)
 
     def datagramReceived(self, datagram, address):
-        """Handles how datagrams are read when they are received. Here, as this is a json
-        serialised message, we are pulling out the peer information and placing it in a 
-        list."""
+        """Handles how datagrams are read when they are received. Here, 
+        as this is a json serialised message, we are pulling out the 
+        peer information and placing it in a list."""
         log.msg("Decoding: " + datagram)
 
         msg = json.loads(datagram)

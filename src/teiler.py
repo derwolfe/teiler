@@ -23,20 +23,22 @@ class TeilerConfig():
     """
     def __init__(self, 
                  address, 
+                 tcpPort,
                  sessionID,
                  name,
                  peerList,
                  multiCastAddress,
                  multiCastPort,
-                 tcpPort,
                  downloadPath):
-        self.address = address
+        self.address = address # this is the local IP
+        # port for file receiver to listen on 
+        self.tcpPort = tcpPort
+
         self.sessionID = sessionID
         self.name = name
         self.peerList = peerList
         self.multiCastAddress = multiCastAddress
         self.multiCastPort = multiCastPort
-        self.tcpPort = tcpPort
         self.downloadPath = downloadPath
         self.messages = []
 
@@ -112,27 +114,37 @@ def main():
     args = parser.parse_args()
 
     config = TeilerConfig(utils.getLiveInterface(),
+                          9998,
                           utils.generateSessionID(),
                           utils.getUsername(),
                           TeilerPeerList(),
                           '230.0.0.30',
-                          '8006',
-                          '998', 
+                          8005,
                           os.path.join(os.path.expanduser("~"), "blaster"))
     log.msg(utils.getUsername())
-
+    
+    reactor.listenMulticast(config.multiCastPort, 
+                            PeerDiscovery(
+                                reactor,
+                                config.name,
+                                config.multiCastAddress,
+                                config.multiCastPort,
+                                config.address,
+                                config.tcpPort),
+                            listenMultiple=True)
+    
     # reactor.listenMulticast(config.multiCastPort, 
     #                         PeerDiscovery(config), 
     #                         listenMultiple=True)
 
     log.msg("Initiating Peer Discovery")
-    fileReceiver = FileReceiverFactory(config)
+    #fileReceiver = FileReceiverFactory(config)
     #reactor.listenTCP(config.tcpPort, fileReceiver)
+    
     log.msg("Starting file listener on ", config.tcpPort)
-    # qt4reactor requires runReturn() in order to work
+    
     reactor.runReturn()
-    # filetransfer.sendFile("/home/armin/tempzip.zip",port=teiler.tcpPort,address=teiler.address)
-    # Create an instance of the application window and run it
+        
     app = TeilerWindow(config)
     app.run()
 
