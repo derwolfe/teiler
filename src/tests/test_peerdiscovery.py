@@ -46,6 +46,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.myUdpPort = 8000
         self.user = "test"
         self.protocol = PeerDiscovery(self.clock, 
+                                      list(), 
                                       self.user, 
                                       self.myAddr, 
                                       self.myAddrPort, 

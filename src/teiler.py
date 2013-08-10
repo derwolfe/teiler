@@ -33,27 +33,28 @@ class TeilerConfig():
         self.address = address # this is the local IP
         # port for file receiver to listen on 
         self.tcpPort = tcpPort
-
         self.sessionID = sessionID
         self.name = name
         self.peerList = peerList
         self.multiCastAddress = multiCastAddress
         self.multiCastPort = multiCastPort
         self.downloadPath = downloadPath
-        self.messages = []
-
 
 
 class TeilerWindow(QWidget):
     """The main front end for the application."""
-    def __init__(self, teiler):
+    def __init__(self, peerList):
         # Initialize the object as a QWidget and
         # set its title and minimum width
+
         QWidget.__init__(self)
-        self.teiler = teiler
+
+        self.peerList = peerList
         self.setWindowTitle('BlastShare')
         self.setMinimumSize(240, 480)
-        self.connect(self.teiler.peerList, 
+
+        # connects the signals!
+        self.connect(self.peerList, 
                      SIGNAL("dropped"), self.sendFileToPeers)
 
         shareFilesAction = QAction(QIcon('exit.png'), '&Share File(s)', self)
@@ -89,7 +90,7 @@ class TeilerWindow(QWidget):
         statusBar.showMessage('Ready')
         
         layout.addWidget(menubar)
-        layout.addWidget(self.teiler.peerList)
+        layout.addWidget(self.peerList)
         layout.addWidget(statusBar)
 
     def sendFileToPeers(self, fileName):
@@ -112,7 +113,7 @@ def main():
     log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
-
+    
     config = TeilerConfig(utils.getLiveInterface(),
                           9998,
                           utils.generateSessionID(),
@@ -121,11 +122,11 @@ def main():
                           '230.0.0.30',
                           8005,
                           os.path.join(os.path.expanduser("~"), "blaster"))
-    log.msg(utils.getUsername())
     
     reactor.listenMulticast(config.multiCastPort, 
                             PeerDiscovery(
                                 reactor,
+                                config.peerList,
                                 config.name,
                                 config.multiCastAddress,
                                 config.multiCastPort,
@@ -133,11 +134,6 @@ def main():
                                 config.tcpPort),
                             listenMultiple=True)
     
-    # reactor.listenMulticast(config.multiCastPort, 
-    #                         PeerDiscovery(config), 
-    #                         listenMultiple=True)
-
-    log.msg("Initiating Peer Discovery")
     #fileReceiver = FileReceiverFactory(config)
     #reactor.listenTCP(config.tcpPort, fileReceiver)
     
@@ -145,7 +141,7 @@ def main():
     
     reactor.runReturn()
         
-    app = TeilerWindow(config)
+    app = TeilerWindow(config.peerList)
     app.run()
 
 if __name__ == '__main__':

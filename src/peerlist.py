@@ -18,6 +18,11 @@ class TeilerPeerList(QListWidget):
         # self.setDragEnabled(True)
         self.setAcceptDrops(True)
         # self.teiler.peerList.setDragEnabled(True)
+
+    def append(self, item):
+        """acts as a wrapper for normal list function
+        """
+        self.addItem(item)
     
     #what's this?
     def contains(self, peerName):
