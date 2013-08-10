@@ -49,9 +49,6 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
 
-    def tearDown(self):
-        self.protocol.reactor.delayedCalls = []
-    
     def test_writes_message(self):
         self.protocol.sendMessage('bob')
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
@@ -63,7 +60,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        dg = Message("testre", "bob", "192.168.1.2", "9128").serialize()
+        dg = Message("tester", "bob", "192.168.1.2", "9128").serialize()
         self.protocol.datagramReceived(dg, ("192.168.1.1", "9123"))
         self.assertTrue(self.protocol.peers[0].name == 'bob')
         
