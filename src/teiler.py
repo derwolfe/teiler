@@ -106,12 +106,12 @@ def download_path_exists():
     if os.path.exists(downloadPath) == False:
         os.mkdir(downloadPath)
 
-
 def main():
     log.startLogging(sys.stdout)
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
     multiCastPort = '8006'
+
     # Initialize peer discovery using UDP multicast
     config = TeilerConfig(utils.getLiveInterface(),
                          utils.generateSessionID(),
@@ -120,15 +120,12 @@ def main():
                          '230.0.0.30',
                          multiCastPort,
                          '998', 
-                         '~/downloads/') # should be os.expandPath(user...)
+                          os.path.join(os.path.expanduser("~"), "blaster"))
                          
     reactor.listenMulticast(multiCastPort, 
                             PeerDiscovery(config), 
                             listenMultiple=True)
-
     log.msg("Initiating Peer Discovery")
-    
-    # Initialize file transfer service
     fileReceiver = FileReceiverFactory(config)
     reactor.listenTCP(config.tcpPort, fileReceiver)
     log.msg("Starting file listener on ", config.tcpPort)
