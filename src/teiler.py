@@ -114,11 +114,12 @@ def main():
     parser = argparse.ArgumentParser(description="Exchange files!")
     args = parser.parse_args()
     
-    config = TeilerConfig(utils.getLiveInterface(),
-                          9998,
+    config = TeilerConfig(utils.getLiveInterface(), #ip
+                          9998, #tcp port
                           utils.generateSessionID(),
                           utils.getUsername(),
                           TeilerPeerList(),
+                          #udp connection information
                           '230.0.0.30',
                           8005,
                           os.path.join(os.path.expanduser("~"), "blaster"))
@@ -134,8 +135,8 @@ def main():
                                 config.tcpPort),
                             listenMultiple=True)
     
-    #fileReceiver = FileReceiverFactory(config)
-    #reactor.listenTCP(config.tcpPort, fileReceiver)
+    fileReceiver = FileReceiverFactory(config)
+    reactor.listenTCP(config.tcpPort, fileReceiver)
     
     log.msg("Starting file listener on ", config.tcpPort)
     

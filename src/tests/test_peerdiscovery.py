@@ -6,6 +6,7 @@ from zope.interface import implements
 from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
 from twisted.trial import unittest
 from twisted.internet import task
+from collections import defaultdict
 
 from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, makeId
 
@@ -46,7 +47,8 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.myUdpPort = 8000
         self.user = "test"
         self.protocol = PeerDiscovery(self.clock, 
-                                      list(), 
+                                      #list(), # may want a defaultdict
+                                      defaultdict(),
                                       self.user, 
                                       self.myAddr, 
                                       self.myAddrPort, 
@@ -69,16 +71,16 @@ class PeerDiscoveryTests(unittest.TestCase):
         dg = Message(heartbeatMsg, "bob", "192.168.1.2", 1232).serialize()
         self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
         self.assertTrue(len(self.protocol.peers) > 0)
-        self.assertTrue(self.protocol.peers[0].name == 'bob')
 
-    # def test_remove_peer_on_receipt_of_exit_message(self):
-    #     # a peer with these details should exist
-    #     # this is a datagram, not a message!
-    #     #dg = Message(exitMsg, "bob", "192.168.1.1", 8000)
-    #     peer = Peer("bob", "192.168.1.1", 8000)
-    #     self.protocol.peers.append(peer)
-    #     #self.protocol.datagramReceived(dg, "192.168.1.1")
-    #     self.assertTrue(len(self.protocol.peers) == 0)
+    def test_remove_peer_on_receipt_of_exit_message(self):
+        # a peer with these details should exist
+        # this is a datagram, not a message!
+        dg = Message(exitMsg, "bob", "192.168.1.1", 8000).serialize()
+        peer = Peer("bob", "192.168.1.1", 8000)
+        #self.protocol.peers.append(peer)
+        self.protocol.peers[peer.id] = peer
+        self.protocol.datagramReceived(dg, "192.168.1.1")
+        self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()
@@ -90,7 +92,7 @@ class PeerDiscoveryTests(unittest.TestCase):
     def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", 8000)
         id = makeId(p.name, p.address, p.tcpPort)
-        self.protocol.peers.append(p)
+        self.protocol.peers[p.id] = p
         self.assertTrue(self.protocol.isPeer(id))
 
     def test_sends_exit_message_on_exit(self):
