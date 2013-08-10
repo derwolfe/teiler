@@ -30,7 +30,7 @@ def generateSessionID():
 
 def getUsername():
     """get the username by accessing env vars"""
-    return pwd.getpwuid(os.getuid()).pw_name
+    return pwd.getpwuid(os.getuid()).pw_name.title()
 
 def getFilenameFromPath(path):
     head, tail = ntpath.split(path)

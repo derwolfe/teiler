@@ -1,16 +1,12 @@
 from binascii import crc32
-#from optparse import OptionParser
 import os, json
-#, pprint, datetime
 
 from twisted.protocols import basic
-#from twisted.internet import protocol
-#from twisted.application import service, internet
-from twisted.internet.protocol import ServerFactory
-from twisted.internet.protocol import ClientFactory
+from twisted.internet.protocol import ServerFactory, ClientFactory
 from twisted.protocols.basic import FileSender, LineReceiver
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
+
 import utils
 
 class FileReceiverProtocol(LineReceiver):
@@ -76,9 +72,9 @@ class FileReceiverProtocol(LineReceiver):
         if self.remain != 0:
             print str(self.remain) + ')!=0'
             remove_base = '--> removing tmpfile@'
-            if self.remain<0:
+            if self.remain < 0:
                 reason = ' .. file moved too much'
-            if self.remain>0:
+            if self.remain > 0:
                 reason = ' .. file moved too little'
             print remove_base + self.outfilename + reason
             os.remove(self.outfilename)

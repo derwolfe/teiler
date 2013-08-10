@@ -7,11 +7,7 @@ from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
 from twisted.trial import unittest
 from twisted.internet import task
 
-# classes to test
 from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, makeId
-
-#from twisted import internet
-#internet.base.DelayedCall.debug = True 
 
 class FakeUdpTransport(object):
     """ Instead of connecting through the network, this transport 
@@ -71,7 +67,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.stopProtocol() # this keeps the reactor clean
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
         
-    def test_isPeer(self):
+    def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", "2000")
         id = makeId(p.name, p.address, p.tcpPort)
         self.protocol.peers.append(p)

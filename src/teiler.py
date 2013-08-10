@@ -27,7 +27,7 @@ class TeilerConfig():
                  name,
                  peerList,
                  multiCastAddress,
-                 multicastPort,
+                 multiCastPort,
                  tcpPort,
                  downloadPath):
         self.address = address
@@ -119,14 +119,15 @@ def main():
                           '8006',
                           '998', 
                           os.path.join(os.path.expanduser("~"), "blaster"))
+    log.msg(utils.getUsername())
 
-    reactor.listenMulticast(config.multiCastPort, 
-                            PeerDiscovery(config), 
-                            listenMultiple=True)
+    # reactor.listenMulticast(config.multiCastPort, 
+    #                         PeerDiscovery(config), 
+    #                         listenMultiple=True)
 
     log.msg("Initiating Peer Discovery")
     fileReceiver = FileReceiverFactory(config)
-    reactor.listenTCP(config.tcpPort, fileReceiver)
+    #reactor.listenTCP(config.tcpPort, fileReceiver)
     log.msg("Starting file listener on ", config.tcpPort)
     # qt4reactor requires runReturn() in order to work
     reactor.runReturn()
