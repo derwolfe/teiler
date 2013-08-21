@@ -25,37 +25,10 @@ How to install
 
 How to use
 ---------
-The application is set up to run as either a client or a server. 
-The server broadcasts the files and the client grabs them.
+The application is setup to launch an inteface from which the user can send and receive files. The user will be shown a list of other users. To share a file or directory with another user, you need only drag and drop a file from your favorite file manager or desktop. 
 
-CD into the directory `teiler` then
+Once dropped, the other user will be presented with message checking whether or not she wants the file.
 
-to run as a server, type
+To run teiler, CD into the directory `teiler` then
 
-`python teilerpy/src/app.py serve` 
-
-or to run in client mode
-
-`python teilerpy/src/app.py listen`
-   
-Overview of the implementation
-------------------------------
-1. a file server
-2. a pinging device to discover the server
-3. some sort of client
-
-Design
-------
-It should be simple -- the server starts, broadcasts it's address. The client picks up the address and grabs the files.
-
-Testing levels
---------------
-1. fileserver serves files
-2. server seends out messages
-3. client hears messages
-4. client parses messages
-5. client makes connection
-6. client downloads file
-7. Then gui
-8. Then authenticate
-
+`python teilerpy/teiler.py` 
