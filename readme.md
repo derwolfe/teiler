@@ -31,4 +31,4 @@ Once dropped, the other user will be presented with message checking whether or 
 
 To run teiler, CD into the directory `teiler` then
 
-`python teilerpy/teiler.py` 
+`python src/teiler.py` 
