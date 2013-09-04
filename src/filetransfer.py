@@ -1,71 +1,62 @@
 from binascii import crc32
 import os, json
 
+from twisted.python import log
 from twisted.protocols import basic
 from twisted.internet.protocol import ServerFactory, ClientFactory
 from twisted.protocols.basic import FileSender, LineReceiver
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
-import utils
+from utils import getFilenameFromPath
 
 class FileReceiverProtocol(LineReceiver):
     """protocol that will be used to transfer files/raw data."""
 
-    def __init__(self, teiler):
+    def __init__(self, downloadPath):
         self.outfile = None
         self.remain = 0
         self.crc = 0
-        self.teiler = teiler
+        self.downloadPath = downloadPath
         
     def lineReceived(self, line):
-        """ """
-        print ' ~ lineReceived:\n\t', line
+        # maybe you need to explicitly check for the keys before running
+        log.msg(' ~ lineReceived: ' + line)
         self.instruction = json.loads(line)
         self.instruction.update(dict(client=self.transport.getPeer().host))
         self.size = self.instruction['file_size']
         self.original_fname = self.instruction.get('original_file_path',
                                                    'not given by client')
-        
-        # Create the upload directory if not already present
-        uploaddir = self.teiler.downloadPath
-        print " * Using upload dir:",uploaddir
-        if not os.path.isdir(uploaddir):
-            os.makedirs(uploaddir)
-
-        self.outfilename = os.path.join(uploaddir, utils.getFilenameFromPath(self.original_fname))
-
-        print ' * Receiving into file@',self.outfilename
+        self.outfilename = os.path.join(self.downloadPath, 
+                                        # is this needed?
+                                        getFilenameFromPath(self.original_fname))
+        log.msg("* Receiving into file @" + self.outfilename)
         try:
             self.outfile = open(self.outfilename,'wb')
         except Exception, value:
-            print ' ! Unable to open file', self.outfilename, value
+            log.msg("! Unable to open file {0} {1}".format(self.outfilename, 
+                                                           value))
+            # might be a good place for an errback
             self.transport.loseConnection()
             return
 
         self.remain = int(self.size)
-        print ' & Entering raw mode.',self.outfile, self.remain
+        log.msg("& Entering raw mode. {0} {1}".format(self.outfile, 
+                                                      self.remain))
         self.setRawMode()
 
     def rawDataReceived(self, data):
-        """ """
-        if self.remain%10000==0:
+        if self.remain % 10000 == 0:
             print '   & ',self.remain,'/',self.size
         self.remain -= len(data)
-
         self.crc = crc32(data, self.crc)
         self.outfile.write(data)
 
     def connectionMade(self):
-        """ """
         basic.LineReceiver.connectionMade(self)
-        print '\n + a connection was made'
-        print ' * ',self.transport.getPeer()
 
     def connectionLost(self, reason):
-        """ """
         basic.LineReceiver.connectionLost(self, reason)
-        print ' - connectionLost'
         if self.outfile:
             self.outfile.close()
         # Problem uploading - tmpfile will be discarded
@@ -84,72 +75,54 @@ class FileReceiverProtocol(LineReceiver):
             print '\n--> finished saving upload@ ' + self.outfilename
             client = self.instruction.get('client', 'anonymous')
 
-def fileinfo(fname):
-    """ when "file" tool is available, return it's output on "fname" """
-    return ( os.system('file 2> /dev/null')!=0 and \
-             os.path.exists(fname) and \
-             os.popen('file "'+fname+'"').read().strip().split(':')[1] )
-
 class FileReceiverFactory(ServerFactory):
-    """ file receiver factory """
+
     protocol = FileReceiverProtocol
 
-    def __init__(self, teiler):
-        self.teiler = teiler
+    def __init__(self, downloadPath):
+        self.downloadPath = downloadPath
         
     def buildProtocol(self, addr):
-        print ' + building protocol'
-        p = self.protocol(self.teiler)
+        p = self.protocol(self.downloadPath)
         p.factory = self
         return p
 
 class FileSenderClient(basic.LineReceiver):
     """ file sender """
-
     def __init__(self, path, controller):
         """ """
         self.path = path
         self.controller = controller
-
         self.infile = open(self.path, 'rb')
         self.insize = os.stat(self.path).st_size
-
         self.result = None
         self.completed = False
-
         self.controller.file_sent = 0
         self.controller.file_size = self.insize
 
     def _monitor(self, data):
-        """ """
         self.controller.file_sent += len(data)
         self.controller.total_sent += len(data)
-
         # Check with controller to see if we've been cancelled and abort
         # if so.
         if self.controller.cancel:
             print 'FileSenderClient._monitor Cancelling'
-
             # Need to unregister the producer with the transport or it will
             # wait for it to finish before breaking the connection
             self.transport.unregisterProducer()
             self.transport.loseConnection()
-
             # Indicate a user cancelled result
             self.result = TransferCancelled('User cancelled transfer')
-
         return data
 
     def cbTransferCompleted(self, lastsent):
-        """ """
         self.completed = True
         self.transport.loseConnection()
 
     def connectionMade(self):
-        """ """
+        # this will be the message sent across the wire.
         instruction = dict(file_size=self.insize,
                            original_file_path=self.path)
-        instruction = json.dumps(instruction)
         self.transport.write(instruction+'\r\n')
         sender = FileSender()
         sender.CHUNK_SIZE = 2 ** 16
@@ -158,10 +131,8 @@ class FileSenderClient(basic.LineReceiver):
         d.addCallback(self.cbTransferCompleted)
 
     def connectionLost(self, reason):
-        """
-            NOTE: reason is a twisted.python.failure.Failure instance
-        """
         from twisted.internet.error import ConnectionDone
+        
         basic.LineReceiver.connectionLost(self, reason)
         print ' - connectionLost\n  * ', reason.getErrorMessage()
         print ' * finished with',self.path
@@ -176,17 +147,14 @@ class FileSenderClientFactory(ClientFactory):
     protocol = FileSenderClient
 
     def __init__(self, path, controller):
-        """ """
         self.path = path
         self.controller = controller
 
     def clientConnectionFailed(self, connector, reason):
-        """ """
         ClientFactory.clientConnectionFailed(self, connector, reason)
         self.controller.completed.errback(reason)
 
     def buildProtocol(self, addr):
-        """ """
         print ' + building protocol'
         p = self.protocol(self.path, self.controller)
         p.factory = self
