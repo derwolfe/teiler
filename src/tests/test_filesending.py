@@ -39,3 +39,18 @@ class FileSenderClientTests(unittest.TestCase):
         self.proto.outfile = open("crap.txt", "wb")
         self.proto.rawDataReceived(self.data)
         self.assertTrue(self.proto.remain == 0)
+        # it finished writing so switch back to line mode
+        self.assertTrue(self.proto.line_mode == 1)
+        
+    def test_mulitple_writes(self):
+        """line mode should not be switched back on if there is
+        more data to be written to the pipe
+        """
+        self.proto.setRawMode() # test to see if this changes
+        self.proto.size = self.size
+        self.proto.remain = self.size + 10
+        self.proto.outfile = open("crap.txt", "wb")
+        self.proto.rawDataReceived(self.data)
+        self.assertTrue(self.proto.remain > 0)
+        # it finished writing so switch back to line mode
+        self.assertTrue(self.proto.line_mode == 0)

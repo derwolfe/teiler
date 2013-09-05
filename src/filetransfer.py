@@ -16,7 +16,7 @@ class FileReceiverProtocol(LineReceiver):
     def __init__(self, downloadPath):
         self.outfile = None
         self.remain = 0
-        self.crc = 0
+        # self.crc = 0
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
@@ -29,8 +29,7 @@ class FileReceiverProtocol(LineReceiver):
                                                    'not given by client')
         self.outfilename = os.path.join(self.downloadPath, 
                                         self.original_fname)
-                                    # is this needed?
-                                        #getFilenameFromPath(self.original_fname))
+        #getFilenameFromPath(self.original_fname))
         log.msg("* Receiving into file @" + self.outfilename)
         try:
             self.outfile = open(self.outfilename,'wb')
@@ -40,19 +39,26 @@ class FileReceiverProtocol(LineReceiver):
             # might be a good place for an errback
             self.transport.loseConnection()
             return
-
         self.remain = int(self.size)
         log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
                                                       self.remain))
         self.setRawMode()
 
+
     def rawDataReceived(self, data):
         if self.remain % 10000 == 0:
             log.msg("remaining {0}/{1}".format(self.remain, self.size))
         self.remain -= len(data)
-        self.crc = crc32(data, self.crc)
+        # worry about this later, it should be sent as well so you can
+        # compare the hashes before and after
+        #self.crc = crc32(data, self.crc)
         self.outfile.write(data)
-
+        # does this drop off once all data has been received? 
+        # you could probably switch back to message mode after this is finished
+        if self.remain == 0:
+            self.outfile.close()
+            self.setLineMode()
+        
     def connectionMade(self):
         basic.LineReceiver.connectionMade(self)
 
