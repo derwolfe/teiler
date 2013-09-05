@@ -15,7 +15,8 @@ def getLiveInterface():
     addresses = []
     local_network = ['127.0.0.1', '127.0.1.1', '127.1.1.1']
 
-    # loop over the available network interfaces and try to get the LAN level IP
+    # loop over the available network interfaces and 
+    # try to get the LAN level IP
     for iface in netifaces.interfaces():
         test_iface = netifaces.ifaddresses(iface).get(netifaces.AF_INET) 
         if test_iface is not None:
