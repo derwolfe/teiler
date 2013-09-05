@@ -124,7 +124,7 @@ class FileSenderClient(basic.LineReceiver):
 
     def cbTransferCompleted(self, lastsent):
         self.completed = True
-        self.transport.loseConnection()
+        #self.transport.loseConnection()
 
     def connectionMade(self):
         # this will be the message sent across the wire.

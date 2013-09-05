@@ -36,4 +36,12 @@ def getFilenameFromPath(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
 
-                
+def get_file_string_length(file):
+    """Get the string length of a file. Since we are using a string/line
+    based protocol we are more concerned with the length of file in characters,
+    and less with its size as a file...I think"""
+    ct = 0
+    with open(file, "r") as f:
+        for line in f.readlines():
+            ct = len(line) + ct
+    return ct

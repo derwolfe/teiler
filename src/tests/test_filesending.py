@@ -6,11 +6,19 @@
 from twisted.trial import unittest
 from twisted.test.proto_helpers import StringTransport
 import json
-
-from sys import getsizeof
+from filecmp import cmp
 
 from ..filetransfer import FileReceiverProtocol
+from ..utils import get_file_string_length
 
+def make_garbage_file():
+    """create junk file and return its size"""
+    with open("./garbage.txt", "w") as f:
+        for x in xrange(100000):
+             f.write("number mumber " + str(x) + "\n")
+    # get the string lenth of the file by looping over it
+    return get_file_string_length("./garbage.txt")
+    
 
 class FileSenderClientTests(unittest.TestCase):
     
@@ -24,6 +32,10 @@ class FileSenderClientTests(unittest.TestCase):
         self.instruct = json.dumps({"file_size" : self.size,
                                     "original_file_path": self.fname
                                 }) 
+
+    def tearDown(self):
+        """delete some the test garbage files for each test"""
+        pass
 
     def test_line_received_sets_raw_mode(self):
         """line received needs valid json"""
@@ -54,3 +66,18 @@ class FileSenderClientTests(unittest.TestCase):
         self.assertTrue(self.proto.remain > 0)
         # it finished writing so switch back to line mode
         self.assertTrue(self.proto.line_mode == 0)
+
+    def test_enormous_line(self):
+        """test reading a file that is bigger than a normal frame.
+        This is more to test a theory, less a test of code
+        """
+        size = make_garbage_file()
+        self.proto.setRawMode()
+        self.proto.size = size
+        self.proto.remain = size
+        self.proto.outfile = open("./garbage2.txt", "wb")
+        with open("./garbage.txt", "r") as f:
+            for line in f.readlines(): 
+                self.proto.rawDataReceived(line)
+        #self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
+        self.assertTrue(self.proto.remain == 0)
