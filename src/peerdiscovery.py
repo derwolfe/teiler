@@ -155,7 +155,7 @@ class PeerDiscovery(DatagramProtocol):
         """Convenience method to make it easy to tell whether or not a peer 
         is already a peer. """
         return id in self.peers.keys() # for use with default dict
-
+        
     def removePeer(self, id):
         del self.peers[id]
 

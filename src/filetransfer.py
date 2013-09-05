@@ -10,6 +10,38 @@ from twisted.internet import reactor
 
 from utils import getFilenameFromPath
 
+class FileReceiverMessage(object):
+    """
+    This contains all of the information that will be exchanged to send a file.
+    """
+    def __init__(self, 
+                 file_size, 
+                 read_from,
+                 write_to
+                 ):
+        self.file_size = file_size
+        self.read_from = read_from
+        self.write_to = write_to
+
+    def serialize(self):
+        return json.dumps({
+            "file_size" : self.file_size,
+            "read_from" : self.read_from,
+            "write_to" : self.write_to
+            })
+
+    @classmethod
+    def from_str(self, line):
+        """alternate construct for a message, makes properties a 
+        bit simpler to read
+        """
+        # possible use attr.get instead of direct access!
+        from_msg = json.loads(line)
+        self.file_size = from_msg.file_size
+        self.read_from = from_msg.read_from
+        self.write_to = from_msg.write_to
+
+
 class FileReceiverProtocol(LineReceiver):
     """protocol that will be used to transfer files/raw data."""
 
@@ -22,14 +54,12 @@ class FileReceiverProtocol(LineReceiver):
     def lineReceived(self, line):
         # maybe you need to explicitly check for the keys before running
         log.msg("lineReceived: " + line)
-        self.instruction = json.loads(line)
+        msg = Message(line)
         #self.instruction.update(dict(client=self.transport.getPeer().host))
-        self.size = self.instruction['file_size']
-        self.original_fname = self.instruction.get('original_file_path',
-                                                   'not given by client')
-        self.outfilename = os.path.join(self.downloadPath, 
-                                        self.original_fname)
-        #getFilenameFromPath(self.original_fname))
+        ## parse the instruction
+        self.size = msg.file_size
+        self.original_fname = msg.read_from
+        self.outfilename = os.path.join(self.downloadPath, self.original_fname)
         log.msg("* Receiving into file @" + self.outfilename)
         try:
             self.outfile = open(self.outfilename,'wb')
@@ -56,6 +86,7 @@ class FileReceiverProtocol(LineReceiver):
         # does this drop off once all data has been received? 
         # you could probably switch back to message mode after this is finished
         if self.remain == 0:
+            # close the file handle as you are no longer using it
             self.outfile.close()
             self.setLineMode()
         

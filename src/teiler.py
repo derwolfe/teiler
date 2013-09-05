@@ -88,7 +88,7 @@ class TeilerWindow(QWidget):
         
         statusBar = QStatusBar()
         statusBar.showMessage('Ready')
-        
+
         layout.addWidget(menubar)
         layout.addWidget(self.peerList)
         layout.addWidget(statusBar)
