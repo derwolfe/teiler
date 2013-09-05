@@ -7,6 +7,8 @@ from twisted.trial import unittest
 from twisted.test.proto_helpers import StringTransport
 import json
 
+from sys import getsizeof
+
 from ..filetransfer import FileReceiverProtocol
 
 
@@ -16,14 +18,24 @@ class FileSenderClientTests(unittest.TestCase):
         self.proto = FileReceiverProtocol(".")
         self.transport = StringTransport()
         self.proto.transport = self.transport
+        self.data = "YOUR mother was a hamster\n" 
+        self.size = len(self.data) # use as a buffer
+        self.fname = "crap.txt"
+        self.instruct = json.dumps({"file_size" : self.size,
+                                    "original_file_path": self.fname
+                                }) 
 
-    def test_line_received(self):
-        "line received needs valid json"
-        line = json.dumps({"file_size" : 0, 
-                           "original_file_path": "./crap.txt"
-                           })
-        self.proto.lineReceived(line)
-        self.proto.instruction = line 
+    def test_line_received_sets_raw_mode(self):
+        """line received needs valid json"""
+        self.proto.lineReceived(self.instruct)
         # has raw mode been set?
         self.assertTrue(self.proto.line_mode == 0)
-        # suppress some of the prints
+
+    def test_writes_to_file(self):
+        """test to see if it actually writes the data to a file, 
+        FIXME The test expects an open file handle."""
+        self.proto.size = self.size
+        self.proto.remain = self.size
+        self.proto.outfile = open("crap.txt", "wb")
+        self.proto.rawDataReceived(self.data)
+        self.assertTrue(self.proto.remain == 0)

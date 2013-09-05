@@ -21,15 +21,16 @@ class FileReceiverProtocol(LineReceiver):
         
     def lineReceived(self, line):
         # maybe you need to explicitly check for the keys before running
-        log.msg(' ~ lineReceived: ' + line)
+        log.msg("lineReceived: " + line)
         self.instruction = json.loads(line)
-        self.instruction.update(dict(client=self.transport.getPeer().host))
+        #self.instruction.update(dict(client=self.transport.getPeer().host))
         self.size = self.instruction['file_size']
         self.original_fname = self.instruction.get('original_file_path',
                                                    'not given by client')
         self.outfilename = os.path.join(self.downloadPath, 
-                                        # is this needed?
-                                        getFilenameFromPath(self.original_fname))
+                                        self.original_fname)
+                                    # is this needed?
+                                        #getFilenameFromPath(self.original_fname))
         log.msg("* Receiving into file @" + self.outfilename)
         try:
             self.outfile = open(self.outfilename,'wb')
@@ -41,13 +42,13 @@ class FileReceiverProtocol(LineReceiver):
             return
 
         self.remain = int(self.size)
-        log.msg("& Entering raw mode. {0} {1}".format(self.outfile, 
+        log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
                                                       self.remain))
         self.setRawMode()
 
     def rawDataReceived(self, data):
         if self.remain % 10000 == 0:
-            print '   & ',self.remain,'/',self.size
+            log.msg("remaining {0}/{1}".format(self.remain, self.size))
         self.remain -= len(data)
         self.crc = crc32(data, self.crc)
         self.outfile.write(data)
