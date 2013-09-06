@@ -8,8 +8,9 @@ from twisted.test.proto_helpers import StringTransport
 import json
 from filecmp import cmp
 
-from ..filetransfer import FileReceiverProtocol
+from ..filetransfer import FileReceiverProtocol, FileTransferMessage
 from ..utils import get_file_string_length
+
 
 def make_garbage_file():
     """create junk file and return its size"""
@@ -29,9 +30,10 @@ class FileSenderClientTests(unittest.TestCase):
         self.data = "YOUR mother was a hamster\n" 
         self.size = len(self.data) # use as a buffer
         self.fname = "crap.txt"
-        self.instruct = json.dumps({"file_size" : self.size,
-                                    "original_file_path": self.fname
-                                }) 
+        # something is wrong here
+        self.instruct = FileTransferMessage(self.size, 
+                                            self.fname, 
+                                            self.fname).serialize()
 
     def tearDown(self):
         """delete some the test garbage files for each test"""
@@ -43,6 +45,8 @@ class FileSenderClientTests(unittest.TestCase):
         # has raw mode been set?
         self.assertTrue(self.proto.line_mode == 0)
 
+# these could have better setup methods!
+#
     def test_writes_to_file(self):
         """test to see if it actually writes the data to a file, 
         FIXME The test expects an open file handle."""
@@ -79,5 +83,5 @@ class FileSenderClientTests(unittest.TestCase):
         with open("./garbage.txt", "r") as f:
             for line in f.readlines(): 
                 self.proto.rawDataReceived(line)
-        #self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
+        self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
         self.assertTrue(self.proto.remain == 0)
