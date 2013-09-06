@@ -10,7 +10,7 @@ from twisted.internet import reactor
 
 from utils import getFilenameFromPath
 
-class FileReceiverMessage(object):
+class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to send a file.
     """
@@ -30,16 +30,20 @@ class FileReceiverMessage(object):
             "write_to" : self.write_to
             })
 
+    def __str__(self):
+        return self.serialize()
+
     @classmethod
-    def from_str(self, line):
+    def from_str(cls, line):
         """alternate construct for a message, makes properties a 
         bit simpler to read
         """
-        # possible use attr.get instead of direct access!
+        
         from_msg = json.loads(line)
-        self.file_size = from_msg.file_size
-        self.read_from = from_msg.read_from
-        self.write_to = from_msg.write_to
+        cls.file_size = from_msg["file_size"]
+        cls.read_from = from_msg["read_from"]
+        cls.write_to = from_msg["write_to"]
+        return cls
 
 
 class FileReceiverProtocol(LineReceiver):
@@ -52,11 +56,10 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
-        # maybe you need to explicitly check for the keys before running
-        log.msg("lineReceived: " + line)
-        msg = Message(line)
-        #self.instruction.update(dict(client=self.transport.getPeer().host))
-        ## parse the instruction
+        log.msg("lineReceived: " + str(line)) 
+        # this could be the problem!
+        msg = FileTransferMessage.from_str(line)
+        print str(msg)
         self.size = msg.file_size
         self.original_fname = msg.read_from
         self.outfilename = os.path.join(self.downloadPath, self.original_fname)
