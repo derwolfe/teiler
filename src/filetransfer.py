@@ -10,6 +10,43 @@ from twisted.internet import reactor
 
 from utils import getFilenameFromPath
 
+class FileTransferMessage(object):
+    """
+    This contains all of the information that will be exchanged to 
+    send a file.
+    """
+    def __init__(self, 
+                 file_size, 
+                 read_from,
+                 write_to
+                 ):
+        self.file_size = file_size
+        self.read_from = read_from
+        self.write_to = write_to
+
+    def serialize(self):
+        return json.dumps({
+            "file_size" : self.file_size,
+            "read_from" : self.read_from,
+            "write_to" : self.write_to
+            })
+
+    def __str__(self):
+        return self.serialize()
+
+    @classmethod
+    def from_str(cls, line):
+        """
+        alternate construct for a message, makes properties a 
+        bit simpler to read
+        """
+        from_msg = json.loads(line)
+        cls.file_size = from_msg["file_size"]
+        cls.read_from = from_msg["read_from"]
+        cls.write_to = from_msg["write_to"]
+        return cls
+
+
 class FileReceiverProtocol(LineReceiver):
     """protocol that will be used to transfer files/raw data."""
 
@@ -20,21 +57,16 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
-        # maybe you need to explicitly check for the keys before running
-        log.msg("lineReceived: " + line)
-        self.instruction = json.loads(line)
-        #self.instruction.update(dict(client=self.transport.getPeer().host))
-        self.size = self.instruction['file_size']
-        self.original_fname = self.instruction.get('original_file_path',
-                                                   'not given by client')
-        self.outfilename = os.path.join(self.downloadPath, 
-                                        self.original_fname)
-        #getFilenameFromPath(self.original_fname))
-        log.msg("* Receiving into file @" + self.outfilename)
+        log.msg("lineReceived: " + line) 
+        msg = FileTransferMessage.from_str(line)
+        self.size = msg.file_size
+        self.original_fname = msg.read_from
+        self.out_fname = os.path.join(self.downloadPath, self.original_fname)
+        log.msg("* Receiving into file @" + self.out_fname)
         try:
-            self.outfile = open(self.outfilename,'wb')
+            self.outfile = open(self.out_fname,'wb')
         except Exception, value:
-            log.msg("! Unable to open file {0} {1}".format(self.outfilename, 
+            log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
                                                            value))
             # might be a good place for an errback
             self.transport.loseConnection()
@@ -46,16 +78,17 @@ class FileReceiverProtocol(LineReceiver):
 
 
     def rawDataReceived(self, data):
-        if self.remain % 10000 == 0:
-            log.msg("remaining {0}/{1}".format(self.remain, self.size))
-        self.remain -= len(data)
-        # worry about this later, it should be sent as well so you can
-        # compare the hashes before and after
-        #self.crc = crc32(data, self.crc)
-        self.outfile.write(data)
-        # does this drop off once all data has been received? 
-        # you could probably switch back to message mode after this is finished
-        if self.remain == 0:
+        # worry about crc later
+        if self.remain > 0:
+            if self.remain % 10000 == 0:
+                log.msg("remaining {0}/{1}".format(self.remain, self.size))
+            self.remain -= len(data)
+            # write the current amount of data to the file            
+            self.outfile.write(data)
+        # it is possible the file is finished being written to at this point
+        if self.remain <= 0:
+            log.msg("writing of file finished. Total len: {0}/{1}"
+                    .format(self.remain, self.size))
             self.outfile.close()
             self.setLineMode()
         
@@ -74,12 +107,12 @@ class FileReceiverProtocol(LineReceiver):
                 reason = ' .. file moved too much'
             if self.remain > 0:
                 reason = ' .. file moved too little'
-            print remove_base + self.outfilename + reason
-            os.remove(self.outfilename)
+            print remove_base + self.out_fname + reason
+            os.remove(self.out_fname)
 
         # Success uploading - tmpfile will be saved to disk.
         else:
-            print '\n--> finished saving upload@ ' + self.outfilename
+            print '\n--> finished saving upload@ ' + self.out_fname
             client = self.instruction.get('client', 'anonymous')
 
 class FileReceiverFactory(ServerFactory):
