@@ -101,9 +101,6 @@ class FileReceiverProtocol(LineReceiver):
         """Use this to find out how much you have over shot the buffer
         always returns a positive number
         """
-        # remain will be written, and there may be leftover
-        # so just subtract the amount of remain from data
-        
         return int(fabs(self.remain - data_length))
             
 
@@ -127,8 +124,8 @@ class FileReceiverProtocol(LineReceiver):
 
         # Success uploading - tmpfile will be saved to disk.
         else:
-            print '\n--> finished saving upload@ ' + self.out_fname
-            client = self.instruction.get('client', 'anonymous')
+            log.msg("--> finished saving upload@ " + self.out_fname)
+            client = self.instruction.get('client', 'anonymous') #? what is this
 
 class FileReceiverFactory(ServerFactory):
 
