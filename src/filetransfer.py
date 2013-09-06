@@ -9,6 +9,7 @@ from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
 from utils import getFilenameFromPath
+from math import fabs
 
 class FileTransferMessage(object):
     """
@@ -78,7 +79,8 @@ class FileReceiverProtocol(LineReceiver):
 
 
     def rawDataReceived(self, data):
-        # worry about crc later
+        # use this to find out if there has been more data written than expected
+        rem_no = self._over_shot_length(len(data))
         if self.remain > 0:
             if self.remain % 10000 == 0:
                 log.msg("remaining {0}/{1}".format(self.remain, self.size))
@@ -89,9 +91,22 @@ class FileReceiverProtocol(LineReceiver):
         if self.remain <= 0:
             log.msg("writing of file finished. Total len: {0}/{1}"
                     .format(self.remain, self.size))
+            # closing the file and seting line mode might be better done 
+            # with the event, finishedWriting being triggered
             self.outfile.close()
-            self.setLineMode()
+            # also pass the remainder to line mode
+            self.setLineMode(data[rem_no:])
+
+    def _over_shot_length(self, data_length):
+        """Use this to find out how much you have over shot the buffer
+        always returns a positive number
+        """
+        # remain will be written, and there may be leftover
+        # so just subtract the amount of remain from data
         
+        return int(fabs(self.remain - data_length))
+            
+
     def connectionMade(self):
         basic.LineReceiver.connectionMade(self)
 
