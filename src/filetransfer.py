@@ -78,17 +78,17 @@ class FileReceiverProtocol(LineReceiver):
 
 
     def rawDataReceived(self, data):
-        if self.remain % 10000 == 0:
-            log.msg("remaining {0}/{1}".format(self.remain, self.size))
-        self.remain -= len(data)
-        # worry about this later, it should be sent as well so you can
-        # compare the hashes before and after
-        #self.crc = crc32(data, self.crc)
-        self.outfile.write(data)
-        # does this drop off once all data has been received? 
-        # you could probably switch back to message mode after this is finished
-        if self.remain == 0:
-            # close the file handle as you are no longer using it
+        # worry about crc later
+        if self.remain > 0:
+            if self.remain % 10000 == 0:
+                log.msg("remaining {0}/{1}".format(self.remain, self.size))
+            self.remain -= len(data)
+            # write the current amount of data to the file            
+            self.outfile.write(data)
+        # it is possible the file is finished being written to at this point
+        if self.remain <= 0:
+            log.msg("writing of file finished. Total len: {0}/{1}"
+                    .format(self.remain, self.size))
             self.outfile.close()
             self.setLineMode()
         

@@ -80,9 +80,16 @@ class FileSenderClientTests(unittest.TestCase):
         self.proto.size = size
         self.proto.remain = size
         self.proto.outfile = open("./garbage2.txt", "wb")
-        with open("./garbage.txt", "r") as f:
+        with open("garbage.txt", "r") as f:
             for line in f.readlines(): 
                 self.proto.rawDataReceived(line)
-        self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
         self.assertTrue(self.proto.remain == 0)
+        self.assertTrue(self.proto.line_mode == 1)
+
+    def test_once_remain_zero_switch_to_line(self):
+        self.proto.setRawMode()
+        self.proto.size = 0
+        self.proto.remain = 0
+        self.proto.outfile = open("./garbage2.txt", "wb")
+        self.proto.rawDataReceived("12")
         self.assertTrue(self.proto.line_mode == 1)
