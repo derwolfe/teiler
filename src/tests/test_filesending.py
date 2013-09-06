@@ -85,3 +85,4 @@ class FileSenderClientTests(unittest.TestCase):
                 self.proto.rawDataReceived(line)
         self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
         self.assertTrue(self.proto.remain == 0)
+        self.assertTrue(self.proto.line_mode == 1)

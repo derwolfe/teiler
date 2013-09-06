@@ -12,7 +12,8 @@ from utils import getFilenameFromPath
 
 class FileTransferMessage(object):
     """
-    This contains all of the information that will be exchanged to send a file.
+    This contains all of the information that will be exchanged to 
+    send a file.
     """
     def __init__(self, 
                  file_size, 
@@ -35,7 +36,8 @@ class FileTransferMessage(object):
 
     @classmethod
     def from_str(cls, line):
-        """alternate construct for a message, makes properties a 
+        """
+        alternate construct for a message, makes properties a 
         bit simpler to read
         """
         from_msg = json.loads(line)
@@ -55,17 +57,16 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
-        log.msg("lineReceived: " + str(line)) 
-        # this could be the problem!
+        log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
         self.size = msg.file_size
         self.original_fname = msg.read_from
-        self.outfilename = os.path.join(self.downloadPath, self.original_fname)
-        log.msg("* Receiving into file @" + self.outfilename)
+        self.out_fname = os.path.join(self.downloadPath, self.original_fname)
+        log.msg("* Receiving into file @" + self.out_fname)
         try:
-            self.outfile = open(self.outfilename,'wb')
+            self.outfile = open(self.out_fname,'wb')
         except Exception, value:
-            log.msg("! Unable to open file {0} {1}".format(self.outfilename, 
+            log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
                                                            value))
             # might be a good place for an errback
             self.transport.loseConnection()
@@ -106,12 +107,12 @@ class FileReceiverProtocol(LineReceiver):
                 reason = ' .. file moved too much'
             if self.remain > 0:
                 reason = ' .. file moved too little'
-            print remove_base + self.outfilename + reason
-            os.remove(self.outfilename)
+            print remove_base + self.out_fname + reason
+            os.remove(self.out_fname)
 
         # Success uploading - tmpfile will be saved to disk.
         else:
-            print '\n--> finished saving upload@ ' + self.outfilename
+            print '\n--> finished saving upload@ ' + self.out_fname
             client = self.instruction.get('client', 'anonymous')
 
 class FileReceiverFactory(ServerFactory):
