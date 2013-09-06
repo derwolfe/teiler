@@ -38,7 +38,6 @@ class FileTransferMessage(object):
         """alternate construct for a message, makes properties a 
         bit simpler to read
         """
-        
         from_msg = json.loads(line)
         cls.file_size = from_msg["file_size"]
         cls.read_from = from_msg["read_from"]
@@ -59,7 +58,6 @@ class FileReceiverProtocol(LineReceiver):
         log.msg("lineReceived: " + str(line)) 
         # this could be the problem!
         msg = FileTransferMessage.from_str(line)
-        print str(msg)
         self.size = msg.file_size
         self.original_fname = msg.read_from
         self.outfilename = os.path.join(self.downloadPath, self.original_fname)
