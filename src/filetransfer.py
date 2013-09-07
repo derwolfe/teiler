@@ -81,40 +81,49 @@ class FileReceiverProtocol(LineReceiver):
         the system understand, then sends it along to the a function
         that knows what to do next
         """
-        # further, what commands are actually needed?
         # NEW_FILE : send new file
         # VALIDATE: check file with crc
+        d = Deferred()
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
-        self._handleReceivedMessage(msg) # should this use a callback
+        
+        d.addCallback(self._handleReceivedMessage)
+        d.addErrback(self._handleError)
+        # invoke the callback...this might be right
+        d.callback(msg)
 
-    def _handleReceivedMessage(self, fromSender):
+    def _handleError(self):
+        print "SHIT\n"
+        log.msg("tried to handle the message, but, rut ro, i'm dead")
+        
+    def _handleReceivedMessage(self, _fromSender):
         """
+        Parse the message sent from a FileSender and figure out 
+        which of the commands it would like you to run.
+        
         :param fromSender: a FileTransferMessage containing a command
         :type fromSender: FileTransferMessage
         """
-        # parse the message, depending on what the message is,
-        # determine which mode should be set, and how to proceed.
-        # not all messages require the setting of raw mode
-        command = fromSender.command
+        command = _fromSender.command
         if command == CREATE_NEW_FILE:
-            self.size = fromSender.file_size
-            self.write_to = fromSender.write_to
+            self.size = _fromSender.file_size
+            self.write_to = _fromSender.write_to
             self.out_fname = path.join(self.downloadPath, 
                                        self.write_to)
             log.msg("* Receiving into file @" + self.out_fname)
+            # could you use a callback to open the file, then attach a callback 
+            # to it to begin consuming?
             try:
                 self.outfile = open(self.out_fname,'wb')
             except Exception, value:
                 log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
                                                                value))
-                # might be a good place for an errback
-                self.transport.loseConnection()
+                # for now just return
                 return
             log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
                                                         self.remain))
             self.setRawMode()
-        else: #as of right now there is no other functionality defined
+        else: 
             return
 
     def rawDataReceived(self, data):
