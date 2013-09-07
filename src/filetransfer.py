@@ -1,6 +1,5 @@
-from binascii import crc32
-import os, json
-
+from json import dumps, loads
+from math import fabs
 from twisted.python import log
 from twisted.protocols import basic
 from twisted.internet.protocol import ServerFactory, ClientFactory
@@ -9,24 +8,42 @@ from twisted.internet.defer import Deferred
 from twisted.internet import reactor
 
 from utils import getFilenameFromPath
-from math import fabs
 
 class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
-    send a file.
+    send a file. It will be sent for each file that is to be exchanged.
+
+    @ivar file_size: See L{__init__}
+    @ivar read_from: See L{__init__}
+    @ivar write_to: See L{__init__}
     """
     def __init__(self, 
                  file_size, 
                  read_from,
                  write_to
                  ):
+        """
+        @param file_size: the string lenth of a file to be sent
+        @type file_size: c{int} 
+
+        @param read_from: the file name, including its relative path on the 
+        senders machine. E.g. ``/movies/evil\ dead 2.avi``. This allows
+        the directory structure to be preserved.
+        @type read_from: c{string}
+
+        @param write_to: the file name into which the data will be written.
+        @type write_to: c{string}
+        """
         self.file_size = file_size
         self.read_from = read_from
         self.write_to = write_to
 
     def serialize(self):
-        return json.dumps({
+        """
+        returns a json serialized version of a L{Message} object.
+        """
+        return dumps({
             "file_size" : self.file_size,
             "read_from" : self.read_from,
             "write_to" : self.write_to
@@ -41,7 +58,7 @@ class FileTransferMessage(object):
         alternate construct for a message, makes properties a 
         bit simpler to read
         """
-        from_msg = json.loads(line)
+        from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
         cls.read_from = from_msg["read_from"]
         cls.write_to = from_msg["write_to"]
@@ -49,15 +66,20 @@ class FileTransferMessage(object):
 
 
 class FileReceiverProtocol(LineReceiver):
-    """protocol that will be used to transfer files/raw data."""
+    """
+    protocol that will be used to transfer files/raw data.
+    """
 
     def __init__(self, downloadPath):
         self.outfile = None
         self.remain = 0
-        # self.crc = 0
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
+        # XXX - there does actually need to be parsing of some set of commands
+        # with this processing there should be some form of understood
+        # error messages
+
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
         self.size = msg.file_size
@@ -72,6 +94,9 @@ class FileReceiverProtocol(LineReceiver):
             # might be a good place for an errback
             self.transport.loseConnection()
             return
+        # this is where the remain instance variable is being init'd. 
+        # this could be extracted into somethat that does a bit more 
+        # trickery, like padding the string with a '\n' of 2 chars or something
         self.remain = int(self.size)
         log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
                                                       self.remain))
@@ -140,7 +165,9 @@ class FileReceiverFactory(ServerFactory):
         return p
 
 class FileSenderClient(basic.LineReceiver):
-    """ file sender """
+    """ 
+    file sender 
+    """
     def __init__(self, path, controller):
         """ """
         self.path = path
