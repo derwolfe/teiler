@@ -21,7 +21,7 @@ def make_garbage_file():
     return get_file_string_length("./garbage.txt")
     
 
-class FileSenderClientTests(unittest.TestCase):
+class FileReceiverProtocolTests(unittest.TestCase):
     
     def setUp(self):
         self.proto = FileReceiverProtocol(".")
