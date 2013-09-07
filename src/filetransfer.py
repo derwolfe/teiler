@@ -14,22 +14,19 @@ class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
     send a file. It will be sent for each file that is to be exchanged.
-
-    @ivar file_size: See L{__init__}
-    @ivar write_to: See L{__init__}
     """
     def __init__(self, 
                  file_size, 
                  write_to
                  ):
         """
-        @param file_size: the string lenth of a file to be sent
-        @type file_size: c{int} 
+        :param file_size: the string lenth of a file to be sent
+        :type file_size: int
 
-        @param write_to: the file name, including its relative path on the 
+        :param write_to: the file name, including its relative path on the 
         senders machine. E.g. ``/movies/evil\ dead 2.avi``. This allows
         the directory structure to be preserved.
-        @type write_to: c{string}
+        :type write_to: string
         """
         self.file_size = file_size
         self.write_to = write_to
@@ -51,14 +48,16 @@ class FileTransferMessage(object):
         """
         A class method that returns a new L{Message} instance.
 
-        @param line: a json formatted line of a message
-        @type: c{string} 
+        :param line: a json formatted line of a message
+        :type line: string
         """
         from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
         cls.write_to = from_msg["write_to"]
         return cls
 
+class Command(object):
+    
 
 class FileReceiverProtocol(LineReceiver):
     """
@@ -71,10 +70,17 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
+        """
+        Line received takes a message line, creates a message from it that 
+        the system understand, then sends it along to the a function
+        that knows what to do next
+        """
         # XXX - there does actually need to be parsing of some set of commands
         # with this processing there should be some form of understood
         # error messages
-
+        # further, what commands are actually needed?
+        # NEW_FILE : send new file
+        # VALIDATE: check file with crc
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
         self.size = msg.file_size
@@ -98,6 +104,23 @@ class FileReceiverProtocol(LineReceiver):
                                                       self.remain))
         self.setRawMode()
 
+    def _handleReceivedMessage(self, message):
+        """
+        :param message: a FileTransferMessage containing a command
+        :type message: FileTransferMessage
+        """
+        # parse the message, depending on what the message is,
+        # determine which mode should be set, and how to proceed.
+        # not all messages require the setting of raw mode
+        command = message.cmd
+        if command == NEW_FILE:
+            self.size = msg.file_size
+            self.write_to = msg.write_to
+            self.out_fname = path.join(self.downloadPath, 
+                                       self.write_to)
+            self.setRawMode()
+        else: #as of right now there is no other functionality defined
+            
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer
@@ -119,7 +142,8 @@ class FileReceiverProtocol(LineReceiver):
             self.setLineMode(data[rem_no:])
 
     def _over_shot_length(self, data_length):
-        """Use this to find out how much you have over shot the buffer
+        """
+        Use this to find out how much you have over shot the buffer
         always returns a positive number
         """
         return int(fabs(self.remain - data_length))
