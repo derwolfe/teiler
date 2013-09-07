@@ -8,12 +8,15 @@ from twisted.trial import unittest
 from twisted.internet import task
 from collections import defaultdict
 
-from ..peerdiscovery import Message, Peer, PeerDiscovery, heartbeatMsg, exitMsg, makeId
+from ..peerdiscovery import PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol
+from ..peerdiscovery import heartbeatMsg, exitMsg, makeId
 
 class FakeUdpTransport(object):
-    """ Instead of connecting through the network, this transport 
+    """ 
+    Instead of connecting through the network, this transport 
     writes the broadcast messages to a variable that can be 
-    checked. """
+    checked. 
+    """
 
     implements(IUDPTransport)
 
@@ -46,14 +49,14 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.myAddrPort = 9203
         self.myUdpPort = 8000
         self.user = "test"
-        self.protocol = PeerDiscovery(self.clock, 
-                                      #list(), # may want a defaultdict
-                                      defaultdict(),
-                                      self.user, 
-                                      self.myAddr, 
-                                      self.myAddrPort, 
-                                      self.myAddr, 
-                                      self.myUdpPort)
+        self.protocol = PeerDiscoveryProtocol(self.clock, 
+                                              #list(), # may want a defaultdict
+                                              defaultdict(),
+                                              self.user, 
+                                              self.myAddr, 
+                                              self.myAddrPort, 
+                                              self.myAddr, 
+                                              self.myUdpPort)
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
 
@@ -63,17 +66,17 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_received_message_from_self_do_not_add(self):
         """The new peer should not be added as it is equal to the host."""
-        dg = Message(self.user, self.user, self.myAddr, self.myUdpPort).serialize()
+        dg = PeerDiscoveryMessage(self.user, self.user, self.myAddr, self.myUdpPort).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        dg = Message(heartbeatMsg, "bob", "192.168.1.2", 1232).serialize()
+        dg = PeerDiscoveryMessage(heartbeatMsg, "bob", "192.168.1.2", 1232).serialize()
         self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
         self.assertTrue(len(self.protocol.peers) > 0)
 
     def test_remove_peer_on_receipt_of_exit_message(self):
-        dg = Message(exitMsg, "bob", "192.168.1.1", 8000).serialize()
+        dg = PeerDiscoveryMessage(exitMsg, "bob", "192.168.1.1", 8000).serialize()
         p = Peer("bob", "192.168.1.1", 8000)
         self.protocol.addPeer(p)
         self.protocol.datagramReceived(dg, "192.168.1.1")

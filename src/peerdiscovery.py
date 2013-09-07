@@ -11,7 +11,8 @@ The process is simple.
     client to disconnect
 """
 
-import json
+from json import loads, dumps
+
 from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol 
@@ -19,8 +20,10 @@ from twisted.internet.protocol import DatagramProtocol
 heartbeatMsg = "HEARTBEAT"
 exitMsg = "EXIT"
 
-class Message(object):
-    """Contains basic location information for clients to use
+# should be renamed to PeerDiscoveryMessage
+class PeerDiscoveryMessage(object):
+    """
+    Contains basic location information for clients to use
     to initiate a connection with this peer. Basically, just the user is,
     what ip they are using, and what port to connect on
     """
@@ -40,11 +43,12 @@ class Message(object):
 
 
 class Peer(object):
-    """Meant to store information for the TCP based protocols to use, such as the 
+    """
+    Meant to store information for the TCP based protocols to use, such as the 
     IP address, and port
     
-    Each peer needs some sort of unique identifier. For now, the combination of port, address,
-    and name should suffice.
+    Each peer needs some sort of unique identifier. For now, the combination 
+    of port, address, and name should suffice.
     """
     def __init__(self, name, address, port):
         self.id = makeId(name, address, port)
@@ -63,15 +67,16 @@ class Peer(object):
 def makeId(name, address, port):
     return name + '_' + address + '_' + str(port)
 
-
-class PeerDiscovery(DatagramProtocol):
+# rename to PeerDiscoveryProtocol
+class PeerDiscoveryProtocol(DatagramProtocol):
     """
     UDP protocol used to find others running the same program. 
     The protocol will do several things, on program start, a connection
     message will be sent; basically announcing itself as a node to the network.
-    Then the protocol will regularly send a heartbeat message at a defined interval.
-    Once the peer has decided to disconnect, it will send an exit message to alert 
-    the other nodes of its demise.
+    Then the protocol will regularly send a heartbeat message at a defined 
+    interval.
+    Once the peer has decided to disconnect, it will send an exit message to 
+    alert the other nodes of its demise.
     """
     def __init__(self, 
                  reactor,
@@ -81,7 +86,8 @@ class PeerDiscovery(DatagramProtocol):
                  multiCastPort, 
                  tcpAddress, 
                  tcpPort):
-        """Set up an instance of the PeerDiscovery protocol by creating 
+        """
+        Set up an instance of the PeerDiscovery protocol by creating 
         the message information needed to broadcast other instances 
         of the protocol running on the same network.
         """
@@ -105,8 +111,10 @@ class PeerDiscovery(DatagramProtocol):
         self.loop.start(5)
 
     def sendHeartBeat(self):
-        """Sends message alerting other peers to your presence."""
-        message = Message(heartbeatMsg, 
+        """
+        Sends message alerting other peers to your presence.
+        """
+        message = PeerDiscoveryMessage(heartbeatMsg, 
                           self.name, 
                           self.tcpAddress, 
                           self.tcpPort, 
@@ -115,8 +123,10 @@ class PeerDiscovery(DatagramProtocol):
         log.msg("Sent " + message)
 
     def stopProtocol(self):
-        """Gracefully tell peers to remove you."""
-        message = Message(exitMsg, 
+        """
+        Gracefully tell peers to remove you.
+        """
+        message = PeerDiscoveryMessage(exitMsg, 
                           self.name, 
                           self.tcpAddress, 
                           self.tcpPort, 
@@ -126,34 +136,36 @@ class PeerDiscovery(DatagramProtocol):
         log.msg("Exit " + message)
 
     def datagramReceived(self, datagram, address):
-        """Handles how datagrams are read when they are received. Here, 
+        """
+        Handles how datagrams are read when they are received. Here, 
         as this is a json serialised message, we are pulling out the 
-        peer information and placing it in a list."""
+        peer information and placing it in a list.
+        """
         log.msg("Decoding: " + datagram)
-
-        msg = json.loads(datagram)
+        msg = loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
         peerMsg = msg['message']
         peerId = makeId(peerName, peerAddress, peerPort)
-
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
-
         if peerMsg == exitMsg:
             if self.isPeer(peerId):
                 log.msg('dropping a peer')
                 self.removePeer(peerId)
-
         elif peerMsg == heartbeatMsg:
             if self.isPeer(peerId) == False:
                 newPeer = Peer(peerName, peerAddress, peerPort)
                 self.addPeer(newPeer)
-                log.msg("Added new Peer: address: {0}, name: {1}".format(peerAddress, peerName))
+                log.msg("Added new Peer: address: {0}, name: {1}"\
+                        .format(peerAddress, peerName))
             
     def isPeer(self, id):
-        """Convenience method to make it easy to tell whether or not a peer 
-        is already a peer. """
+        """
+        Convenience method to make it easy to tell whether or not a peer 
+        is already a peer. 
+        """
+        # this should use a deferred
         return id in self.peers.keys() # for use with default dict
         
     def removePeer(self, id):
