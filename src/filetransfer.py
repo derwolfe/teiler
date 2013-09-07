@@ -1,5 +1,6 @@
 from json import dumps, loads
 from math import fabs
+from os import path, stat
 from twisted.python import log
 from twisted.protocols import basic
 from twisted.internet.protocol import ServerFactory, ClientFactory
@@ -15,28 +16,22 @@ class FileTransferMessage(object):
     send a file. It will be sent for each file that is to be exchanged.
 
     @ivar file_size: See L{__init__}
-    @ivar read_from: See L{__init__}
     @ivar write_to: See L{__init__}
     """
     def __init__(self, 
                  file_size, 
-                 read_from,
                  write_to
                  ):
         """
         @param file_size: the string lenth of a file to be sent
         @type file_size: c{int} 
 
-        @param read_from: the file name, including its relative path on the 
+        @param write_to: the file name, including its relative path on the 
         senders machine. E.g. ``/movies/evil\ dead 2.avi``. This allows
         the directory structure to be preserved.
-        @type read_from: c{string}
-
-        @param write_to: the file name into which the data will be written.
         @type write_to: c{string}
         """
         self.file_size = file_size
-        self.read_from = read_from
         self.write_to = write_to
 
     def serialize(self):
@@ -45,7 +40,6 @@ class FileTransferMessage(object):
         """
         return dumps({
             "file_size" : self.file_size,
-            "read_from" : self.read_from,
             "write_to" : self.write_to
             })
 
@@ -55,12 +49,13 @@ class FileTransferMessage(object):
     @classmethod
     def from_str(cls, line):
         """
-        alternate construct for a message, makes properties a 
-        bit simpler to read
+        A class method that returns a new L{Message} instance.
+
+        @param line: a json formatted line of a message
+        @type: c{string} 
         """
         from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
-        cls.read_from = from_msg["read_from"]
         cls.write_to = from_msg["write_to"]
         return cls
 
@@ -83,8 +78,9 @@ class FileReceiverProtocol(LineReceiver):
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
         self.size = msg.file_size
-        self.original_fname = msg.read_from
-        self.out_fname = os.path.join(self.downloadPath, self.original_fname)
+        self.write_to = msg.write_to
+        self.out_fname = path.join(self.downloadPath, 
+                                      self.write_to)
         log.msg("* Receiving into file @" + self.out_fname)
         try:
             self.outfile = open(self.out_fname,'wb')
@@ -104,7 +100,7 @@ class FileReceiverProtocol(LineReceiver):
 
 
     def rawDataReceived(self, data):
-        # use this to find out if there has been more data written than expected
+        # check for overwrite of buffer
         rem_no = self._over_shot_length(len(data))
         if self.remain > 0:
             if self.remain % 10000 == 0:
@@ -114,7 +110,7 @@ class FileReceiverProtocol(LineReceiver):
             self.outfile.write(data)
         # it is possible the file is finished being written to at this point
         if self.remain <= 0:
-            log.msg("writing of file finished. Total len: {0}/{1}"
+            log.msg("writing of file finished. Total len: {0}/{1}"\
                     .format(self.remain, self.size))
             # closing the file and seting line mode might be better done 
             # with the event, finishedWriting being triggered
@@ -145,7 +141,7 @@ class FileReceiverProtocol(LineReceiver):
             if self.remain > 0:
                 reason = ' .. file moved too little'
             print remove_base + self.out_fname + reason
-            os.remove(self.out_fname)
+            remove(self.out_fname)
 
         # Success uploading - tmpfile will be saved to disk.
         else:
@@ -173,7 +169,7 @@ class FileSenderClient(basic.LineReceiver):
         self.path = path
         self.controller = controller
         self.infile = open(self.path, 'rb')
-        self.insize = os.stat(self.path).st_size
+        self.insize = stat(self.path).st_size
         self.result = None
         self.completed = False
         self.controller.file_sent = 0
