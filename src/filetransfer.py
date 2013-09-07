@@ -14,22 +14,19 @@ class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
     send a file. It will be sent for each file that is to be exchanged.
-
-    @ivar file_size: See L{__init__}
-    @ivar write_to: See L{__init__}
     """
     def __init__(self, 
                  file_size, 
                  write_to
                  ):
         """
-        @param file_size: the string lenth of a file to be sent
-        @type file_size: c{int} 
+        :param file_size: the string lenth of a file to be sent
+        :type file_size: int
 
-        @param write_to: the file name, including its relative path on the 
+        :param write_to: the file name, including its relative path on the 
         senders machine. E.g. ``/movies/evil\ dead 2.avi``. This allows
         the directory structure to be preserved.
-        @type write_to: c{string}
+        :type write_to: string
         """
         self.file_size = file_size
         self.write_to = write_to
@@ -51,8 +48,8 @@ class FileTransferMessage(object):
         """
         A class method that returns a new L{Message} instance.
 
-        @param line: a json formatted line of a message
-        @type: c{string} 
+        :param line: a json formatted line of a message
+        :type line: string
         """
         from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
@@ -74,7 +71,9 @@ class FileReceiverProtocol(LineReceiver):
         # XXX - there does actually need to be parsing of some set of commands
         # with this processing there should be some form of understood
         # error messages
-
+        # further, what commands are actually needed?
+        # NEW_FILE : send new file
+        # VALIDATE: check file with crc
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
         self.size = msg.file_size
@@ -119,7 +118,8 @@ class FileReceiverProtocol(LineReceiver):
             self.setLineMode(data[rem_no:])
 
     def _over_shot_length(self, data_length):
-        """Use this to find out how much you have over shot the buffer
+        """
+        Use this to find out how much you have over shot the buffer
         always returns a positive number
         """
         return int(fabs(self.remain - data_length))
