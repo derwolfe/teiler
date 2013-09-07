@@ -5,8 +5,8 @@
 
 from twisted.trial import unittest
 from twisted.test.proto_helpers import StringTransport
-import json
-from filecmp import cmp
+
+#from filecmp import cmp
 
 from ..filetransfer import FileReceiverProtocol, FileTransferMessage
 from ..utils import get_file_string_length
@@ -32,7 +32,6 @@ class FileSenderClientTests(unittest.TestCase):
         self.fname = "crap.txt"
         # something is wrong here
         self.instruct = FileTransferMessage(self.size, 
-                                            self.fname, 
                                             self.fname).serialize()
 
     def tearDown(self):
@@ -40,7 +39,9 @@ class FileSenderClientTests(unittest.TestCase):
         pass
 
     def test_line_received_sets_raw_mode(self):
-        """line received needs valid json"""
+        """
+        line received needs valid json
+        """
         self.proto.lineReceived(self.instruct)
         # has raw mode been set?
         self.assertTrue(self.proto.line_mode == 0)
