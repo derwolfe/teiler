@@ -68,7 +68,7 @@ def makeId(name, address, port):
     return name + '_' + address + '_' + str(port)
 
 # rename to PeerDiscoveryProtocol
-class PeerDiscovery(DatagramProtocol):
+class PeerDiscoveryProtocol(DatagramProtocol):
     """
     UDP protocol used to find others running the same program. 
     The protocol will do several things, on program start, a connection
@@ -114,7 +114,7 @@ class PeerDiscovery(DatagramProtocol):
         """
         Sends message alerting other peers to your presence.
         """
-        message = Message(heartbeatMsg, 
+        message = PeerDiscoveryMessage(heartbeatMsg, 
                           self.name, 
                           self.tcpAddress, 
                           self.tcpPort, 
@@ -126,7 +126,7 @@ class PeerDiscovery(DatagramProtocol):
         """
         Gracefully tell peers to remove you.
         """
-        message = Message(exitMsg, 
+        message = PeerDiscoveryMessage(exitMsg, 
                           self.name, 
                           self.tcpAddress, 
                           self.tcpPort, 
@@ -142,16 +142,13 @@ class PeerDiscovery(DatagramProtocol):
         peer information and placing it in a list.
         """
         log.msg("Decoding: " + datagram)
-
         msg = json.loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
         peerMsg = msg['message']
         peerId = makeId(peerName, peerAddress, peerPort)
-
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
-
         if peerMsg == exitMsg:
             if self.isPeer(peerId):
                 log.msg('dropping a peer')
