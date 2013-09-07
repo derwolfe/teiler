@@ -34,7 +34,7 @@ class PeerDiscoveryMessage(object):
         self.tcpPort = str(tcpPort)
 
     def serialize(self):
-        return json.dumps({
+        return dumps({
             "message": self.message,
             "name": self.name,
             "address" : self.address,
