@@ -11,7 +11,7 @@ The process is simple.
     client to disconnect
 """
 
-import json
+from json import loads, dumps
 
 from twisted.python import log
 from twisted.internet import task
@@ -142,7 +142,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         peer information and placing it in a list.
         """
         log.msg("Decoding: " + datagram)
-        msg = json.loads(datagram)
+        msg = loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
