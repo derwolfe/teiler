@@ -10,6 +10,10 @@ from twisted.internet import reactor
 
 from utils import getFilenameFromPath
 
+# commands
+
+CREATE_NEW_FILE = "NEW_FILE"
+
 class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
@@ -17,7 +21,8 @@ class FileTransferMessage(object):
     """
     def __init__(self, 
                  file_size, 
-                 write_to
+                 write_to,
+                 command
                  ):
         """
         :param file_size: the string lenth of a file to be sent
@@ -30,6 +35,7 @@ class FileTransferMessage(object):
         """
         self.file_size = file_size
         self.write_to = write_to
+        self.command = command
 
     def serialize(self):
         """
@@ -37,7 +43,8 @@ class FileTransferMessage(object):
         """
         return dumps({
             "file_size" : self.file_size,
-            "write_to" : self.write_to
+            "write_to" : self.write_to,
+            "command": self.command
             })
 
     def __str__(self):
@@ -54,9 +61,8 @@ class FileTransferMessage(object):
         from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
         cls.write_to = from_msg["write_to"]
+        cls.command = from_msg["command"]
         return cls
-
-class Command(object):
     
 
 class FileReceiverProtocol(LineReceiver):
@@ -75,52 +81,41 @@ class FileReceiverProtocol(LineReceiver):
         the system understand, then sends it along to the a function
         that knows what to do next
         """
-        # XXX - there does actually need to be parsing of some set of commands
-        # with this processing there should be some form of understood
-        # error messages
         # further, what commands are actually needed?
         # NEW_FILE : send new file
         # VALIDATE: check file with crc
         log.msg("lineReceived: " + line) 
         msg = FileTransferMessage.from_str(line)
-        self.size = msg.file_size
-        self.write_to = msg.write_to
-        self.out_fname = path.join(self.downloadPath, 
-                                      self.write_to)
-        log.msg("* Receiving into file @" + self.out_fname)
-        try:
-            self.outfile = open(self.out_fname,'wb')
-        except Exception, value:
-            log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
-                                                           value))
-            # might be a good place for an errback
-            self.transport.loseConnection()
-            return
-        # this is where the remain instance variable is being init'd. 
-        # this could be extracted into somethat that does a bit more 
-        # trickery, like padding the string with a '\n' of 2 chars or something
-        self.remain = int(self.size)
-        log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
-                                                      self.remain))
-        self.setRawMode()
+        self._handleReceivedMessage(msg) # should this use a callback
 
-    def _handleReceivedMessage(self, message):
+    def _handleReceivedMessage(self, fromSender):
         """
-        :param message: a FileTransferMessage containing a command
-        :type message: FileTransferMessage
+        :param fromSender: a FileTransferMessage containing a command
+        :type fromSender: FileTransferMessage
         """
         # parse the message, depending on what the message is,
         # determine which mode should be set, and how to proceed.
         # not all messages require the setting of raw mode
-        command = message.cmd
-        if command == NEW_FILE:
-            self.size = msg.file_size
-            self.write_to = msg.write_to
+        command = fromSender.command
+        if command == CREATE_NEW_FILE:
+            self.size = fromSender.file_size
+            self.write_to = fromSender.write_to
             self.out_fname = path.join(self.downloadPath, 
                                        self.write_to)
+            log.msg("* Receiving into file @" + self.out_fname)
+            try:
+                self.outfile = open(self.out_fname,'wb')
+            except Exception, value:
+                log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
+                                                               value))
+                # might be a good place for an errback
+                self.transport.loseConnection()
+                return
+            log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
+                                                        self.remain))
             self.setRawMode()
         else: #as of right now there is no other functionality defined
-            
+            return
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer

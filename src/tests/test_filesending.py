@@ -8,7 +8,7 @@ from twisted.test.proto_helpers import StringTransport
 
 #from filecmp import cmp
 
-from ..filetransfer import FileReceiverProtocol, FileTransferMessage
+from ..filetransfer import FileReceiverProtocol, FileTransferMessage, CREATE_NEW_FILE
 from ..utils import get_file_string_length
 
 
@@ -30,9 +30,9 @@ class FileReceiverProtocolTests(unittest.TestCase):
         self.data = "YOUR mother was a hamster\n" 
         self.size = len(self.data) # use as a buffer
         self.fname = "crap.txt"
-        # something is wrong here
         self.instruct = FileTransferMessage(self.size, 
-                                            self.fname).serialize()
+                                            self.fname,
+                                            CREATE_NEW_FILE).serialize()
 
     def tearDown(self):
         """delete some the test garbage files for each test"""
