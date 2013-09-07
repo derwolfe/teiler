@@ -56,6 +56,8 @@ class FileTransferMessage(object):
         cls.write_to = from_msg["write_to"]
         return cls
 
+class Command(object):
+    
 
 class FileReceiverProtocol(LineReceiver):
     """
@@ -68,6 +70,11 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
+        """
+        Line received takes a message line, creates a message from it that 
+        the system understand, then sends it along to the a function
+        that knows what to do next
+        """
         # XXX - there does actually need to be parsing of some set of commands
         # with this processing there should be some form of understood
         # error messages
@@ -97,6 +104,23 @@ class FileReceiverProtocol(LineReceiver):
                                                       self.remain))
         self.setRawMode()
 
+    def _handleReceivedMessage(self, message):
+        """
+        :param message: a FileTransferMessage containing a command
+        :type message: FileTransferMessage
+        """
+        # parse the message, depending on what the message is,
+        # determine which mode should be set, and how to proceed.
+        # not all messages require the setting of raw mode
+        command = message.cmd
+        if command == NEW_FILE:
+            self.size = msg.file_size
+            self.write_to = msg.write_to
+            self.out_fname = path.join(self.downloadPath, 
+                                       self.write_to)
+            self.setRawMode()
+        else: #as of right now there is no other functionality defined
+            
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer
