@@ -8,7 +8,7 @@ from twisted.test.proto_helpers import StringTransport
 
 #from filecmp import cmp
 
-from ..filetransfer import FileReceiverProtocol, FileTransferMessage, CREATE_NEW_FILE
+from ..filetransfer import FileReceiverProtocol, FileTransferMessage, CREATE_NEW_FILE, UnknownMessageError
 from ..utils import get_file_string_length
 
 
@@ -94,3 +94,16 @@ class FileReceiverProtocolTests(unittest.TestCase):
         self.proto.outfile = open("./garbage2.txt", "wb")
         self.proto.rawDataReceived("12")
         self.assertTrue(self.proto.line_mode == 1)
+
+    def test_handle_message_error_called_with_bad_command(self):
+        """
+        Make sure _handleMessageError is called when a non existent 
+        command is sent.
+        """
+        # make a message
+        msg = str(FileTransferMessage(10, "nope.txt", "DNE"))
+        # should line received return d?
+        d = self.proto.lineReceived(msg)
+        # not sure why yield solves the problem
+        yield self.assertFailure(d, UnknownMessageError)
+        

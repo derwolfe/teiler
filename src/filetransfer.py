@@ -11,9 +11,14 @@ from twisted.internet import reactor
 from utils import getFilenameFromPath
 
 # commands
-
 CREATE_NEW_FILE = "NEW_FILE"
 
+class UnknownMessageError(Exception):
+    """
+    Exception raised when a non existent command is called.
+    """
+    pass
+    
 class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
@@ -81,20 +86,19 @@ class FileReceiverProtocol(LineReceiver):
         the system understand, then sends it along to the a function
         that knows what to do next
         """
-        # NEW_FILE : send new file
-        # VALIDATE: check file with crc
-        d = Deferred()
+        d = Deferred() #may be unneeded
         log.msg("lineReceived: " + line) 
+        # this could be attached as a callback, parsing the message
         msg = FileTransferMessage.from_str(line)
-        
         d.addCallback(self._handleReceivedMessage)
-        d.addErrback(self._handleError)
-        # invoke the callback...this might be right
+        d.addErrback(self._handleMessageError)
+        # invoke message handling
         d.callback(msg)
+        return d
 
-    def _handleError(self):
-        print "SHIT\n"
-        log.msg("tried to handle the message, but, rut ro, i'm dead")
+    def _handleMessageError(self, reason):
+        log.err(reason, "parsing message failure")
+        # this is where you could ask for a resend!
         
     def _handleReceivedMessage(self, _fromSender):
         """
@@ -108,23 +112,20 @@ class FileReceiverProtocol(LineReceiver):
         if command == CREATE_NEW_FILE:
             self.size = _fromSender.file_size
             self.write_to = _fromSender.write_to
-            self.out_fname = path.join(self.downloadPath, 
-                                       self.write_to)
+            self.out_fname = path.join(self.downloadPath, self.write_to)
             log.msg("* Receiving into file @" + self.out_fname)
-            # could you use a callback to open the file, then attach a callback 
-            # to it to begin consuming?
             try:
                 self.outfile = open(self.out_fname,'wb')
             except Exception, value:
                 log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
                                                                value))
-                # for now just return
                 return
             log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
                                                         self.remain))
             self.setRawMode()
         else: 
-            return
+            raise UnknownMessageError
+            # say there has been an error
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer
