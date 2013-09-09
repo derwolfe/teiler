@@ -10,29 +10,37 @@ from twisted.internet import reactor
 
 from utils import getFilenameFromPath
 
+# commands
+CREATE_NEW_FILE = "NEW_FILE"
+
+class UnknownMessageError(Exception):
+    """
+    Exception raised when a non existent command is called.
+    """
+    pass
+    
 class FileTransferMessage(object):
     """
     This contains all of the information that will be exchanged to 
     send a file. It will be sent for each file that is to be exchanged.
-
-    @ivar file_size: See L{__init__}
-    @ivar write_to: See L{__init__}
     """
     def __init__(self, 
                  file_size, 
-                 write_to
+                 write_to,
+                 command
                  ):
         """
-        @param file_size: the string lenth of a file to be sent
-        @type file_size: c{int} 
+        :param file_size: the string lenth of a file to be sent
+        :type file_size: int
 
-        @param write_to: the file name, including its relative path on the 
+        :param write_to: the file name, including its relative path on the 
         senders machine. E.g. ``/movies/evil\ dead 2.avi``. This allows
         the directory structure to be preserved.
-        @type write_to: c{string}
+        :type write_to: string
         """
         self.file_size = file_size
         self.write_to = write_to
+        self.command = command
 
     def serialize(self):
         """
@@ -40,7 +48,8 @@ class FileTransferMessage(object):
         """
         return dumps({
             "file_size" : self.file_size,
-            "write_to" : self.write_to
+            "write_to" : self.write_to,
+            "command": self.command
             })
 
     def __str__(self):
@@ -51,14 +60,15 @@ class FileTransferMessage(object):
         """
         A class method that returns a new L{Message} instance.
 
-        @param line: a json formatted line of a message
-        @type: c{string} 
+        :param line: a json formatted line of a message
+        :type line: string
         """
         from_msg = loads(line)
         cls.file_size = from_msg["file_size"]
         cls.write_to = from_msg["write_to"]
+        cls.command = from_msg["command"]
         return cls
-
+    
 
 class FileReceiverProtocol(LineReceiver):
     """
@@ -71,33 +81,51 @@ class FileReceiverProtocol(LineReceiver):
         self.downloadPath = downloadPath
         
     def lineReceived(self, line):
-        # XXX - there does actually need to be parsing of some set of commands
-        # with this processing there should be some form of understood
-        # error messages
-
+        """
+        Line received takes a message line, creates a message from it that 
+        the system understand, then sends it along to the a function
+        that knows what to do next
+        """
+        d = Deferred() #may be unneeded
         log.msg("lineReceived: " + line) 
+        # this could be attached as a callback, parsing the message
         msg = FileTransferMessage.from_str(line)
-        self.size = msg.file_size
-        self.write_to = msg.write_to
-        self.out_fname = path.join(self.downloadPath, 
-                                      self.write_to)
-        log.msg("* Receiving into file @" + self.out_fname)
-        try:
-            self.outfile = open(self.out_fname,'wb')
-        except Exception, value:
-            log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
-                                                           value))
-            # might be a good place for an errback
-            self.transport.loseConnection()
-            return
-        # this is where the remain instance variable is being init'd. 
-        # this could be extracted into somethat that does a bit more 
-        # trickery, like padding the string with a '\n' of 2 chars or something
-        self.remain = int(self.size)
-        log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
-                                                      self.remain))
-        self.setRawMode()
+        d.addCallback(self._handleReceivedMessage)
+        d.addErrback(self._handleMessageError)
+        # invoke message handling
+        d.callback(msg)
+        return d
 
+    def _handleMessageError(self, reason):
+        log.err(reason, "parsing message failure")
+        # this is where you could ask for a resend!
+        
+    def _handleReceivedMessage(self, _fromSender):
+        """
+        Parse the message sent from a FileSender and figure out 
+        which of the commands it would like you to run.
+        
+        :param fromSender: a FileTransferMessage containing a command
+        :type fromSender: FileTransferMessage
+        """
+        command = _fromSender.command
+        if command == CREATE_NEW_FILE:
+            self.size = _fromSender.file_size
+            self.write_to = _fromSender.write_to
+            self.out_fname = path.join(self.downloadPath, self.write_to)
+            log.msg("* Receiving into file @" + self.out_fname)
+            try:
+                self.outfile = open(self.out_fname,'wb')
+            except Exception, value:
+                log.msg("! Unable to open file {0} {1}".format(self.out_fname, 
+                                                               value))
+                return
+            log.msg("Entering raw mode. {0} {1}".format(self.outfile, 
+                                                        self.remain))
+            self.setRawMode()
+        else: 
+            raise UnknownMessageError
+            # say there has been an error
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer
@@ -119,7 +147,8 @@ class FileReceiverProtocol(LineReceiver):
             self.setLineMode(data[rem_no:])
 
     def _over_shot_length(self, data_length):
-        """Use this to find out how much you have over shot the buffer
+        """
+        Use this to find out how much you have over shot the buffer
         always returns a positive number
         """
         return int(fabs(self.remain - data_length))
