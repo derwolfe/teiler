@@ -12,7 +12,9 @@ from utils import getFilenameFromPath
 
 # commands
 CREATE_NEW_FILE = "NEW_FILE"
+COMMAND_ERROR = "NOT_UNDERSTOOD"
 
+# possible errors that can be returned by FileReceiver/TransferProtocol
 class UnknownMessageError(Exception):
     """
     Exception raised when a non existent command is called.
@@ -86,19 +88,34 @@ class FileReceiverProtocol(LineReceiver):
         the system understand, then sends it along to the a function
         that knows what to do next
         """
-        d = Deferred() #may be unneeded
+        d = Deferred()
         log.msg("lineReceived: " + line) 
-        # this could be attached as a callback, parsing the message
         msg = FileTransferMessage.from_str(line)
         d.addCallback(self._handleReceivedMessage)
         d.addErrback(self._handleMessageError)
-        # invoke message handling
         d.callback(msg)
         return d
 
+    # this may not work with Producer/Consumer
+    # def regrabMessage(self, reason):
+    #     """
+    #     If there was an error with the command sent, ask the sender to 
+    #     retransmit the command.
+    #     """
+    #     msg = ErrorMessage(reason)
+    #     # send this the other direction
+    #     self.transport.write(msg)
+
     def _handleMessageError(self, reason):
         log.err(reason, "parsing message failure")
-        # this is where you could ask for a resend!
+        raise UnknownMessageError()
+        #_clearCommand()
+        #sendCommandRequest(reason)
+
+    # def _clearCommand(self):
+    #     self.setLineMode() #make sending of commands possible
+    #     self.remain = 0
+    #     self.outfile = None
         
     def _handleReceivedMessage(self, _fromSender):
         """
@@ -125,7 +142,6 @@ class FileReceiverProtocol(LineReceiver):
             self.setRawMode()
         else: 
             raise UnknownMessageError
-            # say there has been an error
 
     def rawDataReceived(self, data):
         # check for overwrite of buffer
