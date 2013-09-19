@@ -34,9 +34,6 @@ class FileReceiverProtocolTests(unittest.TestCase):
                                             self.fname,
                                             CREATE_NEW_FILE).serialize()
 
-    def tearDown(self):
-        """delete some the test garbage files for each test"""
-        pass
 
     def test_line_received_sets_raw_mode(self):
         """
@@ -46,8 +43,6 @@ class FileReceiverProtocolTests(unittest.TestCase):
         # has raw mode been set?
         self.assertTrue(self.proto.line_mode == 0)
 
-# these could have better setup methods!
-#
     def test_writes_to_file(self):
         """test to see if it actually writes the data to a file, 
         FIXME The test expects an open file handle."""
@@ -107,3 +102,13 @@ class FileReceiverProtocolTests(unittest.TestCase):
         # not sure why yield solves the problem
         yield self.assertFailure(d, UnknownMessageError)
         
+    def test_with_good_command(self):
+        """
+        Make sure _handleMessageError is called when a non existent 
+        command is sent.
+        """
+        # make a message
+        msg = str(FileTransferMessage(10, "nope.txt", CREATE_NEW_FILE))
+        # should line received return d?
+        self.proto.lineReceived(msg)
+        # not sure why yield solves the problem

@@ -1,6 +1,3 @@
-import os
-import shutil
-
 from zope.interface import implements
 
 from twisted.internet.interfaces import IMulticastTransport, IUDPTransport

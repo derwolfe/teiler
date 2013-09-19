@@ -148,7 +148,15 @@ class FileReceiverProtocol(LineReceiver):
             raise UnknownMessageError
 
     def rawDataReceived(self, data):
-        # check for overwrite of buffer
+        """
+        As long as it is believed that a buffer needs further writes, 
+        write to that buffer. Once the buffer has been filled up,
+        which is determined by `remain` counter equaling 0, then
+        switch back to line mode.
+
+        :param data: the raw strings of data sent over the wire
+        :type data: character string
+        """
         rem_no = self._over_shot_length(len(data))
         if self.remain > 0:
             if self.remain % 10000 == 0:
