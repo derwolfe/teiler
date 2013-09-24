@@ -5,11 +5,13 @@
 
 from twisted.trial import unittest
 from twisted.test.proto_helpers import StringTransport
-import json
-from filecmp import cmp
 
-from ..filetransfer import FileReceiverProtocol
-from ..utils import get_file_string_length
+#from filecmp import cmp
+
+from ..filetransfer import FileReceiverProtocol, FileTransferMessage
+from ..filetransfer import CREATE_NEW_FILE, UnknownMessageError
+from ..filetransfer import ParsingMessageError
+from os import stat
 
 def make_garbage_file():
     """create junk file and return its size"""
@@ -17,10 +19,10 @@ def make_garbage_file():
         for x in xrange(100000):
              f.write("number mumber " + str(x) + "\n")
     # get the string lenth of the file by looping over it
-    return get_file_string_length("./garbage.txt")
-    
+    #return get_file_string_length("./garbage.txt")
+    return stat("./garbage.txt").st_size
 
-class FileSenderClientTests(unittest.TestCase):
+class FileReceiverProtocolTests(unittest.TestCase):
     
     def setUp(self):
         self.proto = FileReceiverProtocol(".")
@@ -29,16 +31,15 @@ class FileSenderClientTests(unittest.TestCase):
         self.data = "YOUR mother was a hamster\n" 
         self.size = len(self.data) # use as a buffer
         self.fname = "crap.txt"
-        self.instruct = json.dumps({"file_size" : self.size,
-                                    "original_file_path": self.fname
-                                }) 
+        self.instruct = FileTransferMessage(self.size, 
+                                            self.fname,
+                                            CREATE_NEW_FILE).serialize()
 
-    def tearDown(self):
-        """delete some the test garbage files for each test"""
-        pass
 
     def test_line_received_sets_raw_mode(self):
-        """line received needs valid json"""
+        """
+        line received needs valid json
+        """
         self.proto.lineReceived(self.instruct)
         # has raw mode been set?
         self.assertTrue(self.proto.line_mode == 0)
@@ -76,8 +77,51 @@ class FileSenderClientTests(unittest.TestCase):
         self.proto.size = size
         self.proto.remain = size
         self.proto.outfile = open("./garbage2.txt", "wb")
-        with open("./garbage.txt", "r") as f:
+        with open("garbage.txt", "r") as f:
             for line in f.readlines(): 
                 self.proto.rawDataReceived(line)
-        #self.assertTrue(cmp("./garbage.txt", "./garbage2.txt"))
         self.assertTrue(self.proto.remain == 0)
+        self.assertTrue(self.proto.line_mode == 1)
+
+    def test_once_remain_zero_switch_to_line(self):
+        self.proto.setRawMode()
+        self.proto.size = 0
+        self.proto.remain = 0
+        self.proto.outfile = open("./garbage2.txt", "wb")
+        self.proto.rawDataReceived("12")
+        self.assertTrue(self.proto.line_mode == 1)
+
+    def test_handle_message_error_called_with_bad_command(self):
+        """
+        Make sure _handleMessageError is called when a non existent 
+        command is sent.
+        """
+        # make a message
+        msg = str(FileTransferMessage(10, "nope.txt", "DNE"))
+        # should line received return d?
+        d = self.proto.lineReceived(msg)
+        # not sure why yield solves the problem
+        yield self.assertFailure(d, UnknownMessageError)
+
+       
+    def test_with_good_command(self):
+        """
+        Make sure _handleMessageError is called when a non existent 
+        command is sent.
+        """
+        # make a message
+        msg = str(FileTransferMessage(10, "nope.txt", CREATE_NEW_FILE))
+        # should line received return d?
+        self.proto.lineReceived(msg)
+        # not sure why yield solves the problem
+
+class FileTransferMessageTests(unittest.TestCase):
+    
+    def test_message_with_incorrect_keys(self):
+        """
+        If a message contains the incorrect keys, it should 
+        throw a ParsingMessageError
+        """
+        args = '{"thing": "thing"}'
+        d = FileTransferMessage.from_str(args)
+        yield self.assertFailure(d, ParsingMessageError) 
