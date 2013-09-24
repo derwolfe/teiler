@@ -140,6 +140,7 @@ class FileReceiverProtocol(LineReceiver):
             self.write_to = _fromSender.write_to
             self.out_fname = path.join(self.downloadPath, self.write_to)
             log.msg("Receiving into file @" + self.out_fname)
+        # should use twisted.python.FilePath?
             try:
                 self.outfile = open(self.out_fname,'wb')
             except Exception, value:
