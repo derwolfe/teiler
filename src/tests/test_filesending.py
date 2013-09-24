@@ -10,9 +10,8 @@ from twisted.test.proto_helpers import StringTransport
 
 from ..filetransfer import FileReceiverProtocol, FileTransferMessage
 from ..filetransfer import CREATE_NEW_FILE, UnknownMessageError
+from ..filetransfer import ParsingMessageError
 from os import stat
-#from ..utils import get_file_string_length
-
 
 def make_garbage_file():
     """create junk file and return its size"""
@@ -103,7 +102,8 @@ class FileReceiverProtocolTests(unittest.TestCase):
         d = self.proto.lineReceived(msg)
         # not sure why yield solves the problem
         yield self.assertFailure(d, UnknownMessageError)
-        
+
+       
     def test_with_good_command(self):
         """
         Make sure _handleMessageError is called when a non existent 
@@ -114,3 +114,14 @@ class FileReceiverProtocolTests(unittest.TestCase):
         # should line received return d?
         self.proto.lineReceived(msg)
         # not sure why yield solves the problem
+
+class FileTransferMessageTests(unittest.TestCase):
+    
+    def test_message_with_incorrect_keys(self):
+        """
+        If a message contains the incorrect keys, it should 
+        throw a ParsingMessageError
+        """
+        args = '{"thing": "thing"}'
+        d = FileTransferMessage.from_str(args)
+        yield self.assertFailure(d, ParsingMessageError) 
