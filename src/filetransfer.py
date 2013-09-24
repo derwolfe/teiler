@@ -171,17 +171,15 @@ class FileReceiverProtocol(LineReceiver):
             self.remain -= len(data)
             # write the current amount of data to the file
             self.outfile.write(data)
-            
         if self.remain <= 0:
             log.msg("writing of file finished. Total len: {0}/{1}"\
                     .format(self.remain, self.size))
             self.outfile.close()
-        #file checks?
-            # also pass the remainder to line mode
             # basically, if you overshoot by 7, self.remain == -7
             if self.remain < 0:
                 self.setLineMode(data[remain:])
-            self.setLineMode()
+            else:
+                self.setLineMode()
 
     def connectionMade(self):
         basic.LineReceiver.connectionMade(self)
@@ -192,19 +190,12 @@ class FileReceiverProtocol(LineReceiver):
             self.outfile.close()
         # Problem uploading - tmpfile will be discarded
         if self.remain != 0:
-            print str(self.remain) + ')!=0'
-            remove_base = '--> removing tmpfile@'
-            if self.remain < 0:
-                reason = ' .. file moved too much'
-            if self.remain > 0:
-                reason = ' .. file moved too little'
-            print remove_base + self.out_fname + reason
             remove(self.out_fname)
-
         # Success uploading - tmpfile will be saved to disk.
         else:
             log.msg("--> finished saving upload@ " + self.out_fname)
-            client = self.instruction.get('client', 'anonymous') #? what is this
+        # cleanup the protocol
+        _clearCommand()
 
 class FileReceiverFactory(ServerFactory):
 
