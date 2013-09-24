@@ -8,8 +8,10 @@ from twisted.test.proto_helpers import StringTransport
 
 #from filecmp import cmp
 
-from ..filetransfer import FileReceiverProtocol, FileTransferMessage, CREATE_NEW_FILE, UnknownMessageError
-from ..utils import get_file_string_length
+from ..filetransfer import FileReceiverProtocol, FileTransferMessage
+from ..filetransfer import CREATE_NEW_FILE, UnknownMessageError
+from os import stat
+#from ..utils import get_file_string_length
 
 
 def make_garbage_file():
@@ -18,8 +20,8 @@ def make_garbage_file():
         for x in xrange(100000):
              f.write("number mumber " + str(x) + "\n")
     # get the string lenth of the file by looping over it
-    return get_file_string_length("./garbage.txt")
-    
+    #return get_file_string_length("./garbage.txt")
+    return stat("./garbage.txt").st_size
 
 class FileReceiverProtocolTests(unittest.TestCase):
     

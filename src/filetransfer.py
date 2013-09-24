@@ -1,3 +1,7 @@
+"""
+
+"""
+
 from json import dumps, loads
 from math import fabs
 from os import path, stat
@@ -12,12 +16,18 @@ from utils import getFilenameFromPath
 
 # commands
 CREATE_NEW_FILE = "NEW_FILE"
-COMMAND_ERROR = "NOT_UNDERSTOOD"
 
 # possible errors that can be returned by FileReceiver/TransferProtocol
 class UnknownMessageError(Exception):
     """
     Exception raised when a non existent command is called.
+    """
+    pass
+
+class ParsingMessageError(Exception):
+    """
+    Exception raised when a message doesn't contain the required
+    keys.
     """
     pass
 
@@ -29,8 +39,7 @@ class FileTransferMessage(object):
     def __init__(self,
                  file_size,
                  write_to,
-                 command
-                 ):
+                 command):
         """
         :param file_size: the string lenth of a file to be sent
         :type file_size: int
@@ -66,15 +75,18 @@ class FileTransferMessage(object):
         :type line: string
         """
         from_msg = loads(line)
-        cls.file_size = from_msg["file_size"]
-        cls.write_to = from_msg["write_to"]
-        cls.command = from_msg["command"]
-        return cls
-
+        keys = from_msg.keys()
+        if "file_size" in keys and "write_to" in keys and "command" in keys:
+            cls.file_size = from_msg["file_size"]
+            cls.write_to = from_msg["write_to"]
+            cls.command = from_msg["command"]
+            return cls
+        else:
+            raise ParsingMessageError()
 
 class FileReceiverProtocol(LineReceiver):
     """
-    protocol that will be used to transfer files/raw data.
+    protocol that will be used to receive files/raw data.
     """
 
     def __init__(self, downloadPath):
@@ -96,22 +108,15 @@ class FileReceiverProtocol(LineReceiver):
         d.callback(msg)
         return d
 
-    # this may not work with Producer/Consumer
-    # def regrabMessage(self, reason):
-    #     """
-    #     If there was an error with the command sent, ask the sender to
-    #     retransmit the command.
-    #     """
-    #     msg = ErrorMessage(reason)
-    #     # send this the other direction
-    #     self.transport.write(msg)
-
-    def _handleMessageError(self, reason):
-        log.err(reason, "parsing message failure")
-        raise UnknownMessageError()
-        _clearCommand()
-        #sendCommandRequest(reason)
-
+    def _handleMessageError(self, error):
+        """
+        Clean up after the mess that may have occurred with the latest
+        file transfer message. 
+        """
+        failure.trap(error)
+        log.err(reason, "Failed to parse file transfer message")
+        _clearCommand(self)
+        
     def _clearCommand(self):
         """
         Reset the varaiables of the current protocol. This should set it up to
@@ -134,11 +139,11 @@ class FileReceiverProtocol(LineReceiver):
             self.size = _fromSender.file_size
             self.write_to = _fromSender.write_to
             self.out_fname = path.join(self.downloadPath, self.write_to)
-            log.msg("* Receiving into file @" + self.out_fname)
+            log.msg("Receiving into file @" + self.out_fname)
             try:
                 self.outfile = open(self.out_fname,'wb')
             except Exception, value:
-                log.msg("! Unable to open file {0} {1}".format(self.out_fname,
+                log.err("Unable to open file {0} {1}".format(self.out_fname,
                                                                value))
                 return
             log.msg("Entering raw mode. {0} {1}".format(self.outfile,
@@ -157,30 +162,25 @@ class FileReceiverProtocol(LineReceiver):
         :param data: the raw strings of data sent over the wire
         :type data: character string
         """
-        rem_no = self._over_shot_length(len(data))
+        #rem_no = self._over_shot_length(len(data))
+        #make sure self.outfile is not None
         if self.remain > 0:
             if self.remain % 10000 == 0:
                 log.msg("remaining {0}/{1}".format(self.remain, self.size))
             self.remain -= len(data)
             # write the current amount of data to the file
             self.outfile.write(data)
-        # it is possible the file is finished being written to at this point
+            
         if self.remain <= 0:
             log.msg("writing of file finished. Total len: {0}/{1}"\
                     .format(self.remain, self.size))
-            # closing the file and seting line mode might be better done
-            # with the event, finishedWriting being triggered
             self.outfile.close()
+        #file checks?
             # also pass the remainder to line mode
-            self.setLineMode(data[rem_no:])
-
-    def _over_shot_length(self, data_length):
-        """
-        Use this to find out how much you have over shot the buffer
-        always returns a positive number
-        """
-        return int(fabs(self.remain - data_length))
-
+            # basically, if you overshoot by 7, self.remain == -7
+            if self.remain < 0:
+                self.setLineMode(data[remain:])
+            self.setLineMode()
 
     def connectionMade(self):
         basic.LineReceiver.connectionMade(self)
@@ -249,10 +249,10 @@ class FileSenderClient(basic.LineReceiver):
 
     def cbTransferCompleted(self, lastsent):
         self.completed = True
-        #self.transport.loseConnection()
 
     def connectionMade(self):
         # this will be the message sent across the wire.
+        # use the fileMessageClass
         instruction = dict(file_size=self.insize,
                            original_file_path=self.path)
         self.transport.write(instruction+'\r\n')
@@ -293,7 +293,8 @@ class FileSenderClientFactory(ClientFactory):
         return p
 
 def sendFile(path, address='localhost', port=1234,):
-    controller = type('test',(object,),{'cancel':False, 'total_sent':0,'completed':Deferred()})
+    controller = type('test',(object,),
+                      {'cancel':False, 'total_sent':0,'completed':Deferred()})
     f = FileSenderClientFactory(path, controller)
     reactor.connectTCP(address, port, f)
     return controller.completed
