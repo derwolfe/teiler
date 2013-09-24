@@ -102,7 +102,6 @@ class FileReceiverProtocolTests(unittest.TestCase):
         d = self.proto.lineReceived(msg)
         # not sure why yield solves the problem
         yield self.assertFailure(d, UnknownMessageError)
-
        
     def test_with_good_command(self):
         """
@@ -114,6 +113,19 @@ class FileReceiverProtocolTests(unittest.TestCase):
         # should line received return d?
         self.proto.lineReceived(msg)
         # not sure why yield solves the problem
+
+    def test_handleMessageError_catches_except(self):
+        pass
+
+    def test_clearing_command(self):
+        pass
+
+    def test_connectionLost_closes_file(self):
+        pass
+
+    def test_connectioLost_removes_file(self):
+        pass
+
 
 class FileTransferMessageTests(unittest.TestCase):
     
