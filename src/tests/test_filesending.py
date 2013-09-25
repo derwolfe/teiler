@@ -11,15 +11,13 @@ from twisted.test.proto_helpers import StringTransport
 from ..filetransfer import FileReceiverProtocol, FileTransferMessage
 from ..filetransfer import CREATE_NEW_FILE, UnknownMessageError
 from ..filetransfer import ParsingMessageError
-from os import stat
+from os import stat, path
 
 def make_garbage_file():
     """create junk file and return its size"""
     with open("./garbage.txt", "w") as f:
         for x in xrange(100000):
              f.write("number mumber " + str(x) + "\n")
-    # get the string lenth of the file by looping over it
-    #return get_file_string_length("./garbage.txt")
     return stat("./garbage.txt").st_size
 
 class FileReceiverProtocolTests(unittest.TestCase):
@@ -115,16 +113,36 @@ class FileReceiverProtocolTests(unittest.TestCase):
         # not sure why yield solves the problem
 
     def test_handleMessageError_catches_except(self):
-        pass
+        """
+        XXX not sure how to test if failure.trap works
+        """
 
     def test_clearing_command(self):
-        pass
+        """
+        does clear command clear?
+        """
+        self.proto._clearCommand()
+        self.assertTrue(self.proto.line_mode == 1)
+        self.assertTrue(self.proto.remain == 0)
+        self.assertTrue(self.proto.outfile == None)
+        
 
     def test_connectionLost_closes_file(self):
-        pass
+        # requires an open file to close!
+        self.proto.out_fname = "./garbage-close.txt"
+        self.proto.outfile = open(self.proto.out_fname, 'w')
+        self.assertFalse(self.proto.outfile.closed)
+        self.proto.connectionLost("reason") # significance of reason?, seems to be for passing of exception
+        self.assertTrue(self.proto.outfile.closed)
 
     def test_connectioLost_removes_file(self):
-        pass
+        self.proto.out_fname = "./garbage-close.txt"
+        self.proto.remain = 1
+        self.proto.outfile = open(self.proto.out_fname, 'w')
+        self.assertFalse(self.proto.outfile.closed)
+        self.proto.connectionLost("reason") 
+        # check that the file is deleted
+        self.assertFalse(path.exists(self.proto.out_fname))
 
 
 class FileTransferMessageTests(unittest.TestCase):
