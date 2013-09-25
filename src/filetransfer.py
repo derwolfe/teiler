@@ -4,7 +4,7 @@
 
 from json import dumps, loads
 from math import fabs
-from os import path, stat
+from os import path, stat, remove
 from twisted.python import log
 from twisted.protocols import basic
 from twisted.internet.protocol import ServerFactory, ClientFactory
@@ -115,7 +115,7 @@ class FileReceiverProtocol(LineReceiver):
         """
         failure.trap(error)
         log.err(reason, "Failed to parse file transfer message")
-        _clearCommand(self)
+        _clearCommand()
         
     def _clearCommand(self):
         """
@@ -171,6 +171,8 @@ class FileReceiverProtocol(LineReceiver):
             self.remain -= len(data)
             # write the current amount of data to the file
             self.outfile.write(data)
+        # this use of if is intentional. Remain needs to be checked
+        # again after having written data
         if self.remain <= 0:
             log.msg("writing of file finished. Total len: {0}/{1}"\
                     .format(self.remain, self.size))
@@ -195,7 +197,8 @@ class FileReceiverProtocol(LineReceiver):
         else:
             log.msg("--> finished saving upload@ " + self.out_fname)
         # cleanup the protocol
-        _clearCommand()
+        
+        #self._clearCommand()
 
 class FileReceiverFactory(ServerFactory):
 
