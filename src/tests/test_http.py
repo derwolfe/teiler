@@ -26,14 +26,13 @@ class HttpFileGrabberTests(unittest.TestCase):
         address = 'a'
         session = '1'
         filename = '/bar'
-        data = urlencode({'address': address, 
-                          'session': session, 
-                          'filename': filename
-                      })
-        addr, sess, fname = parseFileRequest(data)
-        self.assertEqual(addrress, addr)
+        senderAddress = 'b'
+        data = {'address': [address,], 'senderAddress': [senderAddress,], 'session': [session,], 'filename': [filename,]}
+        addr, senderAddr, sess, fname = parseFileRequest(data)
+        self.assertEqual(address, addr)
         self.assertEqual(session, sess)
         self.assertEqual(filename, fname)
+        self.assertEqual(senderAddress, senderAddr)
 
 
     def posts_form(self):
