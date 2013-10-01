@@ -8,6 +8,7 @@ from twisted.internet import reactor
 from twisted.web.client import getPage
 
 from urllib import urlencode, unquote
+from cgi import FieldStorage
 
 ## file server
 
@@ -21,7 +22,7 @@ from urllib import urlencode, unquote
 # a '' server '' will host the files it wants to send, and send posts
 
 
-def sendFile(address, session, filename):
+def sendFileRequest(address, session, filename):
     """
     This function expects a network address, a session id, and a  
     filename. Using this it will post a request a user.
@@ -35,17 +36,25 @@ def sendFile(address, session, filename):
             'filename': filename
             })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
+    # request the page by posting the form
     return getPage(address, 
                     method='POST', 
                     postdata=postdata,
                     headers=headers
                 )
 
+
 def parseFileRequest(form):
     """
     Given a form, parse the request. This will need to be run on the server
     """
-    # parse the form
+    # you want the address, the session Id and the file name
+    data = form.FieldStorage() # expects a request
+    if "address" in data and "session" in data and "filename" in data:
+        addr = data["address"].value
+        session = data["session"].value
+        filename = data["filename"].value
+    return addr, session, filename
     
 
 def getFile(address, session, filename):
