@@ -7,7 +7,7 @@ from twisted.web.resource import Resource
 from twisted.internet import reactor
 from twisted.web.client import getPage
 
-from urllib import urlencode
+from urllib import urlencode, unquote
 
 ## file server
 
@@ -41,17 +41,26 @@ def sendFile(address, session, filename):
                     headers=headers
                 )
 
+def parseFileRequest(form):
+    """
+    Given a form, parse the request. This will need to be run on the server
+    """
+    # parse the form
+    
+
+def getFile(address, session, filename):
+    """
+    Get the file at the specific address, session, filename url
+    """
+    url = address + '/' + session + '/' + filename
+    encoded = urlencode(url)
+    return getPage(url) #download the file from the location
+
 if __name__ == '__main__':
     #root = Resource()
     #root.putChild('r1', File("/Users/chris/Code/rust"))
     #root.putChild('r2', File("/Users/chris/Code/fun/rust"))
 
-    ## your gui will basically construct this set of paths at runtime
-    ## this does not work...why?    
-    c = Content()
-    c.add_file("r1", "/Users/chris/Code/rust")
-    c.add_file("r2", "/Users/chris/Code/fun/rust")
-    factory = Site(c.root)
 
     # factory sets up the actual site root
     #factory = Site(root)
