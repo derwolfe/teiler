@@ -6,12 +6,9 @@ from twisted.web.static import File
 from twisted.web.resource import Resource
 from twisted.internet import reactor
 from twisted.web.client import getPage
+from twisted.internet.defer import Deferred
 
 from urllib import urlencode, unquote
-from cgi import FieldStorage
-
-## file server
-
 ## 1 have the ability to post a file
 ## 2 serve the file at the url
 
@@ -30,7 +27,7 @@ def sendFileRequest(address, session, filename):
     The data contained in this request, will be used to download
     the file from the sender.
     """
-    postdata = urllib.urlencode({
+    postdata = urlencode({
             'address': address,
             'session': session,
             'filename': filename
@@ -44,16 +41,17 @@ def sendFileRequest(address, session, filename):
                 )
 
 
-def parseFileRequest(form):
+def parseFileRequest(data):
     """
-    Given a form, parse the request. This will need to be run on the server
+    Expects a dict like object with the correct keys, this is provided 
+    by request.args
     """
     # you want the address, the session Id and the file name
-    data = form.FieldStorage() # expects a request
+
     if "address" in data and "session" in data and "filename" in data:
-        addr = data["address"].value
-        session = data["session"].value
-        filename = data["filename"].value
+        addr = data["address"]
+        session = data["session"]
+        filename = data["filename"]
     return addr, session, filename
     
 
@@ -61,17 +59,37 @@ def getFile(address, session, filename):
     """
     Get the file at the specific address, session, filename url
     """
-    url = address + '/' + session + '/' + filename
-    encoded = urlencode(url)
     return getPage(url) #download the file from the location
 
+def makeFileUrl(address, session, filename):
+    pieces = address + '/' + session + '/' + filename
+    return pieces # you will need t encode pieces
+
+class FileSubmission(Resource):
+    
+    def render_POST(self, request):
+        """
+        parse a file send request.
+        """
+        addr, session, filename = parseFileRequest(request.args)
+        log.msg("file", filename[0],)
+        url = makeFileUrl(addr[0], session[0], filename[0])
+###        log.msg("url:", url)
+
 if __name__ == '__main__':
-    #root = Resource()
+    from twisted.python import log
+    from sys import stdout
+    log.startLogging(stdout)
+    root = Resource()
     #root.putChild('r1', File("/Users/chris/Code/rust"))
     #root.putChild('r2', File("/Users/chris/Code/fun/rust"))
-
-
+    root.putChild('request', FileSubmission())
+    reactor.callLater(2, 
+                      sendFileRequest, 
+                      address='http://localhost:8880/request', 
+                      session='a', 
+                      filename='1')
     # factory sets up the actual site root
-    #factory = Site(root)
+    factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()

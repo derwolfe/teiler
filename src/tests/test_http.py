@@ -12,7 +12,7 @@ The process is as follows
 
 """
 
-from ..http_file_transfer import parseFileRequestData
+from ..http_file_transfer import parseFileRequest
 from twisted.trial import unittest
 from urllib import urlencode
 
@@ -28,9 +28,9 @@ class HttpFileGrabberTests(unittest.TestCase):
         filename = '/bar'
         data = urlencode({'address': address, 
                           'session': session, 
-                          'filename': filename})
-        
-        addr, sess, fname = parseFileRequestData(form)
+                          'filename': filename
+                      })
+        addr, sess, fname = parseFileRequest(data)
         self.assertEqual(addrress, addr)
         self.assertEqual(session, sess)
         self.assertEqual(filename, fname)
