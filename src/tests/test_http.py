@@ -12,31 +12,31 @@ The process is as follows
 
 """
 
-from ..http_file_transfer import parseFileRequest
+from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
 from twisted.trial import unittest
-from urllib import urlencode
 
-class HttpFileGrabberTests(unittest.TestCase):
+
+class SendFileReuqestTests(unittest.TestCase):
     
+    
+    def test_render_post_adds_files(self):
+        files = []
+        resource = SendFileRequest(files)
+        request = createFileRequest('url', 'chris')
+        result = resource.render_POST(request)
+        self.assertEqual(result, 'url')
+        self.assertTrue(len(files) > 0)
 
-    def test_parses_form(self):
-        """
-        Given a properly formatted form, can i parse it
-        """
-        address = 'a'
-        session = '1'
-        filename = '/bar'
-        senderAddress = 'b'
-        data = {'address': [address,], 'senderAddress': [senderAddress,], 'session': [session,], 'filename': [filename,]}
-        addr, senderAddr, sess, fname = parseFileRequest(data)
-        self.assertEqual(address, addr)
-        self.assertEqual(session, sess)
-        self.assertEqual(filename, fname)
-        self.assertEqual(senderAddress, senderAddr)
+#class HttpFileGrabberTests(unittest.TestCase):
 
+    # def setUp(self):
 
-    def posts_form(self):
-        """
-        server is able to post form to a client
-        """
-        pass
+    #     self.queue = []
+    #     # set up the resource page to which fileRequests
+    #     # will be submitted
+    #     root.putChild('test', SendFileRequest(self.queue))
+    
+    # def test_filerequest_server_understands_posts(self):
+    #     pass
+
+        
