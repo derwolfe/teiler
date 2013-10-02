@@ -1,5 +1,14 @@
 """
-Have a file server accepting post requests.
+Each client will have a server to which requests can be posted.
+
+Once a user posts a request to another user's application, that request for a file
+transfer will join the queue with other file transfer requests.
+
+If the user (or recipient of the transfer request in this case) wants the file,
+the user will somehow confirm the transfer request. 
+
+This will trigger the application to use getFile, which really is a just a twisted
+getPage command.
 """
 from twisted.web.server import Site
 from twisted.web.static import File
@@ -7,20 +16,15 @@ from twisted.web.resource import Resource
 from twisted.internet import reactor
 from twisted.web.client import getPage
 from twisted.internet.defer import Deferred
-
-from urllib import urlencode, unquote, quote
+from urllib import urlencode
 from twisted.python import log
 from sys import stdout
-## 1 have the ability to post a file
-## 2 serve the file at the url
 
-# file uploads suck in twisted, downloads don't   
-# each drop event should just use a sessionId and a filename
-# i.e. add resource root.putChild(sessionId + filename, File(filename))
-# a '' client '' will grab urls that it wants
-# a '' server '' will host the files it wants to send, and send posts
 
 class FileRequest(object):
+    """
+    Store the information relating to a single transfer request.
+    """
     
     def __init__(self, url, session):
         self.url = url
@@ -32,9 +36,10 @@ class FileRequest(object):
 
 class SendFileRequest(Resource):
     """
-    Resource meant to process file sending requests.
-    To transfer a file, the sender of the file must post a form to this resource.
-    Currently this server only supports having urls posted to it.
+    Used by the recipient of a file transfer. 
+
+    The idea is a, a fellow user will post urls to this server.
+    Over time this will change but for right now, this is the basic idea
     """
     def __init__(self, files):
         """
@@ -50,7 +55,8 @@ class SendFileRequest(Resource):
         self.files.append(data) #add the url and session to the list
         log.msg("SendFileRequest:: render_POST: files", self.files)
         return url
-    
+
+# used by the recipient of a file transfer
 def parseFileRequest(data):
     """
     Expects a dict like object with the correct keys, this is provided 
@@ -67,8 +73,10 @@ def parseFileRequest(data):
 # used by the file sender
 def createFileRequest(url, session):
     """
-    The data contained in this request, will be used to download
-    the file from the sender.
+    Used by the file sender to propose a file transfer to 
+    a fellow user.
+
+    Basically, prepare a form to be posted to a url.
     """
     postdata = urlencode({'url': url, 'session': session })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
@@ -77,7 +85,7 @@ def createFileRequest(url, session):
 # used by the file sender
 def submitFileRequest(recipient, postdata, headers):
     """
-    use twisted.web.client.getpage to grab post the file push
+    use twisted.web.client.getpage to post the file push
     request.
 
     returns a deferred.
@@ -88,26 +96,31 @@ def submitFileRequest(recipient, postdata, headers):
                    postdata=postdata,
                    headers=headers)
 
+def getFile(url, session):
+    """
+    using the url and session information, grab the file or files
+    """
+    
 
 if __name__ == '__main__':
     log.startLogging(stdout)
     root = Resource()
     state = []
     root.putChild('request', SendFileRequest(state))
+## all part of initial test
 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
     session = 'chris'
-
     p, h = createFileRequest(url, session)
-    # post a test message to the fileResource
     reactor.callLater(1, 
                       submitFileRequest, 
                       recipient=server, 
                       postdata=p, 
                       headers=h)
 
-    # factory sets up the actual site root
+## part of initial test
+
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
