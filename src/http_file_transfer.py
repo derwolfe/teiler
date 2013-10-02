@@ -20,6 +20,15 @@ from sys import stdout
 # a '' client '' will grab urls that it wants
 # a '' server '' will host the files it wants to send, and send posts
 
+class FileRequest(object):
+    
+    def __init__(self, url, session):
+        self.url = url
+        self.session = session
+
+    def __repr__(self):
+        return "File::{0}:{1}".format(self.url, self.session)
+        
 
 class SendFileRequest(Resource):
     """
@@ -28,14 +37,18 @@ class SendFileRequest(Resource):
     Currently this server only supports having urls posted to it.
     """
     def __init__(self, files):
+        """
+        Pass in a list or some other object to which you
+        can append files to download.
+        """
         Resource.__init__(self)
         self.files = files
     
     def render_POST(self, request):
-        log.msg("SendFileRequest:: render_post : data", request.args)
-        url = parseFileRequest(request.args)
-        self.files.append(url)
-        log.msg(self.files)
+        log.msg("SendFileRequest:: render_POST: data", request.args)
+        data = parseFileRequest(request.args)
+        self.files.append(data) #add the url and session to the list
+        log.msg("SendFileRequest:: render_POST: files", self.files)
         return url
     
 def parseFileRequest(data):
@@ -44,19 +57,20 @@ def parseFileRequest(data):
     by request.args
     """
     log.msg('parseFileRequest: raw data:', data)
-    if "url" in data:
+    if "url" in data and "session" in data:
         url = data["url"][0]
-    log.msg('parseFileRequest: parsed url:', url)
-    return url
+        session = data["session"][0]
+        log.msg('parseFileRequest: parsed url:', url)
+        return FileRequest(url, session)
 
 
 # used by the file sender
-def createFileRequest(url):
+def createFileRequest(url, session):
     """
     The data contained in this request, will be used to download
     the file from the sender.
     """
-    postdata = urlencode({'url': url })
+    postdata = urlencode({'url': url, 'session': session })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
 
@@ -83,9 +97,9 @@ if __name__ == '__main__':
 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
+    session = 'chris'
 
-
-    p, h = createFileRequest(url)
+    p, h = createFileRequest(url, session)
     # post a test message to the fileResource
     reactor.callLater(1, 
                       submitFileRequest, 
