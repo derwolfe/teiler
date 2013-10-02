@@ -28,67 +28,28 @@ class SendFileRequest(Resource):
     Currently this server only supports having urls posted to it.
     """
     def render_POST(self, request):
-        log.msg('hit')
-        d = Deferred()
-        d.addCallback(parseFileRequest)
-        d.addErrback(parseError)
-        d.addCallback(makeFileUrl)
-        d.addCallback(getPage)
-        d.addErrback(log.msg)
-        # go do my bidding
-        d.callback(request.args)
-        return d
+        log.msg("SendFileRequest:: render_post : data", request.args)
+        url = parseFileRequest(request.args)
+        return url
     
-    # def render_GET(self, request):
-    #     log.msg("get request")
-    #     return "<html><h1>hi</h1></html>"
-
-
 def parseFileRequest(data):
     """
     Expects a dict like object with the correct keys, this is provided 
     by request.args
     """
     log.msg('parsefilerequest: raw data:', data)
-
-    if "senderAddress" in data and "session" in data and "filename" in data:
-        senderAddress = unquote(data["senderAddress"][0])
-        session = unquote(data["session"][0])
-        filename = unquote(data["filename"][0])
-        log.msg("parsefilerequest: parsed data:", senderAddress, session, filename)
-    return senderAddress, session, filename
-
-
-#def makeFileUrl(address, senderAddress, session, filename):
-def makeFileUrl(results):
-    """
-    Use the information passed in from the posted message to create a url.
-    """
-    log.msg("makeFileUrl:", results)
-    address = results[0]
-    session = results[1]
-    filename = results[2]
-    pieces = address + '/' + session + '/' + filename
-    log.msg("makeFileUrl: pieces:", pieces)
-    return pieces # you will need t encode pieces
-
-
-def parseError(reason):
-    log.msg("error parsing message", reason)
+    if "url" in data:
+        url = data["url"]
+    return url
 
 
 # used by the file sender
-def createFileRequest(sender, session, filename):
+def createFileRequest(url):
     """
-    This function expects a network address, a session id, and a  
-    filename. Using this it will post a request a user.
-
     The data contained in this request, will be used to download
     the file from the sender.
     """
-    postdata = urlencode({'senderAddress': sender,
-                          'session': session,
-                          'filename': filename })
+    postdata = urlencode({'url': url })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
 
@@ -100,6 +61,7 @@ def submitFileRequest(recipient, postdata, headers):
 
     returns a deferred.
     """
+    log.msg("submitFileRequest:: data:", recipient)
     return getPage(recipient,
                    method='POST', 
                    postdata=postdata,
@@ -111,11 +73,11 @@ if __name__ == '__main__':
     root = Resource()
     root.putChild('request', SendFileRequest())
     server = 'http://localhost:8880/request'
-    p, h = createFileRequest(sender='http://localhost:8880',
-                             session='a', 
-                             filename='1')
+    url = 'http://localhost:8000/filemestupid'
+
+    p, h = createFileRequest(url)
     # post a test message to the fileResource
-    reactor.callLater(10, 
+    reactor.callLater(1, 
                       submitFileRequest, 
                       recipient=server, 
                       postdata=p, 
