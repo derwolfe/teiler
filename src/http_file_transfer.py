@@ -8,7 +8,9 @@ from twisted.internet import reactor
 from twisted.web.client import getPage
 from twisted.internet.defer import Deferred
 
-from urllib import urlencode, unquote
+from urllib import urlencode, unquote, quote
+from twisted.python import log
+from sys import stdout
 ## 1 have the ability to post a file
 ## 2 serve the file at the url
 
@@ -19,26 +21,27 @@ from urllib import urlencode, unquote
 # a '' server '' will host the files it wants to send, and send posts
 
 
-def sendFileRequest(address, session, filename):
+class SendFileRequest(Resource):
     """
-    This function expects a network address, a session id, and a  
-    filename. Using this it will post a request a user.
-
-    The data contained in this request, will be used to download
-    the file from the sender.
+    Resource meant to process file sending requests.
+    To transfer a file, the sender of the file must post a form to this resource.
+    Currently this server only supports having urls posted to it.
     """
-    postdata = urlencode({
-            'address': address,
-            'session': session,
-            'filename': filename
-            })
-    headers = {'Content-type': 'application/x-www-form-urlencoded'}
-    # request the page by posting the form
-    return getPage(address, 
-                    method='POST', 
-                    postdata=postdata,
-                    headers=headers
-                )
+    def render_POST(self, request):
+        log.msg('hit')
+        d = Deferred()
+        d.addCallback(parseFileRequest)
+        d.addErrback(parseError)
+        d.addCallback(makeFileUrl)
+        d.addCallback(getPage)
+        d.addErrback(log.msg)
+        # go do my bidding
+        d.callback(request.args)
+        return d
+    
+    # def render_GET(self, request):
+    #     log.msg("get request")
+    #     return "<html><h1>hi</h1></html>"
 
 
 def parseFileRequest(data):
@@ -46,49 +49,78 @@ def parseFileRequest(data):
     Expects a dict like object with the correct keys, this is provided 
     by request.args
     """
-    # you want the address, the session Id and the file name
+    log.msg('parsefilerequest: raw data:', data)
 
-    if "address" in data and "session" in data and "filename" in data:
-        addr = data["address"]
-        session = data["session"]
-        filename = data["filename"]
-    return addr, session, filename
-    
+    if "senderAddress" in data and "session" in data and "filename" in data:
+        senderAddress = unquote(data["senderAddress"][0])
+        session = unquote(data["session"][0])
+        filename = unquote(data["filename"][0])
+        log.msg("parsefilerequest: parsed data:", senderAddress, session, filename)
+    return senderAddress, session, filename
 
-def getFile(address, session, filename):
+
+#def makeFileUrl(address, senderAddress, session, filename):
+def makeFileUrl(results):
     """
-    Get the file at the specific address, session, filename url
+    Use the information passed in from the posted message to create a url.
     """
-    return getPage(url) #download the file from the location
-
-def makeFileUrl(address, session, filename):
+    log.msg("makeFileUrl:", results)
+    address = results[0]
+    session = results[1]
+    filename = results[2]
     pieces = address + '/' + session + '/' + filename
+    log.msg("makeFileUrl: pieces:", pieces)
     return pieces # you will need t encode pieces
 
-class FileSubmission(Resource):
-    
-    def render_POST(self, request):
-        """
-        parse a file send request.
-        """
-        addr, session, filename = parseFileRequest(request.args)
-        log.msg("file", filename[0],)
-        url = makeFileUrl(addr[0], session[0], filename[0])
-###        log.msg("url:", url)
+
+def parseError(reason):
+    log.msg("error parsing message", reason)
+
+
+# used by the file sender
+def createFileRequest(sender, session, filename):
+    """
+    This function expects a network address, a session id, and a  
+    filename. Using this it will post a request a user.
+
+    The data contained in this request, will be used to download
+    the file from the sender.
+    """
+    postdata = urlencode({'senderAddress': sender,
+                          'session': session,
+                          'filename': filename })
+    headers = {'Content-type': 'application/x-www-form-urlencoded'}
+    return postdata, headers
+
+# used by the file sender
+def submitFileRequest(recipient, postdata, headers):
+    """
+    use twisted.web.client.getpage to grab post the file push
+    request.
+
+    returns a deferred.
+    """
+    return getPage(recipient,
+                   method='POST', 
+                   postdata=postdata,
+                   headers=headers)
+
 
 if __name__ == '__main__':
-    from twisted.python import log
-    from sys import stdout
     log.startLogging(stdout)
     root = Resource()
-    #root.putChild('r1', File("/Users/chris/Code/rust"))
-    #root.putChild('r2', File("/Users/chris/Code/fun/rust"))
-    root.putChild('request', FileSubmission())
-    reactor.callLater(2, 
-                      sendFileRequest, 
-                      address='http://localhost:8880/request', 
-                      session='a', 
-                      filename='1')
+    root.putChild('request', SendFileRequest())
+    server = 'http://localhost:8880/request'
+    p, h = createFileRequest(sender='http://localhost:8880',
+                             session='a', 
+                             filename='1')
+    # post a test message to the fileResource
+    reactor.callLater(10, 
+                      submitFileRequest, 
+                      recipient=server, 
+                      postdata=p, 
+                      headers=h)
+    
     # factory sets up the actual site root
     factory = Site(root)
     reactor.listenTCP(8880, factory)
