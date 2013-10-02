@@ -27,9 +27,15 @@ class SendFileRequest(Resource):
     To transfer a file, the sender of the file must post a form to this resource.
     Currently this server only supports having urls posted to it.
     """
+    def __init__(self, files):
+        Resource.__init__(self)
+        self.files = files
+    
     def render_POST(self, request):
         log.msg("SendFileRequest:: render_post : data", request.args)
         url = parseFileRequest(request.args)
+        self.files.append(url)
+        log.msg(self.files)
         return url
     
 def parseFileRequest(data):
@@ -37,9 +43,10 @@ def parseFileRequest(data):
     Expects a dict like object with the correct keys, this is provided 
     by request.args
     """
-    log.msg('parsefilerequest: raw data:', data)
+    log.msg('parseFileRequest: raw data:', data)
     if "url" in data:
-        url = data["url"]
+        url = data["url"][0]
+    log.msg('parseFileRequest: parsed url:', url)
     return url
 
 
@@ -71,9 +78,12 @@ def submitFileRequest(recipient, postdata, headers):
 if __name__ == '__main__':
     log.startLogging(stdout)
     root = Resource()
-    root.putChild('request', SendFileRequest())
+    state = []
+    root.putChild('request', SendFileRequest(state))
+
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
+
 
     p, h = createFileRequest(url)
     # post a test message to the fileResource
@@ -82,7 +92,7 @@ if __name__ == '__main__':
                       recipient=server, 
                       postdata=p, 
                       headers=h)
-    
+
     # factory sets up the actual site root
     factory = Site(root)
     reactor.listenTCP(8880, factory)
