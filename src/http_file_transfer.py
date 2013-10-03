@@ -10,7 +10,7 @@ the user will somehow confirm the transfer request.
 This will trigger the application to use getFile, which really is a just a twisted
 getPage command.
 """
-from twisted.web.server import Site
+from twisted.web.server import Site, NOT_DONE_YET
 from twisted.web.static import File
 from twisted.web.resource import Resource
 from twisted.internet import reactor
@@ -74,7 +74,7 @@ class SendFileRequest(Resource):
         d.addCallback(self.files.append)
         d.callback(request.args)
         log.msg("SendFileRequest:: render_POST: files", self.files)
-        return "OK"  # not sure if this is necessary
+        return "OK" 
 
 
 # used by the recipient of a file transfer
@@ -123,7 +123,8 @@ def getFile(url, session):
     """
     using the url and session information, grab the file or files
     """
-    
+    # liekly use download page
+    pass
 
 if __name__ == '__main__':
     log.startLogging(stdout)
