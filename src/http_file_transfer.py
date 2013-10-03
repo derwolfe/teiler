@@ -34,7 +34,12 @@ class FileRequest(object):
         return "File::{0}:{1}".format(self.url, self.session)
         
 class FormArgsError(Exception):
+    """
+    Exception to be thrown when a form doesn't contain the 
+    right arguments. Overkill?
+    """
     pass
+
 
 class SendFileRequest(Resource):
     """
@@ -50,17 +55,27 @@ class SendFileRequest(Resource):
         """
         Resource.__init__(self)
         self.files = files
+
+    def render_GET(self, request):
+        """
+        silly little test method.
+        """
+        return "<html>ja, ich bins</html>"
     
     def render_POST(self, request):
         """
         respond to post requests. This is where the file sender processing
         will begin.
         """
+        d = Deferred()
         log.msg("SendFileRequest:: render_POST: data", request.args)
-        data = parseFileRequest(request.args)
-        self.files.append(data) #add the url and session to the list
+        d.addCallback(parseFileRequest)
+        d.addErrback(log.msg)
+        d.addCallback(self.files.append)
+        d.callback(request.args)
         log.msg("SendFileRequest:: render_POST: files", self.files)
         return "OK"  # not sure if this is necessary
+
 
 # used by the recipient of a file transfer
 def parseFileRequest(data):
