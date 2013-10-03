@@ -33,6 +33,8 @@ class FileRequest(object):
     def __repr__(self):
         return "File::{0}:{1}".format(self.url, self.session)
         
+class FormArgsError(Exception):
+    pass
 
 class SendFileRequest(Resource):
     """
@@ -50,11 +52,15 @@ class SendFileRequest(Resource):
         self.files = files
     
     def render_POST(self, request):
+        """
+        respond to post requests. This is where the file sender processing
+        will begin.
+        """
         log.msg("SendFileRequest:: render_POST: data", request.args)
         data = parseFileRequest(request.args)
         self.files.append(data) #add the url and session to the list
         log.msg("SendFileRequest:: render_POST: files", self.files)
-        return url
+        return "OK"  # not sure if this is necessary
 
 # used by the recipient of a file transfer
 def parseFileRequest(data):
@@ -63,7 +69,9 @@ def parseFileRequest(data):
     by request.args
     """
     log.msg('parseFileRequest: raw data:', data)
-    if "url" in data and "session" in data:
+    if "url" not in data or "session" not in data:
+        raise FormArgsError()
+    elif "url" in data and "session" in data:
         url = data["url"][0]
         session = data["session"][0]
         log.msg('parseFileRequest: parsed url:', url)
@@ -104,6 +112,7 @@ def getFile(url, session):
 
 if __name__ == '__main__':
     log.startLogging(stdout)
+    # should I make a site
     root = Resource()
     state = []
     root.putChild('request', SendFileRequest(state))
@@ -120,7 +129,6 @@ if __name__ == '__main__':
                       headers=h)
 
 ## part of initial test
-
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
