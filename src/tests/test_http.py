@@ -69,13 +69,20 @@ class SendFileRequestTests(unittest.TestCase):
         self.files = []
         self.web = DummySite(MainPage(self.files))
 
-    @inlineCallbacks
     def test_get_response(self):
-        response = yield self.web.get("request")
-        self.assertEqual(response.value(), "<html>ja, ich bins</html>")
+        d = self.web.get("request")
+        def check(response):
+            self.assertEqual(response.value(), "<html>ja, ich bins</html>")
+        d.addCallback(check)
+        return d
 
-    @inlineCallbacks
+
     def test_post_adds_files(self):        
         postdata, headers = createFileRequest('url', 'chris')
-        response = yield self.web.post("request", {'postdata': postdata} , headers=headers)
-        self.assertTrue(len(self.files) == 1)
+        #d = self.web.post("request", {'postdata': postdata} , headers=headers)
+        d = self.web.post("request", {'url':'url', 'session': 'chris'}, headers=headers)
+        def check(response):
+#            log.msg(response.responseCode)
+#            self.assertTrue(response.responseCode == 200)
+            self.assertTrue(len(self.files) == 1)
+        d.addCallback(check)
