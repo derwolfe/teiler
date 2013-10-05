@@ -133,19 +133,13 @@ def getFile(url, session):
     """
     using the url and session information, grab the file or files
     """
-    # liekly use download page
     pass
+
 
 if __name__ == '__main__':
     log.startLogging(stdout)
     state = []
     root = MainPage(state)
-    # should I make a site
-    #    root = Resource()
-    #    state = []
-    #    root.putChild('request', SendFileRequest(state))
-    ## all part of initial test
-
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
     session = 'chris'
@@ -155,8 +149,6 @@ if __name__ == '__main__':
                       recipient=server, 
                       postdata=p, 
                       headers=h)
-
-
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
