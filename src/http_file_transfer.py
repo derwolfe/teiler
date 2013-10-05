@@ -10,7 +10,7 @@ the user will somehow confirm the transfer request.
 This will trigger the application to use getFile, which really is a just a twisted
 getPage command.
 """
-from twisted.web.server import Site
+from twisted.web.server import Site, NOT_DONE_YET
 from twisted.web.static import File
 from twisted.web.resource import Resource
 from twisted.internet import reactor
@@ -33,6 +33,18 @@ class FileRequest(object):
     def __repr__(self):
         return "File::{0}:{1}".format(self.url, self.session)
         
+class FormArgsError(Exception):
+    """
+    Exception to be thrown when a form doesn't contain the 
+    right arguments. Overkill?
+    """
+    pass
+
+class MainPage(Resource):
+    def __init__(self, state):
+        Resource.__init__(self)
+        self.putChild("request", SendFileRequest(state))
+
 
 class SendFileRequest(Resource):
     """
@@ -48,13 +60,27 @@ class SendFileRequest(Resource):
         """
         Resource.__init__(self)
         self.files = files
+
+    def render_GET(self, request):
+        """
+        silly little test method.
+        """
+        return "<html>ja, ich bins</html>"
     
     def render_POST(self, request):
+        """
+        respond to post requests. This is where the file sender processing
+        will begin.
+        """
+        d = Deferred()
         log.msg("SendFileRequest:: render_POST: data", request.args)
-        data = parseFileRequest(request.args)
-        self.files.append(data) #add the url and session to the list
+        d.addCallback(parseFileRequest)
+        d.addErrback(log.msg)
+        d.addCallback(self.files.append)
+        d.callback(request.args)
         log.msg("SendFileRequest:: render_POST: files", self.files)
-        return url
+        return "OK" 
+
 
 # used by the recipient of a file transfer
 def parseFileRequest(data):
@@ -63,7 +89,9 @@ def parseFileRequest(data):
     by request.args
     """
     log.msg('parseFileRequest: raw data:', data)
-    if "url" in data and "session" in data:
+    if "url" not in data or "session" not in data:
+        raise FormArgsError()
+    elif "url" in data and "session" in data:
         url = data["url"][0]
         session = data["session"][0]
         log.msg('parseFileRequest: parsed url:', url)
@@ -100,10 +128,12 @@ def getFile(url, session):
     """
     using the url and session information, grab the file or files
     """
-    
+    # liekly use download page
+    pass
 
 if __name__ == '__main__':
     log.startLogging(stdout)
+    # should I make a site
     root = Resource()
     state = []
     root.putChild('request', SendFileRequest(state))
@@ -119,8 +149,8 @@ if __name__ == '__main__':
                       postdata=p, 
                       headers=h)
 
-## part of initial test
 
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
+## part of initial test
