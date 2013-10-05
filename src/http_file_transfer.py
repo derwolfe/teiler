@@ -41,6 +41,11 @@ class FormArgsError(Exception):
     pass
 
 class MainPage(Resource):
+    """
+    Creating a main page should pull together all of the children
+    resources.
+    """
+
     def __init__(self, state):
         Resource.__init__(self)
         self.putChild("request", SendFileRequest(state))
@@ -133,11 +138,13 @@ def getFile(url, session):
 
 if __name__ == '__main__':
     log.startLogging(stdout)
-    # should I make a site
-    root = Resource()
     state = []
-    root.putChild('request', SendFileRequest(state))
-## all part of initial test
+    root = MainPage(state)
+    # should I make a site
+    #    root = Resource()
+    #    state = []
+    #    root.putChild('request', SendFileRequest(state))
+    ## all part of initial test
 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'

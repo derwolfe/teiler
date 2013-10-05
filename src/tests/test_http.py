@@ -82,7 +82,5 @@ class SendFileRequestTests(unittest.TestCase):
         #d = self.web.post("request", {'postdata': postdata} , headers=headers)
         d = self.web.post("request", {'url':'url', 'session': 'chris'}, headers=headers)
         def check(response):
-#            log.msg(response.responseCode)
-#            self.assertTrue(response.responseCode == 200)
             self.assertTrue(len(self.files) == 1)
         d.addCallback(check)
