@@ -40,6 +40,11 @@ class FormArgsError(Exception):
     """
     pass
 
+class MainPage(Resource):
+    def __init__(self, state):
+        Resource.__init__(self)
+        self.putChild("request", SendFileRequest(state))
+
 
 class SendFileRequest(Resource):
     """
@@ -144,7 +149,8 @@ if __name__ == '__main__':
                       postdata=p, 
                       headers=h)
 
-## part of initial test
+
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
+## part of initial test
