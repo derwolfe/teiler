@@ -161,6 +161,7 @@ def getFile(url, session, downloadDir):
     return downloadPage(url, downloadDir)
 
 
+
 if __name__ == '__main__':
     log.startLogging(stdout)
     # to download 
@@ -188,8 +189,6 @@ if __name__ == '__main__':
                       recipient=server, 
                       postdata=p, 
                       headers=h)
-
-
     factory = Site(root)
     reactor.listenTCP(8880, factory)
     reactor.run()
