@@ -70,7 +70,6 @@ class MainPage(Resource):
         Removes a File resource that is currently being hosted.
         """
         log.msg('MainPage:: removeFile:', urlName)
-        self.hosting.
         self.delEntity(urlName)
         
 
