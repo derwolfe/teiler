@@ -52,7 +52,9 @@ class MainPage(Resource):
 
     def __init__(self, toDownload, hosting):
         Resource.__init__(self)
+        # used to receive file transfer requests
         self.putChild("request", SendFileRequest(toDownload))
+        # contains files currently being hosted and their urls
         self.hosting = hosting
 
     def addFile(self, urlName, path):
@@ -68,6 +70,7 @@ class MainPage(Resource):
         Removes a File resource that is currently being hosted.
         """
         log.msg('MainPage:: removeFile:', urlName)
+        self.hosting.
         self.delEntity(urlName)
         
 

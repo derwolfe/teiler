@@ -41,13 +41,6 @@ class SmartDummyRequest(DummyRequest):
     def value(self):
         return "".join(self.written)
 
-    def isSecure(self):
-        return True
-
-    def redirect(self, url):
-        self.responseCode = 200
-        return url
-
 
 class DummySite(server.Site):
     def get(self, url, args=None, headers=None):
