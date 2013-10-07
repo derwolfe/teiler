@@ -50,15 +50,17 @@ class MainPage(Resource):
     to be provided by the user at runtime.
     """
 
-    def __init__(self, state):
+    def __init__(self, toDownload, hosting):
         Resource.__init__(self)
-        self.putChild("request", SendFileRequest(state))
+        self.putChild("request", SendFileRequest(toDownload))
         
 
     def addFile(self, urlName, path):
         """
         Adds a new file resrurce 
         """
+        log.msg('MainPage:: addFile:', path)
+        self.hosting.append(path)
         self.putChild(urlName, File(path))
 
     def removeFile(self, urlName):
@@ -162,8 +164,11 @@ if __name__ == '__main__':
     log.startLogging(stdout)
     # to download 
     state = []
+    toDownload = []
+    hosting = []
+    
     # to host for upload create another list of file names
-    root = MainPage(state)
+    root = MainPage(hosting, toDownload)
 
     # to add new folders
     ## new files

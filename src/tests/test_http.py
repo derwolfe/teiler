@@ -70,8 +70,9 @@ class DummySite(server.Site):
 class SendFileRequestTests(unittest.TestCase):
 
     def setUp(self):
-        self.files = []
-        self.web = DummySite(MainPage(self.files))
+        self.toDownload = []
+        self.hosting = []
+        self.web = DummySite(MainPage(self.toDownload, self.hosting))
 
     def test_get_response(self):
         d = self.web.get("request")
@@ -87,7 +88,7 @@ class SendFileRequestTests(unittest.TestCase):
                           headers=headers)
         def check(response):
             self.assertEqual(response.value(), "<html>OK</html>")
-            self.assertEqual(len(self.files), 1)
+            self.assertEqual(len(self.toDownload), 1)
         d.addCallback(check)
         return d
 
@@ -102,8 +103,9 @@ class FileDownloadTests(unittest.TestCase):
         return reactor.listenTCP(0, site, interface="127.0.0.1")
         
     def setUp(self):
-        state = []
-        r = MainPage(state)
+        self.toDownload = []
+        self.hosting = []
+        r = MainPage(self.toDownload, self.hosting)
         self.site = server.Site(r, timeout=None)
         self.wrapper = WrappingFactory(self.site)
         self.port = self._listen(self.wrapper)
@@ -126,7 +128,6 @@ class FileDownloadTests(unittest.TestCase):
         """
         check to see whether or not download data actually works
         """
-        print self.portno
         addr = 'http://127.0.0.1:%d/file.txt' % self.portno
         d = getFile(addr, self.session, self.downloadTo)
         #d = getFile(self.getURL('file.txt'), self.session, self.downloadTo)
