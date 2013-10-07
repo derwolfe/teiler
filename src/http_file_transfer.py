@@ -10,11 +10,11 @@ the user will somehow confirm the transfer request.
 This will trigger the application to use getFile, which really is a just a twisted
 getPage command.
 """
-from twisted.web.server import Site, NOT_DONE_YET
+from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.resource import Resource
 from twisted.internet import reactor
-from twisted.web.client import getPage
+from twisted.web.client import getPage, downloadPage
 from twisted.internet.defer import Deferred
 from urllib import urlencode
 from twisted.python import log
@@ -40,23 +40,40 @@ class FormArgsError(Exception):
     """
     pass
 
+
 class MainPage(Resource):
     """
     Creating a main page should pull together all of the children
     resources.
+    
+    Files to be 'sent' will be hosted here as static files at a url
+    to be provided by the user at runtime.
     """
 
     def __init__(self, state):
         Resource.__init__(self)
         self.putChild("request", SendFileRequest(state))
+        
 
+    def addFile(self, urlName, path):
+        """
+        Adds a new file resrurce 
+        """
+        self.putChild(urlName, File(path))
+
+    def removeFile(self, urlName):
+        """
+        Removes a File resource that is currently being hosted.
+        """
+        self.delEntity(urlName)
+        
 
 class SendFileRequest(Resource):
     """
     Used by the recipient of a file transfer. 
 
-    The idea is a, a fellow user will post urls to this server.
-    Over time this will change but for right now, this is the basic idea
+    This resource will always be present in the application. It is
+    used to receive file transfer requests from other users.
     """
     def __init__(self, files):
         """
@@ -84,7 +101,7 @@ class SendFileRequest(Resource):
         d.addCallback(self.files.append)
         d.callback(request.args)
         log.msg("SendFileRequest:: render_POST: files", self.files)
-        return "OK" 
+        return "<html>OK</html>" 
 
 
 # used by the recipient of a file transfer
@@ -129,22 +146,30 @@ def submitFileRequest(recipient, postdata, headers):
                    postdata=postdata,
                    headers=headers)
 
-def getFile(url, session):
+def getFile(url, session, downloadDir):
     """
-    using the url and session information, grab the file or files
+    Download the file located at te url into the new location.
     """
-    # liekly use download page
-    pass
+    log.msg("getFile:: data:", url, session)
+    # returns a deferred!, you could attach callback
+    # to remove the files from the list once the transfer is complete
+    return downloadPage(url, downloadDir)
+
+
+
 
 if __name__ == '__main__':
     log.startLogging(stdout)
+    # to download 
     state = []
+    # to host for upload create another list of file names
     root = MainPage(state)
-    # should I make a site
-    #    root = Resource()
-    #    state = []
-    #    root.putChild('request', SendFileRequest(state))
-    ## all part of initial test
+
+    # to add new folders
+    ## new files
+    root.putChild('meme', File('./'))
+    ## use to remove files
+    root.delEntity('meme')
 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'

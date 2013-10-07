@@ -14,12 +14,16 @@ The process is as follows
 
 from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
 from ..http_file_transfer import MainPage
+from ..http_file_transfer import getFile
 from twisted.trial import unittest
 from twisted.web.test.test_web import DummyRequest
-from twisted.internet.defer import succeed, inlineCallbacks
+from twisted.internet.defer import succeed, Deferred
 from twisted.web import server
 from twisted.python import log
-
+from twisted.protocols.policies import WrappingFactory
+from twisted.python.compat import networkString, nativeString
+from twisted.internet import reactor
+from urlparse import urljoin
 
 ## code used to test resources  
 class SmartDummyRequest(DummyRequest):
@@ -76,11 +80,60 @@ class SendFileRequestTests(unittest.TestCase):
         d.addCallback(check)
         return d
 
-
     def test_post_adds_files(self):        
         postdata, headers = createFileRequest('url', 'chris')
-        #d = self.web.post("request", {'postdata': postdata} , headers=headers)
-        d = self.web.post("request", {'url':'url', 'session': 'chris'}, headers=headers)
+        d = self.web.post("request", 
+                          {'url':'url', 'session': 'chris'}, 
+                          headers=headers)
         def check(response):
-            self.assertTrue(len(self.files) == 1)
+            self.assertEqual(response.value(), "<html>OK</html>")
+            self.assertEqual(len(self.files), 1)
         d.addCallback(check)
+        return d
+
+
+class FileDownloadTests(unittest.TestCase):
+    
+    """
+    These tests assume that resource works as expected. The test is to see 
+    if your file download logic works.
+    """
+    def _listen(self, site):
+        return reactor.listenTCP(0, site, interface="127.0.0.1")
+        
+    def setUp(self):
+        state = []
+        r = MainPage(state)
+        self.site = server.Site(r, timeout=None)
+        self.wrapper = WrappingFactory(self.site)
+        self.port = self._listen(self.wrapper)
+        self.portno = self.port.getHost().port
+        self.session = 'a'
+        self.downloadTo = './'
+        self.cleanupServerConnections = 0
+
+    def tearDown(self):
+        connections = list(self.wrapper.protocols.keys())
+        if connections:
+            msg("Some left-over connections; this test is probably buggy.")
+        return self.port.stopListening()
+
+    def getURL(self, path):
+        host = "http://127.0.0.1:%d/" % self.portno
+        return networkString(urljoin(host, nativeString(path)))
+
+    def test_gets_file(self):
+        """
+        check to see whether or not download data actually works
+        """
+        print self.portno
+        addr = 'http://127.0.0.1:%d/file.txt' % self.portno
+        d = getFile(addr, self.session, self.downloadTo)
+        #d = getFile(self.getURL('file.txt'), self.session, self.downloadTo)
+#        import ipdb; ipdb.set_trace()a
+        # peer reset by connection
+        log.msg(self.getURL('file.txt'))
+        def check(response):
+            self.assertTrue(response.status, b"200")
+        d.addCallback(check)
+        
