@@ -19,11 +19,13 @@ from twisted.trial import unittest
 from twisted.web.test.test_web import DummyRequest
 from twisted.internet.defer import succeed, Deferred
 from twisted.web import server
+from twisted.web.static import File
 from twisted.python import log
 from twisted.protocols.policies import WrappingFactory
 from twisted.python.compat import networkString, nativeString
 from twisted.internet import reactor
 from urlparse import urljoin
+
 
 ## code used to test resources  
 class SmartDummyRequest(DummyRequest):
@@ -38,6 +40,13 @@ class SmartDummyRequest(DummyRequest):
 
     def value(self):
         return "".join(self.written)
+
+    def isSecure(self):
+        return True
+
+    def redirect(self, url):
+        self.responseCode = 200
+        return url
 
 
 class DummySite(server.Site):
@@ -73,6 +82,10 @@ class SendFileRequestTests(unittest.TestCase):
         self.toDownload = []
         self.hosting = []
         self.web = DummySite(MainPage(self.toDownload, self.hosting))
+        
+    #def tearDown(self):
+    #    for name in self.web.resource.listEntities():
+    #        self.web.resource.delEntity(name)
 
     def test_get_response(self):
         d = self.web.get("request")
@@ -91,6 +104,28 @@ class SendFileRequestTests(unittest.TestCase):
             self.assertEqual(len(self.toDownload), 1)
         d.addCallback(check)
         return d
+
+class MainPageMethodsTests(unittest.TestCase):
+
+    def setUp(self):
+        self.toDownload = []
+        self.hosting = []
+        self.web = DummySite(MainPage(self.toDownload, self.hosting))
+        self.name = "here"
+
+    def test_add_file_creates_reachable_url(self):
+        self.web.resource.addFile(self.name, ".")
+        entities = self.web.resource.listNames()
+        self.assertTrue(self.name in entities)
+
+    def test_remove_file_removes_url(self):
+        self.web.resource.putChild(self.name, File(".")) # put file using twisted syntax
+        entities = self.web.resource.listNames()
+        self.assertTrue(self.name in entities)
+
+        self.web.resource.removeFile(self.name)
+        entities = self.web.resource.listNames()
+        self.assertTrue(self.name not in entities)
 
 
 class FileDownloadTests(unittest.TestCase):

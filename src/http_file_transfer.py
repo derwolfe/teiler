@@ -53,7 +53,7 @@ class MainPage(Resource):
     def __init__(self, toDownload, hosting):
         Resource.__init__(self)
         self.putChild("request", SendFileRequest(toDownload))
-        
+        self.hosting = hosting
 
     def addFile(self, urlName, path):
         """
@@ -67,6 +67,7 @@ class MainPage(Resource):
         """
         Removes a File resource that is currently being hosted.
         """
+        log.msg('MainPage:: removeFile:', urlName)
         self.delEntity(urlName)
         
 
@@ -158,8 +159,6 @@ def getFile(url, session, downloadDir):
     return downloadPage(url, downloadDir)
 
 
-
-
 if __name__ == '__main__':
     log.startLogging(stdout)
     # to download 
@@ -172,9 +171,11 @@ if __name__ == '__main__':
 
     # to add new folders
     ## new files
-    root.putChild('meme', File('./'))
+    #root.putChild('meme', File('./'))
+    #root.addFile('me', './')
+    #root.removeFile('me')
     ## use to remove files
-    root.delEntity('meme')
+    #root.delEntity('meme')
 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
