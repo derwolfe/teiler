@@ -1,4 +1,7 @@
 language: python
+branches:
+    only:
+        - master 
 python:
     - "2.7"
 before-install:
@@ -9,5 +12,5 @@ install:
     - "pip install -r requirements.txt --use-mirrors"
 #vscript to run tests
 script: 
-    - "python trial src" 
+    - "trial src" 
 
