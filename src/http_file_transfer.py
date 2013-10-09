@@ -151,11 +151,11 @@ def submitFileRequest(recipient, postdata, headers):
                    postdata=postdata,
                    headers=headers)
 
-def getFile(url, session, downloadDir):
+def getFile(url, downloadDir):
     """
     Download the file located at te url into the new location.
     """
-    log.msg("getFile:: data:", url, session)
+    log.msg("getFile:: from:", url)
     # returns a deferred!, you could attach callback
     # to remove the files from the list once the transfer is complete
     return downloadPage(url, downloadDir)

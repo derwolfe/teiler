@@ -11,21 +11,21 @@ The process is as follows
     grab the file using a get request and the parameters supplied in the form.
 
 """
-
-from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
-from ..http_file_transfer import MainPage
-from ..http_file_transfer import getFile
 from twisted.trial import unittest
 from twisted.web.test.test_web import DummyRequest
 from twisted.internet.defer import succeed, Deferred
-from twisted.web import server
+from twisted.web import server, client
 from twisted.web.static import File
 from twisted.python import log
 from twisted.protocols.policies import WrappingFactory
 from twisted.python.compat import networkString, nativeString
 from twisted.internet import reactor
 from urlparse import urljoin
+from filecmp import cmp
+from os import remove
 
+from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
+from ..http_file_transfer import MainPage, getFile
 
 ## code used to test resources  
 class SmartDummyRequest(DummyRequest):
@@ -133,22 +133,41 @@ class FileDownloadTests(unittest.TestCase):
     def setUp(self):
         self.toDownload = []
         self.hosting = []
-        r = MainPage(self.toDownload, self.hosting)
-        self.site = server.Site(r, timeout=None)
+        self.r = MainPage(self.toDownload, self.hosting)
+        self.site = server.Site(self.r, timeout=None)
         self.wrapper = WrappingFactory(self.site)
         self.port = self._listen(self.wrapper)
         self.portno = self.port.getHost().port
         self.session = 'a'
-        self.downloadTo = './'
+        self.downloadTo = './downloaded.txt'
         self.cleanupServerConnections = 0
+        self.url = "example"
+        self.fileText = "ja, ich bins"
+        self.filename = "./file.txt"
+        # add a folder to mainpage containing the file
+        with open("./file.txt", "w") as f:
+            f.write(self.fileText)
+        # add the file resource
+        self.r.addFile(self.url, "file.txt")
+
 
     def tearDown(self):
         connections = list(self.wrapper.protocols.keys())
         if connections:
-            msg("Some left-over connections; this test is probably buggy.")
+            log.msg("Some left-over connections; this test is probably buggy.")
         return self.port.stopListening()
 
+    def test_file_is_available(self):
+        """
+        make sure the resource is listed as availale
+        """
+        self.assertTrue(self.url in self.r.listNames())
+
     def getURL(self, path):
+        """
+        Each test here open and closes a new port, this way the port 
+        assignment is automatic
+        """
         host = "http://127.0.0.1:%d/" % self.portno
         return networkString(urljoin(host, nativeString(path)))
 
@@ -156,13 +175,11 @@ class FileDownloadTests(unittest.TestCase):
         """
         check to see whether or not download data actually works
         """
-        addr = 'http://127.0.0.1:%d/file.txt' % self.portno
-        d = getFile(addr, self.session, self.downloadTo)
-        #d = getFile(self.getURL('file.txt'), self.session, self.downloadTo)
-#        import ipdb; ipdb.set_trace()a
-        # peer reset by connection
-        log.msg(self.getURL('file.txt'))
-        def check(response):
-            self.assertTrue(response.status, b"200")
+        d = getFile(self.getURL(self.url), self.downloadTo)
+        log.msg(self.getURL(self.url))
+        def check(ignored):
+            self.assertTrue(cmp(self.filename, self.downloadTo))
+            remove(self.downloadTo)
         d.addCallback(check)
+        return d
         
