@@ -1,7 +1,7 @@
 language: python
 branches:
     only:
-        - dev
+        - master 
 python:
     - "2.7"
 before-install:
