@@ -1,5 +1,8 @@
 Teiler
 ======
+[![Build
+Status](https://travis-ci.org/derwolfe/teiler.png?branch=dev)](https://travis-ci.org/derwolfe/teiler)
+
 ** this is not usable software at the moment **
 
 Basically, make it simple to share files amongst different computers behind the same router.
