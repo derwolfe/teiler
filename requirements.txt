@@ -1,5 +1,4 @@
 Twisted==13.1.0
-astroid==1.0.0
 ipdb==0.7
 ipython==0.13.1
 logilab-common==0.60.0
