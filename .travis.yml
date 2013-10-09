@@ -1,6 +1,9 @@
 language: python
 python:
     - "2.7"
+before-install:
+    - "sudo apt-get update"
+    - "sudo apt-get install libssl-dev swig"
 # deps
 install: 
     - "pip install -r requirements.txt --use-mirrors"
