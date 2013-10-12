@@ -34,19 +34,26 @@ class FileRequest(object):
     Store the information relating to a single transfer request.
     """
     
-    def __init__(self, url, session, files):
+    def __init__(self, url, session, files, downloadTo):
         # should this really be the list of file names and the base url?
         self.url = url
         self.session = session
         self.files = files
+        self.downloadTo = downloadTo
 
     def __repr__(self):
         return "Files::{0}:{1}".format(self.url, self.session)
 
-    def files(self):
-        # use comprehension, syntax wrong
-        for x in self.files:
-            print x
+    def getFiles(self):
+        """
+        Download each of the files in the request
+        """
+        for f in files:
+            # get the file
+            filename = self.files.pop()
+            url = self.url + '/' + filename
+            #getFile(url, # where to get the download dir?)
+    
  
 class MainPage(Resource):
     """
@@ -57,10 +64,10 @@ class MainPage(Resource):
     to be provided by the user at runtime.
     """
 
-    def __init__(self, toDownload, hosting):
+    def __init__(self, toDownload, hosting, downloadTo):
         Resource.__init__(self)
-        # used to receive file transfer requests
-        self.putChild("request", SendFileRequest(toDownload))
+        # post against the resource to create a new file request
+        self.putChild("request", SendFileRequest(toDownload, downloadTo))
         # contains files currently being hosted and their urls
         self.hosting = hosting
 
@@ -87,13 +94,14 @@ class SendFileRequest(Resource):
     This resource will always be present in the application. It is
     used to receive file transfer requests from other users.
     """
-    def __init__(self, files):
+    def __init__(self, files, downloadTo):
         """
         Pass in a list or some other object to which you
         can append files to download.
         """
         Resource.__init__(self)
         self.files = files
+        self.downloadTo = downloadTo
 
     def render_GET(self, request):
         """
@@ -109,9 +117,11 @@ class SendFileRequest(Resource):
         d = Deferred()
         log.msg("SendFileRequest:: render_POST: data", request.args)
         d.addCallback(parseFileRequest)
-        d.addErrback(log.msg)
+        def error(ignored):
+            return "<html>Error parsing form</html>"
+        d.addErrback(error)
         d.addCallback(self.files.append)
-        d.callback(request.args)
+        d.callback((request.args, self.downloadTo,))
         log.msg("SendFileRequest:: render_POST: files", self.files)
         return "<html>OK</html>" 
 
@@ -126,7 +136,7 @@ def _getFile(url, downloadDir):
     return downloadPage(url, downloadDir)
 
 # used by the recipient of a file transfer
-def parseFileRequest(data):
+def parseFileRequest(data, _downloadTo):
     """
     Expects a dict like object with the correct keys, this is provided 
     by request.args
@@ -140,7 +150,8 @@ def parseFileRequest(data):
         files = _parseFileNames(data["files"][0])
         log.msg('parseFileRequest: parsed url:', url)
         log.msg('parseFileRequest: parsed files:', files)
-        return FileRequest(url, session, files)
+        return FileRequest(url, session, files, _downloadTo)
+
 
 def _parseFileNames(files):
     """
@@ -149,8 +160,7 @@ def _parseFileNames(files):
     # maybe need to escape
     names = files.split(',')
     log.msg("_parseFileNames::", names)
-    return names # filenames cannot contain commas
-    
+    return names
 
 # used by the file sender
 def createFileRequest(url, session, files):
@@ -160,7 +170,9 @@ def createFileRequest(url, session, files):
 
     Basically, prepare a form to be posted to a url.
     """
-    postdata = urlencode({'url': url, 'session': session, 'files': files })
+    postdata = urlencode({'url': url, 
+                          'session': session, 
+                          'files': files })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
 
@@ -177,25 +189,3 @@ def submitFileRequest(recipient, postdata, headers):
                    method='POST', 
                    postdata=postdata,
                    headers=headers)
-
-if __name__ == '__main__':
-    log.startLogging(stdout)
-    # to download 
-    toDownload = []
-    hosting = []
-    
-    # to host for upload create another list of file names
-    root = MainPage(hosting, toDownload) 
-    server = 'http://localhost:8880/request'
-    url = 'http://localhost:8000/filemestupid'
-    session = 'chris'
-    p, h = createFileRequest(url, session)
-    reactor.callLater(1, 
-                      submitFileRequest, 
-                      recipient=server, 
-                      postdata=p, 
-                      headers=h)
-    factory = Site(root)
-    reactor.listenTCP(8880, factory)
-    reactor.run()
-## part of initial test

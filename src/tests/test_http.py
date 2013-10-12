@@ -74,7 +74,8 @@ class SendFileRequestTests(unittest.TestCase):
     def setUp(self):
         self.toDownload = []
         self.hosting = []
-        self.web = DummySite(MainPage(self.toDownload, self.hosting))
+        self.downloadTo = "."
+        self.web = DummySite(MainPage(self.toDownload, self.hosting, self.downloadTo))
         
     def test_get_response(self):
         d = self.web.get("request")
@@ -109,7 +110,8 @@ class MainPageMethodsTests(unittest.TestCase):
     def setUp(self):
         self.toDownload = []
         self.hosting = []
-        self.web = DummySite(MainPage(self.toDownload, self.hosting))
+        self.downloadTo = '.'
+        self.web = DummySite(MainPage(self.toDownload, self.hosting, self.downloadTo))
         self.name = "here"
 
     def test_add_file_creates_reachable_url(self):
@@ -139,7 +141,7 @@ class FileDownloadTests(unittest.TestCase):
     def setUp(self):
         self.toDownload = []
         self.hosting = []
-        self.r = MainPage(self.toDownload, self.hosting)
+        self.r = MainPage(self.toDownload, self.hosting, ".")
         self.site = server.Site(self.r, timeout=None)
         self.wrapper = WrappingFactory(self.site)
         self.port = self._listen(self.wrapper)
