@@ -20,8 +20,8 @@ from twisted.python.filepath import FilePath
 from urllib import urlencode
 from twisted.python import log
 from sys import stdout
+# secure file names
 import os
-
  
 class FormArgsError(Exception):
     """
@@ -29,6 +29,16 @@ class FormArgsError(Exception):
     right arguments.
     """
     pass
+
+## secure filename
+START_DIR = os.path.curdir
+
+def is_secure(path):
+    req = os.path.relpath(path, START_DIR)
+    req = os.path.abspath(req)
+    com = os.path.commonprefix([req, START_DIR])
+    return com == START_DIR
+##
 
 
 class FileRequest(object):
@@ -61,7 +71,7 @@ class FileRequest(object):
         log.msg("FileRequest:: createFileDirs:", path)
         # do the mkdirs -p with all but the filename
         dir, _ = os.path.split(path)
-        head = _prepFilepath(dir)
+        head = dir # here is where the security check should happen
         if os.path.exists(head) == False and head != "" :
             os.makedirs(head, 0755)
             log.msg("FileRequest:: createFileDirs:", head)

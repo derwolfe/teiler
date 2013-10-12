@@ -26,7 +26,7 @@ from os import remove, path
 from shutil import rmtree
 
 from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
-from ..http_file_transfer import MainPage, _getFile, _prepFilepath
+from ..http_file_transfer import MainPage, _getFile, is_secure
 from ..http_file_transfer import  _parseFileNames
 
 ## code used to test resources  
@@ -109,12 +109,9 @@ class UtilityMethodTests(unittest.TestCase):
         expected = ['decker', 'decker/fun', 'decker/fun.txt']
         self.assertTrue(parsed == expected)
 
-    def test_prepFilepath_works(self):
+    def test_securefilepath_works(self):
         path = "../../../foo/bar/baz.txt"
-        expected = "foo/bar/baz.txt"
-        parsed = _prepFilepath(path)
-        print parsed
-        self.assertTrue(expected == parsed)
+        self.assertFalse(is_secure(path))
 
 class FileRequestObjectTests(unittest.TestCase):
     
