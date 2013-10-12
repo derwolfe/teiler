@@ -19,6 +19,7 @@ from twisted.internet.defer import Deferred
 from urllib import urlencode
 from twisted.python import log
 from sys import stdout
+import os
 
  
 class FormArgsError(Exception):
@@ -48,34 +49,37 @@ class FileRequest(object):
 
     def __repr__(self):
         return "Files::{0}:{1}".format(self.url, self.session)
-
-    # def _makeUrl(self):
-    #     pass
-
-    # def _makeFilename(self, filename):
-    #     pass
+    
+    def createFileDirs(self, filepath):
+        """
+        given a path like "./foo/bar/baz.txt" check if ./foo/bar exists.
+        If it does not exists, create it.
+        """
+        path = os.path.join(self.downloadTo, filepath)
+        log.msg("FileRequest:: createFileDirs:", path)
+        # do the mkdirs -p with all but the filename
+        head, tail = os.path.split(path)
+        log.msg("FileRequest:: createFileDirs:", head)
 
     def getFiles(self):
         """
         Download all of the files listed in the request object.
+        It's assumed that the file request will only be sending over filepaths.
+        This means that directories will be created on the fly if the don't
+        exist.
         """
         while self.files:
             # you need to make sure certain filenames do not allow travesal 
             # outside of the directory. That is strip all leading dots
-            # get the file
-            # XXX you will also need to the dir/file check
             filename = self.files.pop()
+            self.createFileDirs(filename)
             url = self.url + '/' + filename
-            downloadTo = self.downloadTo + '/' + filename
+            downloadTo = os.path.join(self.downloadTo, filename) #self.downloadTo + '/' + filename
             log.msg("FileRequest:: getFiles:", url)
             log.msg("FileRequest:: getFiles:", downloadTo)
-            # returns a deferred object
-            # there should be a content-length header somewhere
             #d = getFile(url, self.downloadTo + filename)
-            # use d to monitor the status?
-            
-    
- 
+
+
 class MainPage(Resource):
     """
     Creating a main page should pull together all of the children

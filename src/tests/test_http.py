@@ -89,7 +89,9 @@ class SendFileRequestTests(unittest.TestCase):
                                               'chris', 
                                               'decker, decker/fun')
         d = self.web.post("request", 
-                          {'url':'url', 'session': 'chris', 'files':'decker,decker/fun'}, 
+                          {'url':'url', 
+                           'session': 'chris', 
+                           'files': 'decker,decker/fun'}, 
                           headers=headers)
         def check(response):
             self.assertEqual(response.value(), "<html>OK</html>")
