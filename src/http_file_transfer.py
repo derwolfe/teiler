@@ -24,7 +24,7 @@ from sys import stdout
 class FormArgsError(Exception):
     """
     Exception to be thrown when a form doesn't contain the 
-    right arguments. Overkill?
+    right arguments.
     """
     pass
 
@@ -46,13 +46,22 @@ class FileRequest(object):
 
     def getFiles(self):
         """
-        Download each of the files in the request
+        Download all of the files listed in the request object.
         """
-        for f in files:
+        while self.files:
+            # you need to make sure certain filenames do not allow travesal 
+            # outside of the directory. That is strip all leading dots
             # get the file
             filename = self.files.pop()
             url = self.url + '/' + filename
-            #getFile(url, # where to get the download dir?)
+            downloadTo = self.downloadTo + '/' + filename
+            log.msg("FileRequest:: getFiles:", url)
+            log.msg("FileRequest:: getFiles:", downloadTo)
+            # returns a deferred object
+            # there should be a content-length header somewhere
+            #d = getFile(url, self.downloadTo + filename)
+            # use d to monitor the status?
+            
     
  
 class MainPage(Resource):
@@ -105,7 +114,8 @@ class SendFileRequest(Resource):
 
     def render_GET(self, request):
         """
-        silly little test method.
+        silly little test method. Meant to show that a resource is alive 
+        by issuing a get aginst it.
         """
         return "<html>ja, ich bins</html>"
     
@@ -152,10 +162,12 @@ def parseFileRequest(data, _downloadTo):
         log.msg('parseFileRequest: parsed files:', files)
         return FileRequest(url, session, files, _downloadTo)
 
-
+#used by file receiver
 def _parseFileNames(files):
     """
-    return a list of file names from a comma seperated list of files
+    Used by the recipient of a file transfer request. 
+    Pass in a list of filenames, seperated by commas. 
+    Returns a list of filenames.
     """
     # maybe need to escape
     names = files.split(',')

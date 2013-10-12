@@ -105,6 +105,27 @@ class UtilityMethodTests(unittest.TestCase):
         expected = ['decker', 'decker/fun', 'decker/fun.txt']
         self.assertTrue(parsed == expected)
 
+class FileRequestObjectTests(unittest.TestCase):
+    
+    def setUp(self):
+        self.url = "http://localhost:9000"
+        self.session = "a"
+        self.files = ['decker', 'decker/fun.txt', 'decker/foo/bar.txt']
+        self.downloadTo = "."
+        self.request = FileRequest(self.url, 
+                                   self.session, 
+                                   self.files, 
+                                   self.downloadTo)
+
+    def test_get_files_forms_urls(self):
+        """
+        Does it remove files from the queue during processing?
+        """
+        self.assertTrue(len(self.request.files) > 0)
+        self.request.getFiles()
+        self.assertTrue(len(self.request.files) == 0)
+
+
 class MainPageMethodsTests(unittest.TestCase):
 
     def setUp(self):
