@@ -38,7 +38,7 @@ class FileRequest(object):
         # should this really be the list of file names and the base url?
         self.url = url
         self.session = session
-        self.files = files # list of the filenames
+        self.files = files
 
     def __repr__(self):
         return "Files::{0}:{1}".format(self.url, self.session)
@@ -147,8 +147,9 @@ def _parseFileNames(files):
     return a list of file names from a comma seperated list of files
     """
     # maybe need to escape
-    log.msg(files.split(','))
-    return files.split(',') # filenames cannot contain commas
+    names = files.split(',')
+    log.msg("_parseFileNames::", names)
+    return names # filenames cannot contain commas
     
 
 # used by the file sender
