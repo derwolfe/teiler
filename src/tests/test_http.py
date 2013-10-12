@@ -25,7 +25,7 @@ from filecmp import cmp
 from os import remove
 
 from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
-from ..http_file_transfer import MainPage, getFile
+from ..http_file_transfer import MainPage, _getFile, _parseFileNames
 
 ## code used to test resources  
 class SmartDummyRequest(DummyRequest):
@@ -76,10 +76,6 @@ class SendFileRequestTests(unittest.TestCase):
         self.hosting = []
         self.web = DummySite(MainPage(self.toDownload, self.hosting))
         
-    #def tearDown(self):
-    #    for name in self.web.resource.listEntities():
-    #        self.web.resource.delEntity(name)
-
     def test_get_response(self):
         d = self.web.get("request")
         def check(response):
@@ -88,15 +84,25 @@ class SendFileRequestTests(unittest.TestCase):
         return d
 
     def test_post_adds_files(self):        
-        postdata, headers = createFileRequest('url', 'chris')
+        postdata, headers = createFileRequest('url', 
+                                              'chris', 
+                                              'decker, decker/fun')
         d = self.web.post("request", 
-                          {'url':'url', 'session': 'chris'}, 
+                          {'url':'url', 'session': 'chris', 'files':'decker,decker/fun'}, 
                           headers=headers)
         def check(response):
             self.assertEqual(response.value(), "<html>OK</html>")
             self.assertEqual(len(self.toDownload), 1)
         d.addCallback(check)
         return d
+
+class UtilityMethodTests(unittest.TestCase):
+    
+    def test_filename_parser_works(self):
+        files = 'decker,decker/fun,decker/fun.txt'
+        parsed = _parseFileNames(files)
+        expected = ['decker', 'decker/fun', 'decker/fun.txt']
+        self.assertTrue(parsed == expected)
 
 class MainPageMethodsTests(unittest.TestCase):
 
@@ -175,7 +181,7 @@ class FileDownloadTests(unittest.TestCase):
         """
         check to see whether or not download data actually works
         """
-        d = getFile(self.getURL(self.url), self.downloadTo)
+        d = _getFile(self.getURL(self.url), self.downloadTo)
         log.msg(self.getURL(self.url))
         def check(ignored):
             self.assertTrue(cmp(self.filename, self.downloadTo))

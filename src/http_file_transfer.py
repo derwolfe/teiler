@@ -7,8 +7,8 @@ transfer will join the queue with other file transfer requests.
 If the user (or recipient of the transfer request in this case) wants the file,
 the user will somehow confirm the transfer request. 
 
-This will trigger the application to use getFile, which really is a just a twisted
-getPage command.
+This will trigger the application to use getFile, which really 
+is a just a twisted  getPage command.
 """
 from twisted.web.server import Site
 from twisted.web.static import File
@@ -20,19 +20,7 @@ from urllib import urlencode
 from twisted.python import log
 from sys import stdout
 
-
-class FileRequest(object):
-    """
-    Store the information relating to a single transfer request.
-    """
-    
-    def __init__(self, url, session):
-        self.url = url
-        self.session = session
-
-    def __repr__(self):
-        return "File::{0}:{1}".format(self.url, self.session)
-        
+ 
 class FormArgsError(Exception):
     """
     Exception to be thrown when a form doesn't contain the 
@@ -41,6 +29,25 @@ class FormArgsError(Exception):
     pass
 
 
+class FileRequest(object):
+    """
+    Store the information relating to a single transfer request.
+    """
+    
+    def __init__(self, url, session, files):
+        # should this really be the list of file names and the base url?
+        self.url = url
+        self.session = session
+        self.files = files # list of the filenames
+
+    def __repr__(self):
+        return "Files::{0}:{1}".format(self.url, self.session)
+
+    def files(self):
+        # use comprehension, syntax wrong
+        for x in self.files:
+            print x
+ 
 class MainPage(Resource):
     """
     Creating a main page should pull together all of the children
@@ -108,6 +115,15 @@ class SendFileRequest(Resource):
         log.msg("SendFileRequest:: render_POST: files", self.files)
         return "<html>OK</html>" 
 
+# used by recipient 
+def _getFile(url, downloadDir):
+    """
+    Download the file located at te url into the new location.
+    """
+    log.msg("getFile:: from:", url)
+    # returns a deferred!, you could attach callback
+    # to remove the files from the list once the transfer is complete
+    return downloadPage(url, downloadDir)
 
 # used by the recipient of a file transfer
 def parseFileRequest(data):
@@ -116,24 +132,34 @@ def parseFileRequest(data):
     by request.args
     """
     log.msg('parseFileRequest: raw data:', data)
-    if "url" not in data or "session" not in data:
+    if "url" not in data or "session" not in data or "files" not in data:
         raise FormArgsError()
-    elif "url" in data and "session" in data:
+    elif "url" in data and "session" in data and "files" in data:
         url = data["url"][0]
         session = data["session"][0]
+        files = _parseFileNames(data["files"][0])
         log.msg('parseFileRequest: parsed url:', url)
-        return FileRequest(url, session)
+        log.msg('parseFileRequest: parsed files:', files)
+        return FileRequest(url, session, files)
 
+def _parseFileNames(files):
+    """
+    return a list of file names from a comma seperated list of files
+    """
+    # maybe need to escape
+    log.msg(files.split(','))
+    return files.split(',') # filenames cannot contain commas
+    
 
 # used by the file sender
-def createFileRequest(url, session):
+def createFileRequest(url, session, files):
     """
     Used by the file sender to propose a file transfer to 
     a fellow user.
 
     Basically, prepare a form to be posted to a url.
     """
-    postdata = urlencode({'url': url, 'session': session })
+    postdata = urlencode({'url': url, 'session': session, 'files': files })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
 
@@ -151,35 +177,14 @@ def submitFileRequest(recipient, postdata, headers):
                    postdata=postdata,
                    headers=headers)
 
-def getFile(url, downloadDir):
-    """
-    Download the file located at te url into the new location.
-    """
-    log.msg("getFile:: from:", url)
-    # returns a deferred!, you could attach callback
-    # to remove the files from the list once the transfer is complete
-    return downloadPage(url, downloadDir)
-
-
-
 if __name__ == '__main__':
     log.startLogging(stdout)
     # to download 
-    state = []
     toDownload = []
     hosting = []
     
     # to host for upload create another list of file names
-    root = MainPage(hosting, toDownload)
-
-    # to add new folders
-    ## new files
-    #root.putChild('meme', File('./'))
-    #root.addFile('me', './')
-    #root.removeFile('me')
-    ## use to remove files
-    #root.delEntity('meme')
-
+    root = MainPage(hosting, toDownload) 
     server = 'http://localhost:8880/request'
     url = 'http://localhost:8000/filemestupid'
     session = 'chris'
