@@ -57,15 +57,17 @@ class FileRequest(object):
         If it does not exists, create it.
         """
         path = os.path.join(self.downloadTo, filepath)
+        # strip leading slashes, dots
         log.msg("FileRequest:: createFileDirs:", path)
         # do the mkdirs -p with all but the filename
-        head, _ = os.path.split(path)
-        if head != "." or head != "./" or head != "/":
-            # use os.makedirs
-            if os.path.exists(head) == False:
-                os.makedirs(head, 0755)
-                log.msg("FileRequest:: createFileDirs:", head)
-
+        dir, _ = os.path.split(path)
+        head = _prepFilepath(dir)
+        if os.path.exists(head) == False and head != "" :
+            os.makedirs(head, 0755)
+            log.msg("FileRequest:: createFileDirs:", head)
+        else:
+            log.msg("FileRequest:: createFileDirs: exists", head)
+    
     def getFiles(self):
         """
         Download all of the files listed in the request object.
@@ -79,7 +81,7 @@ class FileRequest(object):
             filename = self.files.pop()
             self.createFileDirs(filename)
             url = self.url + '/' + filename
-            downloadTo = os.path.join(self.downloadTo, filename) #self.downloadTo + '/' + filename
+            downloadTo = os.path.join(self.downloadTo, filename)
             log.msg("FileRequest:: getFiles:", url)
             log.msg("FileRequest:: getFiles:", downloadTo)
             #d = getFile(url, self.downloadTo + filename)
@@ -211,6 +213,13 @@ def createFileRequest(url, session, files):
                           'files': files })
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
+
+ 
+def _prepFilepath(filepath):
+    """
+    Remove leading slashes and dots
+    """
+    return filepath.strip(".").strip("/")
 
 # used by the file sender
 def submitFileRequest(recipient, postdata, headers):
