@@ -16,6 +16,7 @@ from twisted.web.resource import Resource
 from twisted.internet import reactor
 from twisted.web.client import getPage, downloadPage
 from twisted.internet.defer import Deferred
+from twisted.python.filepath import FilePath
 from urllib import urlencode
 from twisted.python import log
 from sys import stdout
@@ -58,7 +59,10 @@ class FileRequest(object):
         path = os.path.join(self.downloadTo, filepath)
         log.msg("FileRequest:: createFileDirs:", path)
         # do the mkdirs -p with all but the filename
-        head, tail = os.path.split(path)
+        head, _ = os.path.split(path)
+        if head != "." or head != "./" or head != "/":
+            # use os.makedirs
+            os.makedirs(head, 0755)
         log.msg("FileRequest:: createFileDirs:", head)
 
     def getFiles(self):
