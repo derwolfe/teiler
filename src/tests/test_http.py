@@ -117,7 +117,7 @@ class FileRequestObjectTests(unittest.TestCase):
                                    self.files, 
                                    self.downloadTo)
 
-    def test_get_files_forms_urls(self):
+    def test_removes_file_from_queue_on_download(self):
         """
         Does it remove files from the queue during processing?
         """

@@ -31,7 +31,12 @@ class FormArgsError(Exception):
 
 class FileRequest(object):
     """
-    Store the information relating to a single transfer request.
+    Stores the state of each file request. 
+
+    Contains all of the files to be downloaded and the relavent session 
+    information.
+
+    Also handles downloading the files it contains.
     """
     
     def __init__(self, url, session, files, downloadTo):
@@ -44,6 +49,12 @@ class FileRequest(object):
     def __repr__(self):
         return "Files::{0}:{1}".format(self.url, self.session)
 
+    # def _makeUrl(self):
+    #     pass
+
+    # def _makeFilename(self, filename):
+    #     pass
+
     def getFiles(self):
         """
         Download all of the files listed in the request object.
@@ -52,6 +63,7 @@ class FileRequest(object):
             # you need to make sure certain filenames do not allow travesal 
             # outside of the directory. That is strip all leading dots
             # get the file
+            # XXX you will also need to the dir/file check
             filename = self.files.pop()
             url = self.url + '/' + filename
             downloadTo = self.downloadTo + '/' + filename
@@ -177,10 +189,13 @@ def _parseFileNames(files):
 # used by the file sender
 def createFileRequest(url, session, files):
     """
-    Used by the file sender to propose a file transfer to 
-    a fellow user.
+    Used by the file sender to propose a file transfer to a fellow user.
 
-    Basically, prepare a form to be posted to a url.
+    The file request will contain the url where the files will be hosted,
+    a session key, and the actual file names that can be found.
+    
+    Only actually filenames will be listed, not directories. The responsibility
+    to create directories will fall on the person downloading the file.
     """
     postdata = urlencode({'url': url, 
                           'session': session, 
