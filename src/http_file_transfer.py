@@ -62,8 +62,9 @@ class FileRequest(object):
         head, _ = os.path.split(path)
         if head != "." or head != "./" or head != "/":
             # use os.makedirs
-            os.makedirs(head, 0755)
-        log.msg("FileRequest:: createFileDirs:", head)
+            if os.path.exists(head) == False:
+                os.makedirs(head, 0755)
+                log.msg("FileRequest:: createFileDirs:", head)
 
     def getFiles(self):
         """

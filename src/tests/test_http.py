@@ -23,6 +23,7 @@ from twisted.internet import reactor
 from urlparse import urljoin
 from filecmp import cmp
 from os import remove, path
+from shutil import rmtree
 
 from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
 from ..http_file_transfer import MainPage, _getFile, _parseFileNames
@@ -126,7 +127,7 @@ class FileRequestObjectTests(unittest.TestCase):
         for file in self.files:
             _path = path.join(self.downloadTo, file)
             if path.exists(_path):
-                remove(_path)
+                rmtree(_path, ignore_errors=True)
 
     def test_removes_file_from_queue_on_download(self):
         """
