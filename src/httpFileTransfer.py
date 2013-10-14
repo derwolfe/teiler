@@ -31,15 +31,22 @@ class FormArgsError(Exception):
     pass
 
 ## secure filename
-START_DIR = os.path.curdir
+START_DIR = os.path.curdir # files will be downloaded to the blaster directory
 
-def is_secure(path):
-    req = os.path.relpath(path, START_DIR)
-    req = os.path.abspath(req)
-    com = os.path.commonprefix([req, START_DIR])
-    return com == START_DIR
+def isSecurePath(pathToCheck, downloadPath):
+    """
+    IsSecurePath checks to see whether a provided path is actually 
+    operating inside of the application.
+
+    The goal is to stop directory traversal from paths passed in by users.
+    """
+    # get the absolute path of the application downlowd folder
+    downloadTo = os.path.abspath(downloadPath)
+    joinedPath = os.path.join(downloadPath, pathToCheck)
+    requestedPath = os.path.abspath(joinedPath)
+    commonPath = os.path.commonprefix([requestedPath, downloadTo])
+    return commonPath == downloadPath 
 ##
-
 
 class FileRequest(object):
     """

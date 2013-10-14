@@ -25,9 +25,9 @@ from filecmp import cmp
 from os import remove, path
 from shutil import rmtree
 
-from ..http_file_transfer import SendFileRequest, FileRequest, createFileRequest
-from ..http_file_transfer import MainPage, _getFile, is_secure
-from ..http_file_transfer import  _parseFileNames
+from ..httpFileTransfer import SendFileRequest, FileRequest, createFileRequest
+from ..httpFileTransfer import MainPage, _getFile, isSecurePath
+from ..httpFileTransfer import  _parseFileNames
 
 ## code used to test resources  
 class SmartDummyRequest(DummyRequest):
@@ -103,15 +103,24 @@ class SendFileRequestTests(unittest.TestCase):
 
 class UtilityMethodTests(unittest.TestCase):
     
+    def setUp(self):
+        self.downloadTo = path.abspath(path.curdir)
+
     def test_filename_parser_works(self):
         files = 'decker,decker/fun,decker/fun.txt'
         parsed = _parseFileNames(files)
         expected = ['decker', 'decker/fun', 'decker/fun.txt']
         self.assertTrue(parsed == expected)
 
-    def test_securefilepath_works(self):
-        path = "../../../foo/bar/baz.txt"
-        self.assertFalse(is_secure(path))
+    def test_securefilepath_with_traversing_path(self):
+        requestPath = "../../../foo/bar/baz.txt"
+        downloadPath = path.join(self.downloadTo, requestPath)
+        self.assertFalse(isSecurePath(downloadPath, self.downloadTo))
+
+    def test_securefilepath_with_ok_path(self):
+        requestPath = "foo/bar/baz.txt"
+        downloadPath = path.join(self.downloadTo, requestPath)
+        self.assertTrue(isSecurePath(downloadPath, self.downloadTo))
 
 class FileRequestObjectTests(unittest.TestCase):
     
