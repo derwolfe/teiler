@@ -1,15 +1,5 @@
 """
-File sending is now being done strictly through HTTP.
-
-The process is as follows
-1)  A wants to send file f to B
-2)  A sends a form as a post request containing 
-        a) url root
-        b) session key
-        c) filename
-3)  B parses the form as part of the post request and decides whether to
-    grab the file using a get request and the parameters supplied in the form.
-
+Tests for the httpFileTransfer classes/methods.
 """
 from twisted.trial import unittest
 from twisted.web.test.test_web import DummyRequest
@@ -77,7 +67,9 @@ class SendFileRequestTests(unittest.TestCase):
         self.toDownload = []
         self.hosting = []
         self.downloadTo = "."
-        self.web = DummySite(MainPage(self.toDownload, self.hosting, self.downloadTo))
+        self.web = DummySite(MainPage(self.toDownload, 
+                                      self.hosting, 
+                                      self.downloadTo))
         
     def test_get_response(self):
         d = self.web.get("request")

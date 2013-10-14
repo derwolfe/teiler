@@ -30,9 +30,6 @@ class FormArgsError(Exception):
     """
     pass
 
-## secure filename
-START_DIR = os.path.curdir # files will be downloaded to the blaster directory
-
 def isSecurePath(pathToCheck, downloadPath):
     """
     IsSecurePath checks to see whether a provided path is actually 
