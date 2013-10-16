@@ -228,13 +228,6 @@ def createFileRequest(url, session, files):
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     return postdata, headers
 
- 
-def _prepFilepath(filepath):
-    """
-    Remove leading slashes and dots
-    """
-    return filepath.strip(".").strip("/")
-
 # used by the file sender
 def submitFileRequest(recipient, postdata, headers):
     """
