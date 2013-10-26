@@ -12,10 +12,10 @@ from twisted.python.compat import networkString, nativeString
 from twisted.internet import reactor
 from urlparse import urljoin
 from filecmp import cmp
-from os import remove, path
+from os import remove, path, makedirs
 from shutil import rmtree
 
-from ..httpFileTransfer import SendFileRequest, FileRequest, createFileRequest
+from ..httpFileTransfer import FileRequestResource, FileRequest, createFileRequest
 from ..httpFileTransfer import MainPage, _getFile, isSecurePath
 from ..httpFileTransfer import  _parseFileNames
 
@@ -61,7 +61,7 @@ class DummySite(server.Site):
             raise ValueError("Unexpected return value: %r" % (result,))
 
 # actual test code
-class SendFileRequestTests(unittest.TestCase):
+class FileRequestResourceTests(unittest.TestCase):
 
     def setUp(self):
         self.toDownload = []
@@ -70,6 +70,7 @@ class SendFileRequestTests(unittest.TestCase):
         self.web = DummySite(MainPage(self.toDownload, 
                                       self.hosting, 
                                       self.downloadTo))
+        
         
     def test_get_response(self):
         d = self.web.get("request")
@@ -125,7 +126,7 @@ class FileRequestObjectTests(unittest.TestCase):
                                    self.session, 
                                    self.files, 
                                    self.downloadTo)
-    
+        
     def tearDown(self):
         """
         delete the files and directories that have been created
@@ -140,9 +141,103 @@ class FileRequestObjectTests(unittest.TestCase):
         Does it remove files from the queue during processing?
         """
         self.assertTrue(len(self.request.files) > 0)
-        self.request.getFiles()
-        self.assertTrue(len(self.request.files) == 0)
+        def check(ignored):
+            self.assertTrue(len(self.request.files) == 0)
+        d =  self.request.getFiles()
+        d.addCallback(check)
+        return d
 
+    def test_file_downloading_begins(self):
+        d = self.request.getFiles()
+        def check(ignored):
+            self.assertTrue(len(self.request.downloading) == 3)
+        d.addCallback(check)
+        return d
+
+    # XXX does not test anything yet!
+    def test_can_check_download_status(self):
+        """
+        get status returns a dictionary containing the status of each
+        Each deferred object return inside of downloading is able to provide its current
+        status. This is provided by getPage from twisted.
+        """
+        d = self.request.getFiles()
+        def check(ignored):
+            status = self.request.getStatus()
+        d.addCallback(check)
+        return d
+
+class FileRequestObjectIntegrationTests(unittest.TestCase):
+    
+    def _listen(self, site):
+        return reactor.listenTCP(0, site, interface="127.0.0.1")
+    
+    def setUp(self):
+        self.createTestFiles()
+        # setup a resource
+        self.toDownload = [] #unused
+        self.hosting = [] # unused
+        self.r = MainPage(self.toDownload, self.hosting, ".")
+        self.site = server.Site(self.r, timeout=None)
+        self.wrapper = WrappingFactory(self.site)
+        self.port = self._listen(self.wrapper)
+        self.portno = self.port.getHost().port
+        self.session = 'a'
+        self.cleanupServerConnections = 0
+        # setup a request
+        self.url = "http://localhost:%d/" % self.portno 
+        self.session = "a"
+        # used by the request
+        fname = 'decker/fun.txt'
+        self.files = [fname]
+        self.expectedDownload = [fname]
+        # used by the resource!
+        self.hosting = path.join(".", "test", self.files[0])
+        self.downloadTo = "."
+        self.request = FileRequest(self.url, 
+                                   self.session, 
+                                   self.files, 
+                                   ".")
+        self.r.addFile(self.url, self.files[0])
+        # create dummy file
+
+        # create the needed files
+    def createTestFiles(self):
+        makedirs("./test/decker")
+        with open("./test/decker/fun.text", "w") as f:
+            f.write("ich bin ein Pfeil")
+
+    def tearDown(self):
+        connections = list(self.wrapper.protocols.keys())
+        if connections:
+            log.msg("Some left-over connections; this test is probably buggy.")
+        return self.port.stopListening()
+        # # delete files!
+        # for file in self.files:
+        #     _path = path.join(self.downloadTo, file)
+        #     if path.exists(_path):
+        #         rmtree(_path, ignore_errors=True)
+
+
+    def test_downloads_files(self):
+        """
+        Does get files actually download and create files if it is able to find
+        them? 
+
+        This is definitely an integration test, as the test requires the creation
+        of several resources, from which files can be downloaded
+        """
+        #make a request against the resource, and see if the download happens
+        # should empty self.files
+        d = self.request.getFiles()
+        def check(ig):
+            import ipdb; ipdb.set_trace()
+            self.assertTrue(len(self.expectedDownload) > 0)
+            self.assertTrue(len(self.files) == 0)
+            self.assertTrue(path.exists(path.join(".", self.expectedDownload)))
+        d.addCallback(check)
+        return d
+        
 
 class MainPageMethodsTests(unittest.TestCase):
 

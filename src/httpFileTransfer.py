@@ -15,7 +15,7 @@ from twisted.web.static import File
 from twisted.web.resource import Resource
 from twisted.internet import reactor
 from twisted.web.client import getPage, downloadPage
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, DeferredList
 from twisted.python.filepath import FilePath
 from urllib import urlencode
 from twisted.python import log
@@ -59,8 +59,11 @@ class FileRequest(object):
         # should this really be the list of file names and the base url?
         self.url = url
         self.session = session
+        ## this is the list of file names
         self.files = files
+        # why is this here?
         self.downloadTo = downloadTo
+        self.downloading = []
 
     def __repr__(self):
         return "Files::{0}:{1}".format(self.url, self.session)
@@ -86,20 +89,46 @@ class FileRequest(object):
         """
         Download all of the files listed in the request object.
         It's assumed that the file request will only be sending over filepaths.
-        This means that directories will be created on the fly if the don't
+        This means that directories will be created on the fly if they don't
         exist.
+
+        This also will occur concurrently, though in the same thread.
+        Each file request will spawn a new deferred, which the reactor will
+        schedule accordingly.
         """
-        while self.files:
-            # you need to make sure certain filenames do not allow travesal 
-            # outside of the directory. That is strip all leading dots
+        # if self.downloads is not empty, getFiles should exit
+        if len(self.downloading) > 0:
+            return
+        # proceed
+        while self.files: 
+            # each request will really just return a deferred, so the 
+            # so it will be popped immediately, and go through the list, 
+            # not exctly what you want...
+            # get the files one by one
             filename = self.files.pop()
+            # create that files directories
             self.createFileDirs(filename)
+            # form the address
             url = self.url + '/' + filename
             downloadTo = os.path.join(self.downloadTo, filename)
-            log.msg("FileRequest:: getFiles:", url)
-            log.msg("FileRequest:: getFiles:", downloadTo)
-            #d = getFile(url, self.downloadTo + filename)
+            log.msg("FileRequest:: getFiles:%s, %s" %(url, downloadTo))
+            # one concern doing it this way is that the network could
+            # be overloaded, as all of the http requests will be issued 
+            # at basically the same time. not sure this is the case
+            # also, how to access the content length header for progress?
+            toGet = _getFile(url, self.downloadTo + filename)
+            self.downloading.append(toGet)
+        log.msg("FileRequest::getFiles:: downloads begun")
+        return DeferredList(self.downloading)
 
+
+    def getStatus(self):
+        """
+        Check the status of each of the downloads in the self.downloading
+        list.
+        """
+        return 
+        
 
 class MainPage(Resource):
     """
@@ -113,7 +142,7 @@ class MainPage(Resource):
     def __init__(self, toDownload, hosting, downloadTo):
         Resource.__init__(self)
         # post against the resource to create a new file request
-        self.putChild("request", SendFileRequest(toDownload, downloadTo))
+        self.putChild("request", FileRequestResource(toDownload, downloadTo))
         # contains files currently being hosted and their urls
         self.hosting = hosting
 
@@ -133,7 +162,7 @@ class MainPage(Resource):
         self.delEntity(urlName)
         
 
-class SendFileRequest(Resource):
+class FileRequestResource(Resource):
     """
     Used by the recipient of a file transfer. 
 
@@ -162,14 +191,14 @@ class SendFileRequest(Resource):
         will begin.
         """
         d = Deferred()
-        log.msg("SendFileRequest:: render_POST: data", request.args)
+        log.msg("FileRequestResource:: render_POST: data", request.args)
         d.addCallback(parseFileRequest)
         def error(ignored):
             return "<html>Error parsing form</html>"
         d.addErrback(error)
         d.addCallback(self.files.append)
         d.callback((request.args, self.downloadTo,))
-        log.msg("SendFileRequest:: render_POST: files", self.files)
+        log.msg("FileRequestResource:: render_POST: files", self.files)
         return "<html>OK</html>" 
 
 # used by recipient 
@@ -180,7 +209,8 @@ def _getFile(url, downloadDir):
     log.msg("getFile:: from:", url)
     # returns a deferred!, you could attach callback
     # to remove the files from the list once the transfer is complete
-    return downloadPage(url, downloadDir)
+    d = downloadPage(url, downloadDir)
+    return d
 
 # used by the recipient of a file transfer
 def parseFileRequest(data, _downloadTo):
