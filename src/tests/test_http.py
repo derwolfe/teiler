@@ -115,58 +115,6 @@ class UtilityMethodTests(unittest.TestCase):
         downloadPath = path.join(self.downloadTo, requestPath)
         self.assertTrue(isSecurePath(downloadPath, self.downloadTo))
 
-class FileRequestObjectTests(unittest.TestCase):
-    
-    def setUp(self):
-        self.url = "http://localhost:9000"
-        self.session = "a"
-        self.testFilesDir = "decker"
-        self.files = ['decker', 'decker/fun.txt', 'decker/foo/bar.txt']
-        self.downloadTo = "."
-        self.request = FileRequest(self.url, 
-                                   self.session, 
-                                   self.files, 
-                                   self.downloadTo)
-        
-    def tearDown(self):
-        """
-        delete the files and directories that have been created
-        """
-        if path.exists("./decker"):
-            rmtree("./decker", ignore_errors=True)
-
-    def test_removes_file_from_queue_on_download(self):
-        """
-        Does it remove files from the queue during processing?
-        """
-        self.assertTrue(len(self.request.files) > 0)
-        def check(ignored):
-            self.assertTrue(len(self.request.files) == 0)
-        d = self.request.getFiles()
-        d.addCallback(check)
-        return d
-
-    def test_file_downloading_begins(self):
-        d = self.request.getFiles()
-        def check(ignored):
-            self.assertTrue(len(self.request.downloading) == 3)
-        d.addCallback(check)
-        return d
-
-    # XXX does not test anything yet!
-    def test_can_check_download_status(self):
-        """
-        get status returns a dictionary containing the status of each
-        Each deferred object return inside of downloading is able to provide its current
-        status. This is provided by getPage from twisted.
-        """
-        d = self.request.getFiles()
-        def check(ignored):
-            status = self.request.getStatus()
-        d.addCallback(check)
-        return d
-
-
 class MainPageMethodsTests(unittest.TestCase):
 
     def setUp(self):
@@ -270,6 +218,19 @@ class FileRequestIntegrationTests(unittest.TestCase):
         d.addCallback(check)
         return d
         
+    def test_calling_get_files_clears_files(self):
+        d = self.request.getFiles()
+        def check(ignored):
+            self.assertTrue(len(self.request.files) == 0)
+        d.addCallback(check)
+        return d        
+    
+    def test_calling_getFiles_adds_files_to_downloading(self):
+        d = self.request.getFiles()
+        def check(ignored):
+            self.assertTrue(len(self.request.downloading) == 1)
+        d.addCallback(check)
+        return d        
 
 class FileDownloadTests(unittest.TestCase):
     
