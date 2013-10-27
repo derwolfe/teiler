@@ -59,10 +59,11 @@ class FileRequest(object):
         # should this really be the list of file names and the base url?
         self.url = url
         self.session = session
-        ## this is the list of file names
-        self.files = files
-        # why is this here?
-        self.downloadTo = downloadTo
+        # must be a list ['name', 'name']
+        self.files = files 
+        # this is the folder into which files should be downloaded 
+        # basically the root
+        self.downloadTo = downloadTo 
         self.downloading = []
 
     def __repr__(self):
@@ -74,13 +75,11 @@ class FileRequest(object):
         If it does not exists, create it.
         """
         path = os.path.join(self.downloadTo, filepath)
-        # strip leading slashes, dots
         log.msg("FileRequest:: createFileDirs:", path)
-        # do the mkdirs -p with all but the filename
         dir, _ = os.path.split(path)
-        head = dir # here is where the security check should happen
+        head = dir
         if os.path.exists(head) == False and head != "" :
-            os.makedirs(head, 0755)
+            os.makedirs(head)
             log.msg("FileRequest:: createFileDirs:", head)
         else:
             log.msg("FileRequest:: createFileDirs: exists", head)
@@ -96,30 +95,23 @@ class FileRequest(object):
         Each file request will spawn a new deferred, which the reactor will
         schedule accordingly.
         """
-        # if self.downloads is not empty, getFiles should exit
         if len(self.downloading) > 0:
             return
-        # proceed
+        defs = []
         while self.files: 
             # each request will really just return a deferred, so the 
             # so it will be popped immediately, and go through the list, 
-            # not exctly what you want...
-            # get the files one by one
             filename = self.files.pop()
-            # create that files directories
             self.createFileDirs(filename)
-            # form the address
             url = self.url + '/' + filename
+            self.downloading.append(url)
             downloadTo = os.path.join(self.downloadTo, filename)
             log.msg("FileRequest:: getFiles:%s, %s" %(url, downloadTo))
-            # one concern doing it this way is that the network could
-            # be overloaded, as all of the http requests will be issued 
-            # at basically the same time. not sure this is the case
-            # also, how to access the content length header for progress?
-            toGet = _getFile(url, self.downloadTo + filename)
-            self.downloading.append(toGet)
-        log.msg("FileRequest::getFiles:: downloads begun")
-        return DeferredList(self.downloading)
+            toGet = _getFile(url, filename)
+            # record keeping to see which urls SHOULD have been accessed
+            defs.append(toGet)
+        log.msg("FileRequest:: getFiles:: downloads begun")
+        return DeferredList(defs)
 
 
     def getStatus(self):
@@ -150,7 +142,7 @@ class MainPage(Resource):
         """
         Adds a new file resrurce 
         """
-        log.msg('MainPage:: addFile:', path)
+        log.msg('MainPage:: addFile:', path, urlName)
         self.hosting.append(path)
         self.putChild(urlName, File(path))
 
@@ -271,3 +263,13 @@ def submitFileRequest(recipient, postdata, headers):
                    method='POST', 
                    postdata=postdata,
                    headers=headers)
+
+# simple test checks
+if __name__ == '__main__':
+    # setup a resource
+    log.startLogging(stdout)
+    r = MainPage([], [], "./")
+    r.addFile("test", ".")
+    factory = Site(r)
+    reactor.listenTCP(8000, factory)
+    reactor.run()

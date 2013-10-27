@@ -120,6 +120,7 @@ class FileRequestObjectTests(unittest.TestCase):
     def setUp(self):
         self.url = "http://localhost:9000"
         self.session = "a"
+        self.testFilesDir = "decker"
         self.files = ['decker', 'decker/fun.txt', 'decker/foo/bar.txt']
         self.downloadTo = "."
         self.request = FileRequest(self.url, 
@@ -131,10 +132,8 @@ class FileRequestObjectTests(unittest.TestCase):
         """
         delete the files and directories that have been created
         """
-        for file in self.files:
-            _path = path.join(self.downloadTo, file)
-            if path.exists(_path):
-                rmtree(_path, ignore_errors=True)
+        if path.exists("./decker"):
+            rmtree("./decker", ignore_errors=True)
 
     def test_removes_file_from_queue_on_download(self):
         """
@@ -143,7 +142,7 @@ class FileRequestObjectTests(unittest.TestCase):
         self.assertTrue(len(self.request.files) > 0)
         def check(ignored):
             self.assertTrue(len(self.request.files) == 0)
-        d =  self.request.getFiles()
+        d = self.request.getFiles()
         d.addCallback(check)
         return d
 
@@ -167,77 +166,6 @@ class FileRequestObjectTests(unittest.TestCase):
         d.addCallback(check)
         return d
 
-class FileRequestObjectIntegrationTests(unittest.TestCase):
-    
-    def _listen(self, site):
-        return reactor.listenTCP(0, site, interface="127.0.0.1")
-    
-    def setUp(self):
-        self.createTestFiles()
-        # setup a resource
-        self.toDownload = [] #unused
-        self.hosting = [] # unused
-        self.r = MainPage(self.toDownload, self.hosting, ".")
-        self.site = server.Site(self.r, timeout=None)
-        self.wrapper = WrappingFactory(self.site)
-        self.port = self._listen(self.wrapper)
-        self.portno = self.port.getHost().port
-        self.session = 'a'
-        self.cleanupServerConnections = 0
-        # setup a request
-        self.url = "http://localhost:%d/" % self.portno 
-        self.session = "a"
-        # used by the request
-        fname = 'decker/fun.txt'
-        self.files = [fname]
-        self.expectedDownload = [fname]
-        # used by the resource!
-        self.hosting = path.join(".", "test", self.files[0])
-        self.downloadTo = "."
-        self.request = FileRequest(self.url, 
-                                   self.session, 
-                                   self.files, 
-                                   ".")
-        self.r.addFile(self.url, self.files[0])
-        # create dummy file
-
-        # create the needed files
-    def createTestFiles(self):
-        makedirs("./test/decker")
-        with open("./test/decker/fun.text", "w") as f:
-            f.write("ich bin ein Pfeil")
-
-    def tearDown(self):
-        connections = list(self.wrapper.protocols.keys())
-        if connections:
-            log.msg("Some left-over connections; this test is probably buggy.")
-        return self.port.stopListening()
-        # # delete files!
-        # for file in self.files:
-        #     _path = path.join(self.downloadTo, file)
-        #     if path.exists(_path):
-        #         rmtree(_path, ignore_errors=True)
-
-
-    def test_downloads_files(self):
-        """
-        Does get files actually download and create files if it is able to find
-        them? 
-
-        This is definitely an integration test, as the test requires the creation
-        of several resources, from which files can be downloaded
-        """
-        #make a request against the resource, and see if the download happens
-        # should empty self.files
-        d = self.request.getFiles()
-        def check(ig):
-            import ipdb; ipdb.set_trace()
-            self.assertTrue(len(self.expectedDownload) > 0)
-            self.assertTrue(len(self.files) == 0)
-            self.assertTrue(path.exists(path.join(".", self.expectedDownload)))
-        d.addCallback(check)
-        return d
-        
 
 class MainPageMethodsTests(unittest.TestCase):
 
@@ -262,6 +190,86 @@ class MainPageMethodsTests(unittest.TestCase):
         entities = self.web.resource.listNames()
         self.assertTrue(self.name not in entities)
 
+        
+class FileRequestIntegrationTests(unittest.TestCase):
+    
+    def _listen(self, site):
+        return reactor.listenTCP(0, site, interface="127.0.0.1")
+    
+    def getURL(self, path):
+        host = "http://127.0.0.1:%d/" % self.portno
+        return networkString(urljoin(host, nativeString(path)))
+
+    def setUp(self):
+        self._createTestFiles()
+        self.toDownload = []
+        self.hosting = []
+        self.downloadTo = "."
+        self.r = MainPage(self.toDownload, 
+                          self.hosting, 
+                          self.downloadTo) # host the files in trial temp including decker
+        self.url = 'test'
+        self.r.addFile(self.url, "./test")
+        self.site = server.Site(self.r, timeout=3)
+        self.wrapper = WrappingFactory(self.site)
+        self.port = self._listen(self.wrapper)
+        self.portno = self.port.getHost().port
+        self.cleanupServerConnections = 0
+        # file name to download
+        self.fname = 'decker/fun.txt'
+        self.files = [self.fname]
+        self.session = "a"
+        # create a file resource!
+        self.fileURL = self.getURL(self.url + '/' + self.fname)
+        self.request = FileRequest(self.getURL(self.url), 
+                                   self.session, 
+                                   self.files, 
+                                   self.downloadTo)
+
+        # create the needed files
+    def _createTestFiles(self):
+        makedirs("./test/decker")
+        with open("./test/decker/fun.txt", "w") as f:
+            f.write("ich")
+
+    def _deleteTestFiles(self):
+        if path.exists("./test"):
+            rmtree("./test", ignore_errors=True)
+        if path.exists("./decker"):
+            rmtree("./decker", ignore_errors=True)
+    
+    def tearDown(self):
+        self._deleteTestFiles()
+        connections = list(self.wrapper.protocols.keys())
+        if connections:
+            log.msg("Some left-over connections; this test is probably buggy.")
+        return self.port.stopListening()
+    
+    def test_resource_active(self):
+        """
+        make sure the file is available for the integration test to use.
+        IF this fails, then no tests in this object should pass
+        """
+        self.assertTrue(self.url in self.r.listNames())
+        def check(data):
+            self.assertTrue(data == "ich")
+        d = client.getPage(self.fileURL)
+        d.addCallback(check)
+        return d
+
+    def test_downloads_files(self):
+        """
+        This is definitely an integration test, as the test requires the creation
+        of several resources, from which files can be downloaded
+        """
+        # this should download and create the files?
+        d = self.request.getFiles()
+        def check(data):
+            self.assertTrue(len(self.request.downloading) == 1)
+            self.assertTrue(path.exists("./decker/fun.txt"))
+        d.addCallback(check)
+        return d
+        
 
 class FileDownloadTests(unittest.TestCase):
     
