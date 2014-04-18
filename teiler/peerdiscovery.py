@@ -1,17 +1,18 @@
 """
-This module is resposible for peer discovery over UDP only.
+Peer Discovery
+--------------
 
 The process is simple.
 1) Start up the client and broadcast a UDP datagram on a defined interval.
-2) Listen for other packets
-3) When another packet is heard, pull it into the list of the peers.
+2) Listen for other datagrams
+3) When another datagram is heard, pull it into the list of the peers.
     But, if the peer is already in the list, do nothing.
 4) On disconnect, the client sends an exit message, letting the other
     users know that they are no longer online; making it safe for the
     client to disconnect
 """
 
-from json import loads, dumps
+import json
 
 from twisted.python import log
 from twisted.internet import task
@@ -34,7 +35,7 @@ class PeerDiscoveryMessage(object):
         self.tcpPort = str(tcpPort)
 
     def serialize(self):
-        return dumps({
+        return json.dumps({
             "message": self.message,
             "name": self.name,
             "address" : self.address,
@@ -60,11 +61,22 @@ class Peer(object):
         return self.id
 
     def __eq__(self, other):
-        """needed to be able to remove items from peers form the list"""
+        """
+        Does one peer equal another?
+        """
         return self.id == other.id
 
 
 def makeId(name, address, port):
+    """
+    Create a unique id for a peer.
+
+    :param name: the name of a peer
+    :param address: the ip address of a peer
+    :param port: the port being used
+
+    :returns string: an id
+    """
     return name + '_' + address + '_' + str(port)
 
 # rename to PeerDiscoveryProtocol
@@ -143,7 +155,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         peer information and placing it in a list.
         """
         log.msg("Decoding: " + datagram)
-        msg = loads(datagram)
+        msg = json.loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
@@ -174,5 +186,3 @@ class PeerDiscoveryProtocol(DatagramProtocol):
 
     def addPeer(self, peer):
         self.peers[peer.id] = peer
-
-

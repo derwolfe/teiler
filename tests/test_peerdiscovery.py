@@ -5,14 +5,14 @@ from twisted.trial import unittest
 from twisted.internet import task
 from collections import defaultdict
 
-from ..peerdiscovery import PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol
-from ..peerdiscovery import heartbeatMsg, exitMsg, makeId
+from teiler.peerdiscovery import PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol
+from teiler.peerdiscovery import heartbeatMsg, exitMsg, makeId
 
 class FakeUdpTransport(object):
-    """ 
-    Instead of connecting through the network, this transport 
-    writes the broadcast messages to a variable that can be 
-    checked. 
+    """
+    Instead of connecting through the network, this transport
+    writes the broadcast messages to a variable that can be
+    checked.
     """
 
     implements(IUDPTransport)
@@ -46,13 +46,13 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.myAddrPort = 9203
         self.myUdpPort = 8000
         self.user = "test"
-        self.protocol = PeerDiscoveryProtocol(self.clock, 
+        self.protocol = PeerDiscoveryProtocol(self.clock,
                                               #list(), # may want a defaultdict
                                               defaultdict(),
-                                              self.user, 
-                                              self.myAddr, 
-                                              self.myAddrPort, 
-                                              self.myAddr, 
+                                              self.user,
+                                              self.myAddr,
+                                              self.myAddrPort,
+                                              self.myAddr,
                                               self.myUdpPort)
         self.tr = FakeUdpTransport()
         self.protocol.transport = self.tr
@@ -85,7 +85,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         # there should be two messages delivered over the interval of 10 seconds
         self.protocol.stopProtocol() # this keeps the reactor clean
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
-        
+
     def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", 8000)
         id = makeId(p.name, p.address, p.tcpPort)
@@ -95,11 +95,11 @@ class PeerDiscoveryTests(unittest.TestCase):
     def test_sends_exit_message_on_exit(self):
         # check that stop protocol sends an exit message
         self.protocol.startProtocol() # needed to get a loop object to cancel
-        self.protocol.stopProtocol() # 
+        self.protocol.stopProtocol() #
         self.assertTrue('EXIT' in self.protocol.transport.msgs[1])
 
     def test_kills_looping_call(self):
         self.protocol.startProtocol() # loop started, could this be mocked?
-        self.assertTrue(self.protocol.loop.running == True) 
+        self.assertTrue(self.protocol.loop.running == True)
         self.protocol.stopProtocol()
         self.assertTrue(self.protocol.loop.running == False)

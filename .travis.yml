@@ -2,15 +2,15 @@ language: python
 branches:
     only:
         - master 
+        - move_resources
 python:
     - "2.7"
-before-install:
-    - "sudo apt-get update && sudo apt-get install swig"
-    - "pip install http://dl.dropbox.com/u/174789/m2crypto-0.20.1.tar.gz"
+#    - "3.3"
+#    - "3.4"
 # deps
 install: 
-    - "pip install -r requirements.txt --use-mirrors"
+    - "python setup.py -q install"
 #vscript to run tests
 script: 
-    - "trial src" 
+    - "trial tests" 
 

@@ -1,0 +1,39 @@
+API 
+
+The application is made up of several web pages, requests, and responses.
+
+At any given time, the following "pages" are used by a single user.
+
+RootResource
+    - Hosts all of the other resources that might be used by a client
+    - Keeps track of every file being served by the application.
+FileRequestResource
+    - Fields file transfer requests from other users.
+    - Creates new FileTransferRequests from succesfully parsed requests.
+** Planned
+StatusResource
+    - show status of each file transfer request?
+
+Users are able to keep track of:
+    - FileTransferRequests
+    - Files being served.
+
+FileTransferRequests contain 
+    - a network address for the requesting user, e.g. 192.168.1.23
+    - a list of files that can be found on the requesting users server.
+        - these filenames will be cat'ed together with the requesting user's
+        address., e.g. localhost:9212/foo/bar/baz/jeff.jpg
+
+Usage
+1) both users start the application
+2) user (1) sloppy, wants to send user 2, bozo, a file.
+3) sloppy searches for peers and finds bozo in his user list.
+4) sloppy drags a file onto bozo which sends him a FileTransferRequest.
+5) bozo sees this request, looks over the file information, and says Ok, send
+along
+6) The file transfer begins. Each file is pulled down one by one, or in several
+different asynchronous requests. 
+7) The file transfer completes.
+
+
+
