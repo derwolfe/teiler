@@ -10,7 +10,7 @@ class FileRequestResourceTests(unittest.TestCase):
         self.downloadTo = "."
         self._resourceToTest = client.FileRequestResource(self.requests, 
                                                           self.downloadTo)
-        self._resource = DummyRootResource(self._resourceToTest)
+        self._resource = DummyRootResource('requests', self._resourceToTest)
         self.web = DummySite(self._resource)
 
     def test_post_file_request_returns_ok_200(self):
