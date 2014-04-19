@@ -13,17 +13,17 @@ class FileRequestResourceTests(unittest.TestCase):
         self._resource = DummyRootResource('requests', self._resourceToTest)
         self.web = DummySite(self._resource)
 
-    def test_post_file_request_returns_ok_200(self):
-        # create a request, and post it
+    def test_post_good_file_request_returns_ok(self):
         d = self.web.post('requests', 
                           {'url': 'plop', 'files': 'fx' },
                           headers=server.HEADERS)
         def check(response):
             self.assertEqual(response.value(), "ok")
+            # response code?
         d.addCallback(check)
         return d   
 
-    def test_good_request_adds_file_request_to_queue(self): 
+    def test_post_good_request_adds_file_request_to_queue(self): 
         d = self.web.post('requests',
                           {'url': 'plop', 'files': 'fx' },
                           headers=server.HEADERS)

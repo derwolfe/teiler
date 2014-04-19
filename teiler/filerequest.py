@@ -45,6 +45,18 @@ def createFileDirs(downloadTo, newPath):
     # newpath likely contains a filename, so we need to make the parentdirs
     toCreate.parent().makedirs()
 
+def getClientFileName(downloadTo, filename):
+    """
+    Get the fully qualified file name.
+    :param downloadTo: the location where downloads are saved
+    :paramtype: string
+
+    :param filename: the new filename
+    :paramtype string:
+    
+    :returns: a filepath
+    """
+    return filepath.FilePath(filepath.joinpath(downloadTo, newPath))
 
 # this file receiver has a lot of overlap with file request, they shoud be
 # unified into a single class, this way the progress of the entire filerequest
@@ -74,8 +86,9 @@ class FileRequest(object):
             url = self.url + '/' + filename
             # make a new filepath where the file should live
             # use filepath.FilePath
-            clientFileName = os.path.join(self.downloadTo, filename)
-            # sets up the transfer
+            #clientFileName = os.path.join(self.downloadTo, filename)
+            clientFileName = getClientFileName(self.downloadTo, filename)
+            # sets up the transfer, downloads into clientFileName
             fileDownload = DownloadAgent(reactor, url, clientFileName) 
             self._downloading.append(fileDownload)
             deferred = fileDownload.getFile()
