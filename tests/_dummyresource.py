@@ -45,6 +45,12 @@ class DummySite(server.Site):
             raise ValueError("Unexpected return value: %r" % (result,))
 
 class DummyRootResource(resource.Resource):
+    """
+    Creates a simple resource that can be used to construct a site.
+
+    :param url: the url where the resource can be reached.
+    :param resourceToTest: The resource to inject and test.
+    """
     def __init__(self, url, resourceToTest):
         resource.Resource.__init__(self)
         self.putChild(url, resourceToTest) 
