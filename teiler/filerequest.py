@@ -2,6 +2,7 @@
 A FileRequest object contains all of the information needed to transmit (that
 is to grab) a set of of files from one user to another.
 """
+from twisted.internet import reactor
 from twisted.python import filepath
 from twisted.internet.defer import Deferred
 
@@ -17,6 +18,9 @@ def _getFileNames(request):
     """
     return request["files"][0].split(',')
 
+def getFileUrl(rooturl, filename):
+    return rooturl + '/' + filename
+
 def parseFileRequest(args):
     """
     Parse and create a new FileRequest object from a request.
@@ -28,24 +32,7 @@ def parseFileRequest(args):
     files = _getFileNames(request)
     return FileRequest(url, files, downloadDir)
 
-def createFileDirs(downloadTo, newPath):
-    """
-    Make the directories that live between downloadTo and newPath. This only
-    createsFiles and returns no information.
-
-    :param downloadTo: where downloads are saved
-    :paramtype: string
-
-    :param newPath: where the new file will be saved
-    :paramtype: string
-
-    :returns: None
-    """
-    toCreate = filepath.FilePath(filepath.joinpath(downloadTo, newPath))
-    # newpath likely contains a filename, so we need to make the parentdirs
-    toCreate.parent().makedirs()
-
-def getClientFileName(downloadTo, filename):
+def getNewFilePath(downloadTo, filename):
     """
     Get the fully qualified file name.
     :param downloadTo: the location where downloads are saved
@@ -53,14 +40,36 @@ def getClientFileName(downloadTo, filename):
 
     :param filename: the new filename
     :paramtype string:
-    
+
     :returns: a filepath
     """
-    return filepath.FilePath(filepath.joinpath(downloadTo, newPath))
+    return filepath.FilePath(filepath.joinpath(downloadTo, filename))
 
-# this file receiver has a lot of overlap with file request, they shoud be
-# unified into a single class, this way the progress of the entire filerequest
-# can be managed as a whole.
+class IOHandler(object):
+    """
+    IOHandler is responsible for creating changes to a file system,
+    i.e. creating or destroying files.
+    """
+
+    def createFileDirs(self, downloadTo, newPath):
+        """
+        Make the directories that live between downloadTo and newPath. This only
+        createsFiles and returns no information.
+
+        :param downloadTo: where downloads are saved
+        :paramtype: string
+
+        :param newPath: where the new file will be saved
+        :paramtype: string
+
+        :returns: None
+        """
+        toCreate = filepath.FilePath(filepath.joinpath(downloadTo, newPath))
+        parentDir = toCreate.parent()
+        if not parentDir.exists():
+            parentDir.makedirs()
+
+
 class FileRequest(object):
     def __init__(self, url, files, downloadTo):
         self.url = url
@@ -70,26 +79,30 @@ class FileRequest(object):
         self._downloadTo = downloadTo
         # initialilly no files are being downloaded
         self._downloading = []
-
+        self._history = []
+        
     def __repr__(self):
         return "{0}".format(self.url)
 
-    def getFiles(self):
+    def getFiles(self, downloader, IOHandler):
+        """
+        getFiles downloads all of the files listed ina fileRequest. It
+        handles building the necessary directories.
+        
+        :param downloader: a DownloadAgent object is necessary to download files.
+        The object must have a method getFiles that returns a deferred.
+        """
         # this basically makes a request for each file in rapid succession
         # and does NOT await the result (use semaphore if you need to)
+        # pass in a DownloadAgent with a getFile method
         deferreds = []
         while self.files:
             filename = self.files.pop()
             self._downloading.append(filename)
-            # make the directories where the file should live.
-            _createFileDirs(self.downloadTo, filename)
-            url = self.url + '/' + filename
-            # make a new filepath where the file should live
-            # use filepath.FilePath
-            #clientFileName = os.path.join(self.downloadTo, filename)
-            clientFileName = getClientFileName(self.downloadTo, filename)
-            # sets up the transfer, downloads into clientFileName
-            fileDownload = DownloadAgent(reactor, url, clientFileName) 
-            self._downloading.append(fileDownload)
-            deferred = fileDownload.getFile()
-            deferreds.append(deferred)
+            IOHandler.createFileDirs(self._downloadTo, filename)
+            url = getFileUrl(self.url, filename)
+            self._history.append(url)
+            newFile = getNewFilePath(self._downloadTo, filename)
+            d = downloader.getFile(url, filename)
+            deferreds.append(d)
+        return deferreds

@@ -57,6 +57,8 @@ class DownloadAgent(object):
     """
     Downloads files making the data available to a protocol.
     """
+    # XXX why did i do it this way, is there a reason I need these instance
+    # variables.
     def __init__(self, reactor, url, filename):
         self.reactor = reactor
         self.url = url
@@ -85,10 +87,11 @@ class DownloadAgent(object):
             finished = Deferred()
             # delivery body basically handles receiving the
             # entire response body, so no further cbs needed
+            # in order to read the progress from this object, you need to
+            # pass in all of the download information.
             response.deliverBody(FileWriter(finished,
                                             response.length,
                                             self.filename))
             return finished
         d.addCallback(cbRequest)
         return d
-
