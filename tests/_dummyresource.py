@@ -45,6 +45,6 @@ class DummySite(server.Site):
             raise ValueError("Unexpected return value: %r" % (result,))
 
 class DummyRootResource(resource.Resource):
-    def __init__(self, requests, downloadTo):
+    def __init__(self, resourceToTest):
         resource.Resource.__init__(self)
-        self.putChild('requests', FileRequestResource(requests, downloadTo)) 
+        self.putChild('requests', resourceToTest) 
