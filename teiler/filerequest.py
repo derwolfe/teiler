@@ -18,7 +18,7 @@ def _getFileNames(request):
     """
     return request["files"][0].split(',')
 
-def getFileUrl(rooturl, filename):
+def _getFileUrl(rooturl, filename):
     return rooturl + '/' + filename
 
 def parseFileRequest(args):
@@ -32,7 +32,7 @@ def parseFileRequest(args):
     files = _getFileNames(request)
     return FileRequest(url, files, downloadDir)
 
-def getNewFilePath(downloadTo, filename):
+def _getNewFilePath(downloadTo, filename):
     """
     Get the fully qualified file name.
     :param downloadTo: the location where downloads are saved
@@ -44,6 +44,7 @@ def getNewFilePath(downloadTo, filename):
     :returns: a filepath
     """
     return filepath.FilePath(filepath.joinpath(downloadTo, filename))
+
 
 class IOHandler(object):
     """
@@ -100,9 +101,9 @@ class FileRequest(object):
             filename = self.files.pop()
             self._downloading.append(filename)
             IOHandler.createFileDirs(self._downloadTo, filename)
-            url = getFileUrl(self.url, filename)
+            url = _getFileUrl(self.url, filename)
             self._history.append(url)
-            newFile = getNewFilePath(self._downloadTo, filename)
+            newFile = _getNewFilePath(self._downloadTo, filename)
             d = downloader.getFile(url, filename)
             deferreds.append(d)
         return deferreds
