@@ -24,8 +24,6 @@ class FileRequestResource(Resource):
     information.
     """
     def __init__(self, transferRequests, downloadTo):
-        """
-        """
         Resource.__init__(self)
         # list of files that others want to transfer to you
         self.transferRequests = transferRequests

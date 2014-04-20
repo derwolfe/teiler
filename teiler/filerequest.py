@@ -70,7 +70,6 @@ class FileRequest(object):
         self.files = files
         # where the files should be downloaded to, root dir
         self._downloadTo = downloadTo
-        # initialilly no files are being downloaded
         self._downloading = []
         self._history = []
 
@@ -82,8 +81,9 @@ class FileRequest(object):
         getFiles downloads all of the files listed ina fileRequest. It
         handles building the necessary directories.
 
-        :param downloader: a DownloadAgent object is necessary to download files.
-        The object must have a method getFiles that returns a deferred.
+        :param downloader: a file downloader object.
+
+        :param dirCreator: a function that can create directories
         """
         # this basically makes a request for each file in rapid succession
         # and does NOT await the result (use semaphore if you need to)
