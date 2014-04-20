@@ -2,9 +2,7 @@
 A FileRequest object contains all of the information needed to transmit (that
 is to grab) a set of of files from one user to another.
 """
-from twisted.internet import reactor
 from twisted.python import filepath
-from twisted.internet.defer import Deferred
 
 class FormArgsError(Exception):
     """

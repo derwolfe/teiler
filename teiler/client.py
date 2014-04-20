@@ -7,9 +7,7 @@ wants to SEND a file to another user.
 However, the recipient of the file transfer can decline a transfer request.
 """
 from twisted.web.resource import Resource
-from twisted.python import log, failure
 from twisted.internet.defer import Deferred
-from twisted.internet import reactor
 
 from twisted.web.server import NOT_DONE_YET
 
