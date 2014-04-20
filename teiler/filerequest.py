@@ -44,29 +44,23 @@ def _getNewFilePath(downloadTo, filename):
     return filepath.FilePath(filepath.joinpath(downloadTo, filename))
 
 
-class IOHandler(object):
+def createFileDirs(downloadTo, newPath):
     """
-    IOHandler is responsible for creating changes to a file system,
-    i.e. creating or destroying files.
+    Make the directories that live between downloadTo and newPath. This only
+    createsFiles and returns no information.
+
+    :param downloadTo: where downloads are saved
+    :paramtype: string
+
+    :param newPath: where the new file will be saved
+    :paramtype: string
+
+    :returns: None
     """
-
-    def createFileDirs(self, downloadTo, newPath):
-        """
-        Make the directories that live between downloadTo and newPath. This only
-        createsFiles and returns no information.
-
-        :param downloadTo: where downloads are saved
-        :paramtype: string
-
-        :param newPath: where the new file will be saved
-        :paramtype: string
-
-        :returns: None
-        """
-        toCreate = filepath.FilePath(filepath.joinpath(downloadTo, newPath))
-        parentDir = toCreate.parent()
-        if not parentDir.exists():
-            parentDir.makedirs()
+    toCreate = filepath.FilePath(filepath.joinpath(downloadTo, newPath))
+    parentDir = toCreate.parent()
+    if not parentDir.exists():
+        parentDir.makedirs()
 
 
 class FileRequest(object):
@@ -79,15 +73,15 @@ class FileRequest(object):
         # initialilly no files are being downloaded
         self._downloading = []
         self._history = []
-        
+
     def __repr__(self):
         return "{0}".format(self.url)
 
-    def getFiles(self, downloader, IOHandler):
+    def getFiles(self, downloader, dirCreator=createFileDirs):
         """
         getFiles downloads all of the files listed ina fileRequest. It
         handles building the necessary directories.
-        
+
         :param downloader: a DownloadAgent object is necessary to download files.
         The object must have a method getFiles that returns a deferred.
         """
@@ -98,7 +92,7 @@ class FileRequest(object):
         while self.files:
             filename = self.files.pop()
             self._downloading.append(filename)
-            IOHandler.createFileDirs(self._downloadTo, filename)
+            dirCreator(self._downloadTo, filename)
             url = _getFileUrl(self.url, filename)
             self._history.append(url)
             newFile = _getNewFilePath(self._downloadTo, filename)

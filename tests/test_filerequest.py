@@ -39,17 +39,16 @@ class MockDownloader(object):
         d.addBoth(finish)
         return d
 
-class MockIOHandler(object):
+
+def mockCreateFileDirs(downloadTo, newPath):
     """
-    Mock IO handler is able to create file directories without touching
+    Mock IO hand is able to create file directories without touching
     the file system.
     """
-    def createFileDirs(self, downloadTo, newPath):
-        return True
-
+    return True
 
 class FileRequestTests(unittest.TestCase):
-    
+
     def setUp(self):
         self.url = 'here'
         self.files = ['file1']
@@ -59,15 +58,15 @@ class FileRequestTests(unittest.TestCase):
                                                 self.downloadTo)
 
     def test_get_files_adds_files_to_downloading(self):
-        self.frequest.getFiles(MockDownloader(), MockIOHandler())
+        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
         self.assertTrue(self.frequest._downloading == ['file1'])
         self.assertTrue(len(self.frequest._downloading) == 1)
 
     def test_get_files_removes_files_from_files(self):
-        self.frequest.getFiles(MockDownloader(), MockIOHandler())
+        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
         self.assertTrue(len(self.frequest.files) == 0)
 
     def test_get_files_with_url_and_filename(self):
-        self.frequest.getFiles(MockDownloader(), MockIOHandler())
+        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
         self.assertTrue(len(self.frequest._history) == 1)
         self.assertTrue(self.frequest._history == ['here/file1'])
