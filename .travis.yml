@@ -2,7 +2,6 @@ language: python
 branches:
     only:
         - master 
-        - move_resources
 python:
     - "2.7"
 #    - "3.3"
