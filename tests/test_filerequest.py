@@ -41,10 +41,9 @@ class FakeDownloader(object):
         return d
 
 
-def mockCreateFileDirs(downloadTo, newPath):
+def fakeCreateFileDirs(downloadTo, newPath):
     """
-    Fake IO hand is able to create file directories without touching
-    the file system.
+    Stand in for createFileDirs. Same args, no side effect.
     """
     return True
 
@@ -60,15 +59,15 @@ class FileRequestTests(unittest.TestCase):
                                                 self.downloadTo)
 
     def test_get_files_adds_files_to_downloading(self):
-        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), fakeCreateFileDirs)
         self.assertTrue(self.frequest.downloading == ['file1'])
         self.assertTrue(len(self.frequest.downloading) == 1)
 
     def test_get_files_removes_files_from_files(self):
-        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), fakeCreateFileDirs)
         self.assertTrue(len(self.frequest.files) == 0)
 
     def test_get_files_with_url_and_filename(self):
-        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), fakeCreateFileDirs)
         self.assertTrue(len(self.frequest.history) == 1)
         self.assertTrue(self.frequest.history == ['here/file1'])
