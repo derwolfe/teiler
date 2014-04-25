@@ -53,6 +53,7 @@ class FileWriter(Protocol):
         :param filepath: the path to where the new file should be saved.
         :param ioHandler: an object can open, write to, and close file-like
                           objects.
+        :param progress: an object that can 
         """
         self._finished = finished
         self._written = 0
@@ -90,7 +91,7 @@ class FileWriter(Protocol):
 
 class DownloadProgress(object):
     """
-    DownloadProgress is meant to report the status of a download. It does
+    DownloadProgress reports the progress of a download. It does
     this by maintaining an internal progress counter.
     """
     def __init__(self):
@@ -100,6 +101,9 @@ class DownloadProgress(object):
         self._progress.append(increase)
 
     def current(self):
+        """
+        current returns the most recently received progress state.
+        """
         return self._progress[-1]
 
 
@@ -111,6 +115,8 @@ def getFile(reactor, url, filename, ioHandler, progress):
     :param reactor: the reactor being used by the system
     :param url: the url where the file is located
     :param filename: the filename to write the file to.
+    :param ioHandler: an object that can perform open, write, close on file-like
+                      objects.
     :param progress: an object to which period progress updates can be added.
 
     :returns: a deferred object.
