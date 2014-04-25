@@ -87,9 +87,10 @@ class FileWriter(Protocol):
         self._ioHandler.close()
         self._finished.callback(None)
 
-class DownloadProgress:
+
+class DownloadProgress(object):
     """
-    DownloadProgress is meant to report the status of a download. It does 
+    DownloadProgress is meant to report the status of a download. It does
     this by maintaining an internal progress counter.
     """
     def __init__(self):
@@ -100,7 +101,7 @@ class DownloadProgress:
 
     def current(self):
         return self._progress[-1]
-    
+
 
 def getFile(reactor, url, filename, ioHandler, progress):
     """
@@ -111,7 +112,7 @@ def getFile(reactor, url, filename, ioHandler, progress):
     :param url: the url where the file is located
     :param filename: the filename to write the file to.
     :param progress: an object to which period progress updates can be added.
-    
+
     :returns: a deferred object.
     """
     d = Agent(reactor).request('GET', url,
@@ -124,7 +125,7 @@ def getFile(reactor, url, filename, ioHandler, progress):
         """
         finished = Deferred()
         response.deliverBody(FileWriter(finished, response.length,
-                                        filename, ioHandler, 
+                                        filename, ioHandler,
                                         progress))
         return finished
     d.addCallback(cbRequest)
