@@ -1,3 +1,4 @@
+
 """
 downloadAgent
 
@@ -8,90 +9,123 @@ from __future__ import division
 
 from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent
-from twisted.python.filepath import FilePath
 from twisted.python import log
 from twisted.web.http_headers import Headers
 from twisted.internet.defer import Deferred
 
+
+class IOHandler(object):
+    """
+    IOHandler opens files, writes to them, and closes them.
+    """
+    def __init__(self):
+        self._openedFile = None
+
+    def open(self, path):
+        """
+        Open a file like object
+        """
+        self._openedFile = open(path, 'w')
+
+    def close(self):
+        """
+        Close a file like object.
+        """
+        self._openedFile.close()
+
+    def write(self, data):
+        """
+        Write to the file held in self.
+        :param data: the data to write
+        """
+        self._openedFile.write(data)
+
+
 class FileWriter(Protocol):
     """
-    FileWriter writes the bytes of a response to a given file.
+    FileWriter writes the data to a file like object and can report the
+    progress of a file transfer.
     """
-    def __init__(self, finished, filesize, filename):
-        self.finished = finished
-        self.written = 0
-        self.filesize = filesize
-        self.remaining = filesize
-        self.openedFile = open(filename, "w")
+    def __init__(self, finished, filesize, filename, ioHandler, progress):
+        """
+        :param finished: a callback to be called when transmission has finished
+        :param filesize: the expected length of the file
+        :param filepath: the path to where the new file should be saved.
+        :param ioHandler: an object can open, write to, and close file-like
+                          objects.
+        """
+        self._finished = finished
+        self._written = 0
+        self._filesize = filesize
+        self._remaining = filesize
+        self._ioHandler = ioHandler
+        self._openedFile = self._ioHandler.open(filename)
+        self._progress = progress
 
-    def getProgress(self):
+    def currentProgress(self):
         """
         Return the current percentage of the file transferred.
         """
-        return (self.written / self.filesize) * 100
+        return (self._written / self._filesize) * 100
 
-    def dataReceived(self, bytes):
+    def dataReceived(self, data):
         """
         Write the bites to a supplied file and update progress in the log.
         """
-        if self.remaining > 0:
-            self.written += len(bytes)
-            self.remaining -= len(bytes)
-            self.openedFile.write(bytes)
-            log.msg('progress',
-                    self.getProgress(),
-                    system="DownloadAgent, FileWriter")
+        if self._remaining > 0:
+            self._written += len(data)
+            self._remaining -= len(data)
+            self._ioHandler.write(data)
+            self._progress.add(self.currentProgress())
         else:
             self.connectionLost()
 
-
     def connectionLost(self, reason):
-        log.msg('Finished receiving body:',
-                reason.getErrorMessage(),
-                system="DownloadAgent, FileWriter")
-        self.openedFile.close()
-        self.finished.callback(None)
+        """ Connectiong closed """
+        log.msg('Finished receiving body:', reason.getErrorMessage(),
+                system="FileWriter")
+        self._ioHandler.close()
+        self._finished.callback(None)
 
-
-class DownloadAgent(object):
+class DownloadProgress:
     """
-    Downloads files making the data available to a protocol.
+    DownloadProgress is meant to report the status of a download. It does 
+    this by maintaining an internal progress counter.
     """
-    # XXX why did i do it this way, is there a reason I need these instance
-    # variables.
-    def __init__(self, reactor, url, filename):
-        self.reactor = reactor
-        self.url = url
-        self.filename = filename
+    def __init__(self):
+        self._progress = [0.0]
 
-    def getFile(self):
+    def add(self, increase):
+        self._progress.append(increase)
+
+    def current(self):
+        return self._progress[-1]
+    
+
+def getFile(reactor, url, filename, ioHandler, progress):
+    """
+    Download file is similar to web.client.getPage except it is able
+    the progress of the download in real time.
+
+    :param reactor: the reactor being used by the system
+    :param url: the url where the file is located
+    :param filename: the filename to write the file to.
+    :param progress: an object to which period progress updates can be added.
+    
+    :returns: a deferred object.
+    """
+    d = Agent(reactor).request('GET', url,
+                               Headers({'User-Agent': ['Teiler']}),
+                               None)
+
+    def cbRequest(response):
         """
-        Download file is similar to web.client.getPage except it is able
-        the progress of the download in real time.
-
-        url - where the file is located
-        filename - the path where the file should be saved.
+        This callback fires when the response headers have been received.
         """
-        agent = Agent(self.reactor)
-        d = agent.request('GET',
-                          self.url,
-                          Headers({'User-Agent': ['Twisted Web Client']}),
-                          None)
-
-        # this gets called on the response from the request.
-        # it will then pass through the specified transport
-        def cbRequest(response):
-            """
-            consume the response data
-            """
-            finished = Deferred()
-            # delivery body basically handles receiving the
-            # entire response body, so no further cbs needed
-            # in order to read the progress from this object, you need to
-            # pass in all of the download information.
-            response.deliverBody(FileWriter(finished,
-                                            response.length,
-                                            self.filename))
-            return finished
-        d.addCallback(cbRequest)
-        return d
+        finished = Deferred()
+        response.deliverBody(FileWriter(finished, response.length,
+                                        filename, ioHandler, 
+                                        progress))
+        return finished
+    d.addCallback(cbRequest)
+    return d

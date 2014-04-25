@@ -8,16 +8,16 @@ However, the recipient of the file transfer can decline a transfer request.
 """
 from twisted.web.resource import Resource
 from twisted.internet.defer import Deferred
-
 from twisted.web.server import NOT_DONE_YET
 
-import filerequest
+import teiler.filerequest as filerequest
+
 
 # this is basically the TransferRequestEndpoint
 class FileRequestResource(Resource):
     """
     FileRequestResource fields requests for file transfers.
-    
+
     Expose a simple endpoint where other users can post transfer requests.
 
     The resource accepts POSTed json data messages containing file location
@@ -31,14 +31,20 @@ class FileRequestResource(Resource):
         self.downloadTo = downloadTo
 
     def _parseForm(self, request):
+        """
+        Try parsing the request, if it fails, tell the requestor.
+        """
         d = Deferred()
         d.addCallback(filerequest.parseFileRequest)
-        # can you save it
+
         def successfulParse(data):
+            """ pass the request on if it parses """
             self.transferRequests.append(data)
-            request.write("ok") # this is not being returned outside
+            request.write("ok")  # this is not being returned outside
             request.finish()
+
         def parseFailure(failure):
+            """ trap failures """
             request.write("error parsing request")
             request.finish()
         d.addCallbacks(successfulParse, parseFailure)
@@ -62,4 +68,3 @@ class FileRequestResource(Resource):
         d.addCallback(self._parseForm)
         d.callback(request)
         return NOT_DONE_YET
-

@@ -1,12 +1,14 @@
 from zope.interface import implements
 
-from twisted.internet.interfaces import IMulticastTransport, IUDPTransport
+from twisted.internet.interfaces import IUDPTransport
 from twisted.trial import unittest
 from twisted.internet import task
 from collections import defaultdict
 
-from teiler.peerdiscovery import PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol
-from teiler.peerdiscovery import heartbeatMsg, exitMsg, makeId
+from teiler.peerdiscovery import (
+    PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol, HEARTBEAT, EXIT, 
+    makePeerId)
+
 
 class FakeUdpTransport(object):
     """
@@ -38,6 +40,7 @@ class FakeUdpTransport(object):
     def joinGroup(self, address):
         pass
 
+
 class PeerDiscoveryTests(unittest.TestCase):
 
     def setUp(self):
@@ -47,7 +50,6 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.myUdpPort = 8000
         self.user = "test"
         self.protocol = PeerDiscoveryProtocol(self.clock,
-                                              #list(), # may want a defaultdict
                                               defaultdict(),
                                               self.user,
                                               self.myAddr,
@@ -63,17 +65,23 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_received_message_from_self_do_not_add(self):
         """The new peer should not be added as it is equal to the host."""
-        dg = PeerDiscoveryMessage(self.user, self.user, self.myAddr, self.myUdpPort).serialize()
+        dg = PeerDiscoveryMessage(self.user,
+                                  self.user,
+                                  self.myAddr,
+                                  self.myUdpPort).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
         self.assertTrue(len(self.protocol.peers) == 0)
 
     def test_received_message_from_peer_add(self):
-        dg = PeerDiscoveryMessage(heartbeatMsg, "bob", "192.168.1.2", 1232).serialize()
+        dg = PeerDiscoveryMessage(HEARTBEAT,
+                                  "bob",
+                                  "192.168.1.2",
+                                  1232).serialize()
         self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
         self.assertTrue(len(self.protocol.peers) > 0)
 
     def test_remove_peer_on_receipt_of_exit_message(self):
-        dg = PeerDiscoveryMessage(exitMsg, "bob", "192.168.1.1", 8000).serialize()
+        dg = PeerDiscoveryMessage(EXIT, "bob", "192.168.1.1", 8000).serialize()
         p = Peer("bob", "192.168.1.1", 8000)
         self.protocol.addPeer(p)
         self.protocol.datagramReceived(dg, "192.168.1.1")
@@ -82,24 +90,25 @@ class PeerDiscoveryTests(unittest.TestCase):
     def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()
         self.protocol.reactor.advance(10)
-        # there should be two messages delivered over the interval of 10 seconds
-        self.protocol.stopProtocol() # this keeps the reactor clean
+        # there should be two messages delivered over the
+        # dinterval of 10 seconds
+        self.protocol.stopProtocol()  # this keeps the reactor clean
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
 
     def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", 8000)
-        id = makeId(p.name, p.address, p.tcpPort)
+        peerId = makePeerId(p.name, p.address, p.tcpPort)
         self.protocol.addPeer(p)
-        self.assertTrue(self.protocol.isPeer(id))
+        self.assertTrue(self.protocol.isPeer(peerId))
 
     def test_sends_exit_message_on_exit(self):
         # check that stop protocol sends an exit message
-        self.protocol.startProtocol() # needed to get a loop object to cancel
-        self.protocol.stopProtocol() #
+        self.protocol.startProtocol()  # needed to get a loop object to cancel
+        self.protocol.stopProtocol()
         self.assertTrue('EXIT' in self.protocol.transport.msgs[1])
 
     def test_kills_looping_call(self):
-        self.protocol.startProtocol() # loop started, could this be mocked?
-        self.assertTrue(self.protocol.loop.running == True)
+        self.protocol.startProtocol()  # loop started, could this be mocked?
+        self.assertTrue(self.protocol.loop.running is True)
         self.protocol.stopProtocol()
-        self.assertTrue(self.protocol.loop.running == False)
+        self.assertTrue(self.protocol.loop.running is False)

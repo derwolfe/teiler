@@ -1,8 +1,8 @@
 from twisted.trial import unittest
-from twisted.python import filepath
 from twisted.internet.defer import Deferred
 
 from teiler import filerequest
+
 
 class ParseFileRequestTests(unittest.TestCase):
 
@@ -11,7 +11,6 @@ class ParseFileRequestTests(unittest.TestCase):
         downdir = "."
         result = filerequest.parseFileRequest((request, downdir,))
         self.assertTrue(len(result.files) == 2)
-        self.assertTrue(result._downloadTo == ".")
         self.assertTrue(result.files[0] == 'plop')
         self.assertTrue(result.files[1] == 'foo/bar/baz.txt')
 
@@ -21,6 +20,7 @@ class ParseFileRequestTests(unittest.TestCase):
         self.assertRaises(filerequest.FormArgsError,
                           filerequest.parseFileRequest,
                           (request, downdir,))
+
 
 class MockDownloader(object):
     """
@@ -34,6 +34,7 @@ class MockDownloader(object):
         d = Deferred()
         self.requests.append(url)
         self.called += 1
+
         def finish(ignored):
             return True
         d.addBoth(finish)
@@ -47,6 +48,7 @@ def mockCreateFileDirs(downloadTo, newPath):
     """
     return True
 
+
 class FileRequestTests(unittest.TestCase):
 
     def setUp(self):
@@ -59,8 +61,8 @@ class FileRequestTests(unittest.TestCase):
 
     def test_get_files_adds_files_to_downloading(self):
         self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
-        self.assertTrue(self.frequest._downloading == ['file1'])
-        self.assertTrue(len(self.frequest._downloading) == 1)
+        self.assertTrue(self.frequest.downloading == ['file1'])
+        self.assertTrue(len(self.frequest.downloading) == 1)
 
     def test_get_files_removes_files_from_files(self):
         self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
@@ -68,5 +70,5 @@ class FileRequestTests(unittest.TestCase):
 
     def test_get_files_with_url_and_filename(self):
         self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
-        self.assertTrue(len(self.frequest._history) == 1)
-        self.assertTrue(self.frequest._history == ['here/file1'])
+        self.assertTrue(len(self.frequest.history) == 1)
+        self.assertTrue(self.frequest.history == ['here/file1'])

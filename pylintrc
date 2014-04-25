@@ -90,13 +90,13 @@ const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 class-rgx=[A-Z_][a-zA-Z0-9]+$
 
 # Regular expression which should only match correct function names
-function-rgx=([a-z][A-Za-z0-9]{1,30})$
+function-rgx=[_]?([a-z][A-Za-z0-9]{1,30})$
 
 # Regular expression which should only match correct method names
-method-rgx=([a-z][A-Za-z0-9]{1,30})$
+method-rgx=(_?_?[a-z][A-Za-z0-9]{1,30})\w+
 
 # Regular expression which should only match correct instance attribute names
-attr-rgx=([a-z][A-Za-z0-9]{1,30})$
+attr-rgx=([a-z_][A-Za-z0-9]{1,30})$
 
 # Regular expression which should only match correct argument names
 argument-rgx=_?[a-z][A-Za-z0-9]{1,30}$
@@ -106,14 +106,14 @@ variable-rgx=_?[a-z][A-Za-z0-9]{1,30}$
 
 # Regular expression which should only match correct attribute names in class
 # bodies
-class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
-
+class-attribute-rgx=_?([A-Za-z_][A-Za-z0-9_]{2,30}|(__.*__))$
+		
 # Regular expression which should only match correct list comprehension /
 # generator expression variable names
 inlinevar-rgx=_?[a-z][A-Za-z0-9]{1,30}$
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_
+good-names=i,j,k,ex,Run,_,d
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata

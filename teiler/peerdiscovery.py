@@ -12,16 +12,17 @@ The process is simple.
     client to disconnect
 """
 
+
 import json
 
 from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
 
-heartbeatMsg = "HEARTBEAT"
-exitMsg = "EXIT"
+HEARTBEAT = "HEARTBEAT"
+EXIT = "EXIT"
 
-# should be renamed to PeerDiscoveryMessage
+
 class PeerDiscoveryMessage(object):
     """
     Contains basic location information for clients to use
@@ -38,8 +39,8 @@ class PeerDiscoveryMessage(object):
         return json.dumps({
             "message": self.message,
             "name": self.name,
-            "address" : self.address,
-            "tcpPort" : self.tcpPort,
+            "address": self.address,
+            "tcpPort": self.tcpPort,
             })
 
 
@@ -50,36 +51,38 @@ class Peer(object):
 
     Each peer needs some sort of unique identifier. For now, the combination
     of port, address, and name should suffice.
+
+
     """
     def __init__(self, name, address, port):
-        self.id = makeId(name, address, port)
+        self.peerId = makePeerId(name, address, port)
         self.name = name
         self.address = address
         self.tcpPort = port
 
     def __str__(self):
-        return self.id
+        return self.peerId
 
     def __eq__(self, other):
         """
         Does one peer equal another?
         """
-        return self.id == other.id
+        return self.peerId == other.peerId
 
 
-def makeId(name, address, port):
+def makePeerId(name, address, port):
     """
-    Create a unique id for a peer.
+    Create a unique peerId for a peer.
 
     :param name: the name of a peer
     :param address: the ip address of a peer
     :param port: the port being used
 
-    :returns string: an id
+    :returns string: an peerId
     """
     return name + '_' + address + '_' + str(port)
 
-# rename to PeerDiscoveryProtocol
+
 class PeerDiscoveryProtocol(DatagramProtocol):
     """
     UDP protocol used to find others running the same program.
@@ -103,8 +106,8 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         the message information needed to broadcast other instances
         of the protocol running on the same network.
         """
-        self.peers = peers # your list needs to implement append
-        self.id = makeId(name, tcpAddress, tcpPort)
+        self.peers = peers  # your list needs to implement append
+        self.peerId = makePeerId(name, tcpAddress, tcpPort)
         self.reactor = reactor
         self.name = name
         self.multiCastAddress = multiCastAddress
@@ -127,11 +130,10 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         """
         Sends message alerting other peers to your presence.
         """
-        message = PeerDiscoveryMessage(heartbeatMsg,
-                          self.name,
-                          self.tcpAddress,
-                          self.tcpPort,
-                          ).serialize()
+        message = PeerDiscoveryMessage(HEARTBEAT,
+                                       self.name,
+                                       self.tcpAddress,
+                                       self.tcpPort).serialize()
         self.sendMessage(message)
         log.msg("Sent " + message)
 
@@ -139,11 +141,10 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         """
         Gracefully tell peers to remove you.
         """
-        message = PeerDiscoveryMessage(exitMsg,
-                          self.name,
-                          self.tcpAddress,
-                          self.tcpPort,
-                          ).serialize()
+        message = PeerDiscoveryMessage(EXIT,
+                                       self.name,
+                                       self.tcpAddress,
+                                       self.tcpPort).serialize()
         self.sendMessage(message)
         self.loop.stop()
         log.msg("Exit " + message)
@@ -154,35 +155,35 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         as this is a json serialised message, we are pulling out the
         peer information and placing it in a list.
         """
-        log.msg("Decoding: " + datagram)
+        log.msg("Decoding: " + datagram + " from ", address)
         msg = json.loads(datagram)
         peerName = msg['name']
         peerAddress = msg['address']
         peerPort = msg['tcpPort']
         peerMsg = msg['message']
-        peerId = makeId(peerName, peerAddress, peerPort)
+        peerPeerId = makePeerId(peerName, peerAddress, peerPort)
         log.msg("Peer: Address: {0} Name: {1}".format(peerAddress, peerName))
-        if peerMsg == exitMsg:
-            if self.isPeer(peerId):
+        if peerMsg == EXIT:
+            if self.isPeer(peerPeerId):
                 log.msg('dropping a peer')
-                self.removePeer(peerId)
-        elif peerMsg == heartbeatMsg:
-            if self.isPeer(peerId) == False:
+                self.removePeer(peerPeerId)
+        elif peerMsg == HEARTBEAT:
+            if self.isPeer(peerPeerId) is False:
                 newPeer = Peer(peerName, peerAddress, peerPort)
                 self.addPeer(newPeer)
-                log.msg("Added new Peer: address: {0}, name: {1}"\
+                log.msg("new Peer: address: {0}, name: {1}"
                         .format(peerAddress, peerName))
 
-    def isPeer(self, id):
+    def isPeer(self, peerId):
         """
         Convenience method to make it easy to tell whether or not a peer
         is already a peer.
         """
         # this should use a deferred
-        return id in self.peers.keys() # for use with default dict
+        return peerId in self.peers.keys()  # for use with default dict
 
-    def removePeer(self, id):
-        del self.peers[id]
+    def removePeer(self, peerId):
+        del self.peers[peerId]
 
     def addPeer(self, peer):
-        self.peers[peer.id] = peer
+        self.peers[peer.peerId] = peer

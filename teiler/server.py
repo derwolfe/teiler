@@ -13,7 +13,7 @@ from .client import FileRequestResource
 
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
-# root endpoint
+
 class RootResource(Resource):
     """
     The `RootResource` is the base location for the system.
@@ -49,7 +49,7 @@ class RootResource(Resource):
         log.msg('removeFile:', urlName, system="MainPage")
         self.delEntity(urlName)
 
-# Who calls these methods? I would think a user on the main page?
+
 def submitFileRequest(recipient, postdata, headers):
     """
     Post the file request information to another user.
@@ -60,6 +60,7 @@ def submitFileRequest(recipient, postdata, headers):
                    postdata=postdata,
                    headers=headers)
 
+
 def createFileRequestData(url, files):
     """
     Propose a file transfer to a fellow user.
@@ -69,6 +70,4 @@ def createFileRequestData(url, files):
     """
     # XXX maybe the post data should be from a class containg url, session,
     # and file information. This class could then have an encode method.
-    return urlencode({'url': url, 'files': files })
-    
-
+    return urlencode({'url': url, 'files': files})
