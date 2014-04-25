@@ -22,9 +22,9 @@ class ParseFileRequestTests(unittest.TestCase):
                           (request, downdir,))
 
 
-class MockDownloader(object):
+class FakeDownloader(object):
     """
-    Mock download agent object
+    Fake download agent object
     """
     def __init__(self):
         self.called = 0
@@ -43,7 +43,7 @@ class MockDownloader(object):
 
 def mockCreateFileDirs(downloadTo, newPath):
     """
-    Mock IO hand is able to create file directories without touching
+    Fake IO hand is able to create file directories without touching
     the file system.
     """
     return True
@@ -60,15 +60,15 @@ class FileRequestTests(unittest.TestCase):
                                                 self.downloadTo)
 
     def test_get_files_adds_files_to_downloading(self):
-        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
         self.assertTrue(self.frequest.downloading == ['file1'])
         self.assertTrue(len(self.frequest.downloading) == 1)
 
     def test_get_files_removes_files_from_files(self):
-        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
         self.assertTrue(len(self.frequest.files) == 0)
 
     def test_get_files_with_url_and_filename(self):
-        self.frequest.getFiles(MockDownloader(), mockCreateFileDirs)
+        self.frequest.getFiles(FakeDownloader(), mockCreateFileDirs)
         self.assertTrue(len(self.frequest.history) == 1)
         self.assertTrue(self.frequest.history == ['here/file1'])

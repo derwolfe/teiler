@@ -4,7 +4,7 @@ from twisted.internet.defer import Deferred
 
 class FakeIoHandler(object):
     """
-    Mock out file operations.
+    Fake file operations.
     """
     def __init__(self):
         self.buffer = []
@@ -43,7 +43,7 @@ class FileWriterProgressTests(unittest.TestCase):
                                    self.io, self.progress)
         self.protocol.dataReceived(b'zehn zehn ')
         self.assertTrue(self.progress.current() == 10)
-        #self.assertTrue(self.progress is self.protocol._progress)
+
 
 class DownloadProgressTests(unittest.TestCase):
     
