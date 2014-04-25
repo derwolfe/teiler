@@ -1,6 +1,5 @@
-
 """
-downloadAgent
+downloadagent
 
 This download agent makes it possible to return the current status of a file
 transfer.
@@ -71,7 +70,7 @@ class FileWriter(Protocol):
 
     def dataReceived(self, data):
         """
-        Write the bites to a supplied file and update progress in the log.
+        Write received data to file-like object and update progress counters.
         """
         if self._remaining > 0:
             self._written += len(data)
@@ -103,8 +102,9 @@ class DownloadProgress(object):
     def current(self):
         """
         current returns the most recently received progress state.
+        :returns: an int
         """
-        return self._progress[-1]
+        return int(self._progress[-1])
 
 
 def getFile(reactor, url, filename, ioHandler, progress):

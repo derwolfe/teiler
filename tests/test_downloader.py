@@ -44,3 +44,14 @@ class FileWriterProgressTests(unittest.TestCase):
         self.protocol.dataReceived(b'zehn zehn ')
         self.assertTrue(self.progress.current() == 10)
         #self.assertTrue(self.progress is self.protocol._progress)
+
+class DownloadProgressTests(unittest.TestCase):
+    
+    def test_can_update_progress(self):
+        progress = DownloadProgress()
+        progress.add(10.0)
+        self.assertTrue(10 == progress.current())
+
+    def test_progress_initialized_to_zero(self):
+        progress = DownloadProgress()
+        self.assertTrue(0 == progress.current())
