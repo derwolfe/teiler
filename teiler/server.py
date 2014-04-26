@@ -9,8 +9,6 @@ from twisted.web.client import getPage
 from twisted.python import log
 from urllib import urlencode
 
-from .client import FileRequestResource
-
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
 
@@ -28,8 +26,8 @@ class FileServerResource(Resource):
     `removeFile` is used when a user no longer wishes to serve a given file to
     other users at  given location.
     """
-    isLeaf = False 
-    
+    isLeaf = False
+
     def __init__(self, hosting):
         Resource.__init__(self)
         self.hosting = hosting
@@ -51,7 +49,7 @@ class FileServerResource(Resource):
 
     def render_GET(self, request):
         request.setHeader("content-type", "text/plain")
-        return "Hi, welcome to teiler - here is the base file server" 
+        return "Hi, welcome to teiler - here is the base file server"
 
 
 def submitFileRequest(recipient, postdata, headers):
