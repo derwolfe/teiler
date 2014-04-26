@@ -10,19 +10,22 @@ from twisted.python import log
 class HelloResource(resource.Resource):
     isLeaf = False
     numberRequests = 0
-    
+
     def render_GET(self, request):
         self.numberRequests += 1
         request.setHeader("content-type", "text/plain")
         return "I am request #" + str(self.numberRequests) + "\n"
 
-
 if __name__ == '__main__':
     log.startLogging(sys.stdout)
+    filesServed = []
+    transferRequests = []
+    downloadDirectory = "."
     root = resource.Resource()
     root.putChild('', HelloResource())
-    root.putChild('files', FileServerResource([]))
-    root.putChild('requests', FileRequestResource([], "."))
+    root.putChild('files', FileServerResource(filesServed))
+    root.putChild('requests', FileRequestResource(transferRequests, 
+                                                    downloadDirectory))
     reactor.listenTCP(8080, server.Site(root))
     reactor.run()
 
