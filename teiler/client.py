@@ -23,6 +23,8 @@ class FileRequestResource(Resource):
     The resource accepts POSTed json data messages containing file location
     information.
     """
+    isLeaf = True 
+    
     def __init__(self, transferRequests, downloadTo):
         Resource.__init__(self)
         # list of files that others want to transfer to you
@@ -54,7 +56,8 @@ class FileRequestResource(Resource):
         """
         The resource has no need to render GET requests.
         """
-        pass
+        request.setHeader("content-type", "text/plain")
+        return "Hi, welcome to teiler - here are the file requests."         
 
     def render_POST(self, request):
         """

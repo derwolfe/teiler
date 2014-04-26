@@ -14,9 +14,10 @@ from .client import FileRequestResource
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
 
-class RootResource(Resource):
+# maybe call FileServerResource
+class FileServerResource(Resource):
     """
-    The `RootResource` is the base location for the system.
+    The `FileServerResource` is the base location for the system.
 
     `addFile` New files are served from a host by calling addFiles with both
     a location where the file should be served, relative to the root
@@ -27,18 +28,17 @@ class RootResource(Resource):
     `removeFile` is used when a user no longer wishes to serve a given file to
     other users at  given location.
     """
-    def __init__(self, toDownload, hosting, downloadTo):
+    isLeaf = False 
+    
+    def __init__(self, hosting):
         Resource.__init__(self)
-        # post against the resource to create a new file request.
-        self.putChild("request", FileRequestResource(toDownload, downloadTo))
-        # all files that this server is serving - this is state.
         self.hosting = hosting
 
     def addFile(self, urlName, path):
         """
-        Adds a new file resource
+        Adds a new file resource for other users to access.
         """
-        log.msg('addFile:', path, urlName, system="RootResource")
+        log.msg('addFile:', path, urlName, system="FileServerResource")
         self.hosting.append(path)
         self.putChild(urlName, File(path))
 
@@ -48,6 +48,10 @@ class RootResource(Resource):
         """
         log.msg('removeFile:', urlName, system="MainPage")
         self.delEntity(urlName)
+
+    def render_GET(self, request):
+        request.setHeader("content-type", "text/plain")
+        return "Hi, welcome to teiler - here is the base file server" 
 
 
 def submitFileRequest(recipient, postdata, headers):
