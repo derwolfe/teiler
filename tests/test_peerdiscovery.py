@@ -97,7 +97,7 @@ class PeerDiscoveryTests(unittest.TestCase):
 
     def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", 8000)
-        peerId = makePeerId(p.name, p.address, p.tcpPort)
+        peerId = makePeerId(p.name, p.address, p.port)
         self.protocol.addPeer(p)
         self.assertTrue(self.protocol.isPeer(peerId))
 
