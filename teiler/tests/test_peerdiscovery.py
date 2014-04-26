@@ -5,7 +5,7 @@ from twisted.trial import unittest
 from twisted.internet import task
 from collections import defaultdict
 
-from teiler.peerdiscovery import (
+from ..peerdiscovery import (
     PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol, HEARTBEAT, EXIT, 
     makePeerId)
 

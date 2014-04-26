@@ -1,11 +1,12 @@
 from twisted.internet import reactor
 from twisted.web import server, resource
-from teiler.server import FileServerResource
-from teiler.client import FileRequestResource
+from twisted.python import log
 
 import sys
 
-from twisted.python import log
+from teiler.server import FileServerResource
+from teiler.client import FileRequestResource
+
 
 class HelloResource(resource.Resource):
     isLeaf = False

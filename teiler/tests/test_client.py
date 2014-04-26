@@ -1,6 +1,6 @@
 from twisted.trial import unittest
 
-from teiler import server, client
+from .. import server, client
 from ._dummyresource import DummyRootResource, DummySite
 
 
