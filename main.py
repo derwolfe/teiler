@@ -12,9 +12,8 @@ class HelloResource(resource.Resource):
     numberRequests = 0
 
     def render_GET(self, request):
-        self.numberRequests += 1
         request.setHeader("content-type", "text/plain")
-        return "I am request #" + str(self.numberRequests) + "\n"
+        return "Welcome to teiler\n"
 
 if __name__ == '__main__':
     log.startLogging(sys.stdout)
