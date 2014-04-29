@@ -35,5 +35,6 @@ along
 different asynchronous requests. 
 7) The file transfer completes.
 
-
+-- 28 apr
+Make a client that can communicate with the twisted resources.
 
