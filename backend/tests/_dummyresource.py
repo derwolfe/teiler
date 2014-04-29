@@ -1,8 +1,9 @@
 from twisted.web.test.test_web import DummyRequest
 from twisted.web import resource
 from twisted.web import server
-from teiler.client import FileRequestResource
 from twisted.internet.defer import succeed, Deferred
+from backend.client import FileRequestResource
+
 
 class SmartDummyRequest(DummyRequest):
     def __init__(self, method, url, args=None, headers=None):

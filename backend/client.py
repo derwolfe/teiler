@@ -10,7 +10,7 @@ from twisted.web.resource import Resource
 from twisted.internet.defer import Deferred
 from twisted.web.server import NOT_DONE_YET
 
-import teiler.filerequest as filerequest
+import backend.filerequest as filerequest
 
 
 # this is basically the TransferRequestEndpoint
