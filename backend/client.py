@@ -54,8 +54,9 @@ class FileRequestResource(Resource):
 
     def render_GET(self, request):
         """
-        The resource has no need to render GET requests.
+        Shows all of the requests currently on the server.
         """
+        # if request is local, show local file requests, otherwise, show a message
         request.setHeader("content-type", "text/plain")
         return "Hi, welcome to teiler - here are the file requests."
 

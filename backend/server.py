@@ -6,7 +6,7 @@ These files will be requested at a known location by the client.
 from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.web.client import getPage
-from twisted.python import log
+from twisted.python import log, filepath
 from urllib import urlencode
 
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
@@ -48,10 +48,27 @@ class FileServerResource(Resource):
         self.delEntity(urlName)
 
     def render_GET(self, request):
+        """
+        Display the files currently being hosted.
+        """
         request.setHeader("content-type", "text/plain")
         return "Hi, welcome to teiler - here is the base file server"
 
+    def render_POST(self, request):
+        """
+        The request should contain the information needed to host a new file.
+        Only honor that request, if it originates from localhost.
+        """
+        # if request is from localhost, post the file
+        self.addFile(request.location, request.path)
+        filenames = createFilenames(request.path) # this could block!
+        # files needs to be a list.
+        postdata = createFileRequestData(request.location, filenames)
+        request.setHeader("content-type", "text/plain")
+        return "you've posted a file"
 
+
+## these are client requests
 def submitFileRequest(recipient, postdata, headers):
     """
     Post the file request information to another user.
@@ -73,3 +90,16 @@ def createFileRequestData(url, files):
     # XXX maybe the post data should be from a class containg url, session,
     # and file information. This class could then have an encode method.
     return urlencode({'url': url, 'files': files})
+
+def createFilenames(path):
+    """
+    Get all of the filenames that are below this path. Basically if a directory
+    is passed in, it can be assumed that the user wants to share the entire
+    directory.
+    
+    :param applicationPath: a string that will be converted to a FilePath object
+    """
+    # XXX this could block
+    path = filepath.FilePath(path)
+    # this could be arbitrarily large, it might make sense to force the client to do this!
+    return ['/'.join(subpath.segmentsFrom(path.parent())) for subpath in path.walk()]
