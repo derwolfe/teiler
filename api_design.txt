@@ -37,4 +37,8 @@ different asynchronous requests.
 
 -- 28 apr
 Make a client that can communicate with the twisted resources.
+There should be endpoints for download progress, filerequests, and hosted
+files. New files are added via post as a filerequests.
+
+This way you can build a pyjs client.
 
