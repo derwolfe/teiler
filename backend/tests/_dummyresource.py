@@ -2,7 +2,7 @@ from twisted.web.test.test_web import DummyRequest
 from twisted.web import resource
 from twisted.web import server
 from twisted.internet.defer import succeed, Deferred
-from backend.client import FileRequestResource
+from backend.server import FileRequestResource
 
 
 class SmartDummyRequest(DummyRequest):
@@ -54,4 +54,4 @@ class DummyRootResource(resource.Resource):
     """
     def __init__(self, url, resourceToTest):
         resource.Resource.__init__(self)
-        self.putChild(url, resourceToTest) 
+        self.putChild(url, resourceToTest)

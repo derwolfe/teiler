@@ -1,6 +1,6 @@
 from twisted.trial import unittest
 
-from .. import server, client
+from .. import server
 from ._dummyresource import DummyRootResource, DummySite
 
 
@@ -9,7 +9,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def setUp(self):
         self.requests = []
         self.downloadTo = "."
-        self._resourceToTest = client.FileRequestResource(self.requests,
+        self._resourceToTest = server.FileRequestResource(self.requests,
                                                           self.downloadTo)
         self._resource = DummyRootResource('requests', self._resourceToTest)
         self.web = DummySite(self._resource)
