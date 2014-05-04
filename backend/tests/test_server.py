@@ -8,7 +8,7 @@ from ._dummyresource import DummyRootResource, DummySite
 class FileServerResourceTests(unittest.TestCase):
 
     def setUp(self):
-        self.hosting = []
+        self.hosting = server.Files()
         self._resourceToTest = server.FileServerResource(self.hosting)
         self._resource = DummyRootResource('files', self._resourceToTest)
         self.web = DummySite(self._resource)
@@ -24,6 +24,6 @@ class FileServerResourceTests(unittest.TestCase):
     def test_posting_file_adds_filename_and_path_to_hosts(self):
         d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'}, headers=server.HEADERS)
         def check(ignored):
-            self.assertTrue(self.hosting[0] == ('foo', '/bar'))
+            self.assertTrue(self.hosting.get('foo') == '/bar')
         d.addCallback(check)
         return d

@@ -2,7 +2,7 @@ from twisted.internet import reactor
 from twisted.web import server, resource
 from twisted.python import log
 from sys import stdout
-from backend.server import FileServerResource, FileRequestResource
+from backend.server import FileServerResource, FileRequestResource, Files
 
 class IPResource(resource.Resource):
     isLeaf = True
@@ -13,7 +13,7 @@ class IPResource(resource.Resource):
 
 if __name__ == '__main__':
     log.startLogging(stdout)
-    filesServed = []
+    filesServed = Files()
     transferRequests = []
     downloadDirectory = "."
     root = resource.Resource()

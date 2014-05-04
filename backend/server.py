@@ -16,8 +16,29 @@ import backend.filerequest as filerequest
 
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
+class Files(object):
+    """
+    Data structure that maintains the current files being served by
+    the application.
+    Supports add, remove, and listall
+    """
+    def __init__(self):
+        self._items = {}
 
-# XXX not tested!
+    def add(self, url, path):
+        self._items[url] = path
+
+    def remove(self, url):
+        del self.items[url]
+
+    def get(self, url):
+        return self._items.get(url)
+
+    def listAll(self):
+        items = self._items.iteritems
+        return [''.join("'url':'%s', 'path':'%s', " %(x, y)) for x, y in items]
+
+
 class FileServerResource(Resource):
     """
     The `FileServerResource` is the base location for the system.
@@ -34,7 +55,7 @@ class FileServerResource(Resource):
     isLeaf = False
 
     def __init__(self, hosting):
-        Resource.__init__(self) # is this necessary?
+        Resource.__init__(self)
         self.hosting = hosting
 
     def _addFile(self, urlName, path):
@@ -42,30 +63,29 @@ class FileServerResource(Resource):
         Adds a new file resource for other users to access.
         """
         log.msg('addFile:', path, urlName, system="FileServerResource")
-        self.hosting.append((urlName, path))
-        # needs to call super!
+        self.hosting.add(urlName, path)
         Resource.putChild(self, urlName, File(path))
-        # file could fail and say, 'file not found!'
-        # it could also not have sufficient permissions to serve
+
+    def _removeFile(self, urlName):
+        """
+        Remove the file being served at the `urlName`
+        """
+        self.hosting.remove(urlName)
+        self.delEntity(urlName)
 
     def render_DELETE(self, urlName):
         """
         Removes a File resource that is currently being hosted.
         """
         log.msg('removeFile:', urlName, system="MainPage")
-        self.delEntity(urlName)
+        self._removeFile(urlName)
 
     def render_GET(self, request):
         """
         Display the files currently being hosted.
         """
         request.setHeader("content-type", "application/json")
-        # return the files being served
-        # return the either the file, or the top level directory of th
-        # file being served. Basically, return a list of those paths
-        # that are saved in the `hosting` datastructure.
-        files = [', '.join(x) for x in self.hosting]
-        return json.dumps({'files': files})
+        return json.dumps({'files': self.hosting.listAll()})
 
     def render_POST(self, request):
         """
@@ -83,14 +103,11 @@ class FileServerResource(Resource):
         # if this location is already being served, what to do?
         self._addFile(serveAt[0], filepath[0])
         # filenames = createFilenames(filepath)  # this could block!
-        # filenames is ALL of the files being hosted for the client
-        # broadcast the file being available to another user
         #postdata = createFileRequestData(request.location, filenames)
-        # if it can be added, return a link to the file resource,
-        # otherwise, return an error
         url = request.URLPath().netloc  + '/' + serveAt[0]
         request.setHeader("content-type", "application/json")
         return json.dumps({ 'url': url, 'error': None })
+
 
 def createFileRequestData(url, files):
     """
