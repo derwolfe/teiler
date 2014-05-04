@@ -1,5 +1,5 @@
 """
-downloadagent
+downloadagent.py
 
 This download agent makes it possible to return the current status of a file
 transfer.
@@ -11,33 +11,6 @@ from twisted.web.client import Agent
 from twisted.python import log
 from twisted.web.http_headers import Headers
 from twisted.internet.defer import Deferred
-
-
-class IOHandler(object):
-    """
-    IOHandler opens files, writes to them, and closes them.
-    """
-    def __init__(self):
-        self._openedFile = None
-
-    def open(self, path):
-        """
-        Open a file like object
-        """
-        self._openedFile = open(path, 'w')
-
-    def close(self):
-        """
-        Close a file like object.
-        """
-        self._openedFile.close()
-
-    def write(self, data):
-        """
-        Write to the file held in self.
-        :param data: the data to write
-        """
-        self._openedFile.write(data)
 
 
 class FileWriter(Protocol):
@@ -81,7 +54,9 @@ class FileWriter(Protocol):
             self.connectionLost()
 
     def connectionLost(self, reason):
-        """ Connectiong closed """
+        """
+        Connection closed
+        """
         log.msg('Finished receiving body:', reason.getErrorMessage(),
                 system="FileWriter")
         self._ioHandler.close()
@@ -136,3 +111,30 @@ def getFile(reactor, url, filename, ioHandler, progress):
         return finished
     d.addCallback(cbRequest)
     return d
+
+
+class IOHandler(object):
+    """
+    IOHandler opens files, writes to them, and closes them.
+    """
+    def __init__(self):
+        self._openedFile = None
+
+    def open(self, path):
+        """
+        Open a file like object
+        """
+        self._openedFile = open(path, 'w')
+
+    def close(self):
+        """
+        Close a file like object.
+        """
+        self._openedFile.close()
+
+    def write(self, data):
+        """
+        Write to the file held in self.
+        :param data: the data to write
+        """
+        self._openedFile.write(data)
