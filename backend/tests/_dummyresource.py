@@ -2,6 +2,7 @@ from twisted.web.test.test_web import DummyRequest
 from twisted.web import resource
 from twisted.web import server
 from twisted.internet.defer import succeed, Deferred
+from twisted.python.urlpath import URLPath
 from backend.server import FileRequestResource
 
 
@@ -20,7 +21,8 @@ class SmartDummyRequest(DummyRequest):
         return "".join(self.written)
 
     def URLPath(self):
-        return self.url
+        # this should return a new URLPath instance
+        return URLPath(path=self.url)
 
 
 class DummySite(server.Site):

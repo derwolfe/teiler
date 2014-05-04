@@ -1,10 +1,11 @@
 from twisted.trial import unittest
+import json
 
 from .. import server
 from ._dummyresource import DummyRootResource, DummySite
 
 
-class FileRequestResourceTests(unittest.TestCase):
+class FileServerResourceTests(unittest.TestCase):
 
     def setUp(self):
         self.hosting = []
@@ -15,6 +16,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def test_posting_file_and_path_returns_new_location(self):
         d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'}, headers=server.HEADERS)
         def check(response):
-            resp = response.Value()
-            print resp
+            resp = json.loads(response.value())
+            self.assertTrue(resp['url'] == 'localhost/foo')
+        d.addCallback(check)
         return d
