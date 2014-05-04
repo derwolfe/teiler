@@ -1,4 +1,6 @@
 """
+filerequest.py
+
 A FileRequest object contains all of the information needed to transmit (that
 is to grab) a set of of files from one user to another.
 """
@@ -22,6 +24,7 @@ def _getFileNames(request):
 def _getFileUrl(rooturl, filename):
     """
     _getFileUrl creates a url from a base url and a filename.
+
     :param rooturl: the root url
     :param filename: a filename, relative to its base directory.
     :rtype: string
@@ -122,5 +125,6 @@ class FileRequest(object):
             self.history.append(url)
             newFile = _getNewFilePath(self._downloadTo, filename)
             d = downloader.getFile(url, newFile)
+            # XXX this doesn't work yet, you're not using the deferreds
             deferreds.append(d)
         return deferreds
