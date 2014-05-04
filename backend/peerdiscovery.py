@@ -1,6 +1,5 @@
 """
-Peer Discovery
---------------
+peerdiscovery.py
 
 The process is simple.
 1) Start up the client and broadcast a UDP datagram on a defined interval.
@@ -98,6 +97,15 @@ class PeerDiscoveryProtocol(DatagramProtocol):
 
     Once the peer has decided to disconnect, it will send an exit message to
     alert the other nodes of its demise.
+
+    :param reactor: the reactor being used.
+    :param peers: a data structure in which peers can be stored. This needs to
+    support adding, deleting, and getting by an index.
+    :param name: the username you'd like to broadcast.
+    :param multiCastAddress: the multicast address to broadcast.
+    :param multiCastPort: the port on which to broadcast.
+    :param address: the IP address to broadcast. This is for the current user.
+    :param port: the Port to broadcast where other users can connect.
     """
     def __init__(self, reactor, peers, name, multiCastAddress,
                  multiCastPort, address, port):
