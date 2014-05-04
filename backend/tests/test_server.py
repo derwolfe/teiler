@@ -20,3 +20,10 @@ class FileServerResourceTests(unittest.TestCase):
             self.assertTrue(resp['url'] == 'localhost/foo')
         d.addCallback(check)
         return d
+
+    def test_posting_file_adds_filename_and_path_to_hosts(self):
+        d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'}, headers=server.HEADERS)
+        def check(ignored):
+            self.assertTrue(self.hosting[0] == ('foo', '/bar'))
+        d.addCallback(check)
+        return d
