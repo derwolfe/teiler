@@ -92,8 +92,8 @@ class FileServerResource(Resource):
         Display the files currently being hosted.
         """
         request.setHeader("content-type", "application/json")
-        baseUri = request.URLPath().netloc
-        return json.dumps({'files': self.hosting.listAll(baseUri)})
+        url = request.URLPath().__str__()
+        return json.dumps({'files': self.hosting.listAll(url)})
 
     def render_POST(self, request):
         """
@@ -112,7 +112,7 @@ class FileServerResource(Resource):
         self._addFile(serveAt[0], filepath[0])
         # filenames = createFilenames(filepath)  # this could block!
         #postdata = createFileRequestData(request.location, filenames)
-        url = request.URLPath().netloc  + '/' + serveAt[0]
+        url = request.URLPath().__str__()  + '/' + serveAt[0]
         request.setHeader("content-type", "application/json")
         return json.dumps({ 'url': url, 'error': None })
 
