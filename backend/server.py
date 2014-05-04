@@ -20,6 +20,7 @@ class Files(object):
     """
     Data structure that maintains the current files being served by
     the application.
+
     Supports add, remove, and listall
     """
     def __init__(self):
@@ -34,11 +35,15 @@ class Files(object):
     def get(self, url):
         return self._items.get(url)
 
-    def listAll(self):
+    def listAll(self, root):
+        """
+        Return a list of machine readable urls.
+        """
         buffer = []
         for key, val in self._items.iteritems():
-            buffer.append({'url': key, 'path': val})
-        return {'hosting': buffer }
+            uri = root + '/' + key
+            buffer.append({'url': uri, 'path': val})
+        return buffer
 
 
 class FileServerResource(Resource):
@@ -87,7 +92,8 @@ class FileServerResource(Resource):
         Display the files currently being hosted.
         """
         request.setHeader("content-type", "application/json")
-        return json.dumps({'files': self.hosting.listAll()})
+        baseUri = request.URLPath().netloc
+        return json.dumps({'files': self.hosting.listAll(baseUri)})
 
     def render_POST(self, request):
         """
