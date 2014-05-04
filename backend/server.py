@@ -35,8 +35,10 @@ class Files(object):
         return self._items.get(url)
 
     def listAll(self):
-        items = self._items.iteritems
-        return [''.join("'url':'%s', 'path':'%s', " %(x, y)) for x, y in items]
+        buffer = []
+        for key, val in self._items.iteritems():
+            buffer.append({'url': key, 'path': val})
+        return {'hosting': buffer }
 
 
 class FileServerResource(Resource):
