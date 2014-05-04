@@ -10,6 +10,7 @@ class SmartDummyRequest(DummyRequest):
         DummyRequest.__init__(self, url.split('/'))
         self.method = method
         self.headers.update(headers or {})
+        self.url = url
 
         args = args or {}
         for k, v in args.items():
@@ -17,6 +18,9 @@ class SmartDummyRequest(DummyRequest):
 
     def value(self):
         return "".join(self.written)
+
+    def URLPath(self):
+        return self.url
 
 
 class DummySite(server.Site):

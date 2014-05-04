@@ -5,18 +5,19 @@ All of the resources needed to run the file server
 """
 from twisted.web.resource import Resource
 from twisted.web.static import File
-from twisted.web.client import getPage
+from twisted.web.server import NOT_DONE_YET
 from twisted.python import log, filepath
+from twisted.internet.defer import Deferred
 from urllib import urlencode
 
-from twisted.internet.defer import Deferred
-from twisted.web.server import NOT_DONE_YET
-
+import json
 import backend.filerequest as filerequest
+
 
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
 
+# XXX not tested!
 class FileServerResource(Resource):
     """
     The `FileServerResource` is the base location for the system.
@@ -33,16 +34,19 @@ class FileServerResource(Resource):
     isLeaf = False
 
     def __init__(self, hosting):
-
+        Resource.__init__(self) # is this necessary?
         self.hosting = hosting
 
-    def addFile(self, urlName, path):
+    def _addFile(self, urlName, path):
         """
         Adds a new file resource for other users to access.
         """
         log.msg('addFile:', path, urlName, system="FileServerResource")
-        self.hosting.append(path)
-        self.putChild(urlName, File(path))
+        self.hosting.append((urlName, path))
+        # needs to call super!
+        Resource.putChild(self, urlName, File(path))
+        # file could fail and say, 'file not found!'
+        # it could also not have sufficient permissions to serve
 
     def render_DELETE(self, urlName):
         """
@@ -55,40 +59,42 @@ class FileServerResource(Resource):
         """
         Display the files currently being hosted.
         """
-        request.setHeader("content-type", "text/plain")
+        request.setHeader("content-type", "application/json")
         # return the files being served
-        return "Hi, welcome to teiler - here is the base file server"
+        # return the either the file, or the top level directory of th
+        # file being served. Basically, return a list of those paths
+        # that are saved in the `hosting` datastructure.
+        files = [', '.join(x) for x in self.hosting]
+        return json.dumps({'files': files})
 
     def render_POST(self, request):
         """
-        The request should contain the information needed to host a new file.
-        Only honor that request, if it originates from localhost.
+        Posting a new file request should result in either the new file
+        being successfully added to the system or an error message being
+        returned to the user.
         """
-        # if request is from localhost, post the file
-        self.addFile(request.location, request.path)
-        filenames = createFilenames(request.path) # this could block!
-        # files needs to be a list.
-        postdata = createFileRequestData(request.location, filenames)
-        request.setHeader("content-type", "text/plain")
-        # return the link to the posted file
-        return "you've posted a file"
-
-
-## these are client requests
-def submitFileRequest(recipient, postdata, headers):
-    """
-    Post the file request information to another user.
-    """
-    log.msg("submitFileRequest:: data:", recipient, system="httpFileTransfer")
-    return getPage(recipient,
-                   method='POST',
-                   postdata=postdata,
-                   headers=headers)
-
+        serveAt = request.args['serveat']
+        filepath = request.args['filepath']
+        # both of these could happen, result in a bad request
+        if not serveAt:
+            return json.dumps({'url': None, 'errors': 'No serve path provided'})
+        if not filepath:
+            return json.dumps({'url': None, 'errors': 'No filepath provided'})
+        # if this location is already being served, what to do?
+        self._addFile(serveAt[0], filepath[0])
+        # filenames = createFilenames(filepath)  # this could block!
+        # filenames is ALL of the files being hosted for the client
+        # broadcast the file being available to another user
+        #postdata = createFileRequestData(request.location, filenames)
+        # if it can be added, return a link to the file resource,
+        # otherwise, return an error
+        url = request.URLPath().netloc  + '/' + serveAt[0]
+        request.setHeader("content-type", "application/json")
+        return json.dumps({ 'url': url, 'error': None })
 
 def createFileRequestData(url, files):
     """
-    Propose a file transfer to a fellow user.
+    Create the data needed to send a file request to another users.
 
     The file request will contain the url where the files will be hosted,
     a session key, and the actual file names that can be found.
@@ -97,18 +103,22 @@ def createFileRequestData(url, files):
     # and file information. This class could then have an encode method.
     return urlencode({'url': url, 'files': files})
 
+# XXX not tested
 def createFilenames(path):
     """
     Get all of the filenames that are below this path. Basically if a directory
     is passed in, it can be assumed that the user wants to share the entire
     directory.
 
-    :param applicationPath: a string that will be converted to a FilePath object
+    :param applicationPath: a string that will be converted to a FilePath
+    object
     """
     # XXX this could block
     path = filepath.FilePath(path)
-    # this could be arbitrarily large, it might make sense to force the client to do this!
-    return ['/'.join(subpath.segmentsFrom(path.parent())) for subpath in path.walk()]
+    # this could be arbitrarily large, it might make sense to force the client
+    # to do this!
+    return ['/'.join(subpath.segmentsFrom(path.parent()))
+            for subpath in path.walk()]
 
 
 class FileRequestResource(Resource):
@@ -153,7 +163,8 @@ class FileRequestResource(Resource):
         """
         Shows all of the requests currently on the server.
         """
-        # if request is local, show local file requests, otherwise, show a message
+        # if request is local, show local file requests, otherwise, show a
+        # message
         request.setHeader("content-type", "text/plain")
         return "Hi, welcome to teiler - here are the file requests."
 
