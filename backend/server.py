@@ -97,9 +97,9 @@ class FileServerResource(Resource):
 
     def render_POST(self, request):
         """
-        Posting a new file request should result in either the new file
-        being successfully added to the system or an error message being
-        returned to the user.
+        Initiate a file transfer to another user. This means, notify the other
+        user that you are ready to transfer the file AND set that file up
+        at a location that the client can find.
         """
         serveAt = request.args['serveat']
         filepath = request.args['filepath']
@@ -110,9 +110,12 @@ class FileServerResource(Resource):
             return json.dumps({'url': None, 'errors': 'No filepath provided'})
         # if this location is already being served, what to do?
         self._addFile(serveAt[0], filepath[0])
-        # filenames = createFilenames(filepath)  # this could block!
-        #postdata = createFileRequestData(request.location, filenames)
         url = request.URLPath().__str__()  + '/' + serveAt[0]
+
+        # filenames = createFilenames(filepath)  # this could block!
+        # while posting, make a request to another server, saying
+        # ADD THIS FILE TO YOUR DOWNLOADS
+        #postdata = createFileRequestData(request.location, filenames)
         request.setHeader("content-type", "application/json")
         return json.dumps({ 'url': url, 'error': None })
 
