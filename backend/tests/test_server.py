@@ -17,7 +17,7 @@ class FileServerResourceTests(unittest.TestCase):
         d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'}, headers=server.HEADERS)
         def check(response):
             resp = json.loads(response.value())
-            self.assertTrue(resp['url'] == 'localhost/foo')
+            self.assertTrue(resp['url'] == u'http://localhost/files/foo')
         d.addCallback(check)
         return d
 
