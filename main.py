@@ -24,5 +24,5 @@ if __name__ == '__main__':
     root.putChild('requests', FileRequestResource(transferRequests,
                                                     downloadDirectory))
     # the peer discovery system should start running as well
-    reactor.listenTCP(8080, server.Site(root))
+    reactor.listenTCP(58888, server.Site(root))
     reactor.run()

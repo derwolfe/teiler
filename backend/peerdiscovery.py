@@ -12,33 +12,61 @@ The process is simple.
 """
 import json
 
+from zope import interface
 from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
+
 
 HEARTBEAT = "HEARTBEAT"
 EXIT = "EXIT"
 
 
-class Peer(object):
+class IPeerList(interface.Interface):
+
+    def add(peer):
+        """
+        Add a peer to the list.
+        """
+
+    def remove(peerId):
+        """
+        Remove a peer from the list.
+        """
+
+    def exists(peerId):
+        """
+        Tell whether a peer is in the list.
+        """
+
+    def count():
+        """
+        Return the number of peers in the list.
+        """
+
+
+class PeerList(object):
     """
-    Meant to store information for the TCP based protocols to use, such as the
-    IP address, and port
-
-    Each peer needs some sort of unique identifier. For now, the combination
-    of port, address, and name should suffice.
+    A simple structure meant to manage the other peers. Supports a limited
+    set of operations, such as add, remove, exists, and count.
     """
-    def __init__(self, name, address, port):
-        self.peerId = makePeerId(name, address, port)
-        self.name = name
-        self.address = address
-        self.port = port
 
-    def __str__(self):
-        return self.peerId
+    interface.implements(IPeerList)
 
-    def __eq__(self, other):
-        return self.peerId == other.peerId
+    def __init__(self):
+        self._peers = {}
+
+    def add(self, peer):
+        self._peers[peer.peerId] = peer
+
+    def remove(self, peerId):
+        del self._peers[peerId]
+
+    def exists(self, peerId):
+        return self._peers.get(peerId) is not None
+
+    def count(self):
+        return len(self._peers.keys())
 
 
 def makePeerId(name, address, port):
@@ -74,17 +102,35 @@ class PeerDiscoveryMessage(object):
             "port": self.port
         })
 
+    @classmethod
+    def parseDatagram(klass, datagram):
+        """
+        Given a datagram formatted using JSON, return a new message object.
+        """
+        msg = json.loads(datagram)
+        peerMsg = msg['message']
+        peerName = msg['name']
+        peerAddress = msg['address']
+        peerPort = msg['port']
+        return klass(peerMsg, peerName, peerAddress, peerPort)
 
-def parseDatagram(datagram):
+
+class Peer(object):
     """
-    Given a datagram formatted using JSON, return a new message object.
+    A peer is another user located on a different system. Maintains the user's
+    peerId, username, IP address, and port.
     """
-    msg = json.loads(datagram)
-    peerMsg = msg['message']
-    peerName = msg['name']
-    peerAddress = msg['address']
-    peerPort = msg['port']
-    return PeerDiscoveryMessage(peerMsg, peerName, peerAddress, peerPort)
+    def __init__(self, name, address, port):
+        self.peerId = makePeerId(name, address, port)
+        self.name = name
+        self.address = address
+        self.port = port
+
+    def __str__(self):
+        return self.peerId
+
+    def __eq__(self, other):
+        return self.peerId == other.peerId
 
 
 class PeerDiscoveryProtocol(DatagramProtocol):
@@ -99,22 +145,24 @@ class PeerDiscoveryProtocol(DatagramProtocol):
     alert the other nodes of its demise.
 
     :param reactor: the reactor being used.
-    :param peers: a data structure in which peers can be stored. This needs to
-    support adding, deleting, and getting by an index.
+    :param peers: a data structure in which peers can be stored, implements
+    IPeerList
     :param name: the username you'd like to broadcast.
     :param multiCastAddress: the multicast address to broadcast.
     :param multiCastPort: the port on which to broadcast.
     :param address: the IP address to broadcast. This is for the current user.
     :param port: the Port to broadcast where other users can connect.
     """
-    def __init__(self, reactor, peers, name, multiCastAddress,
+    def __init__(self, reactor, peerList, name, multiCastAddress,
                  multiCastPort, address, port):
         """
         Set up an instance of the PeerDiscovery protocol by creating
         the message information needed to broadcast other instances
         of the protocol running on the same network.
         """
-        self.peers = peers  # your list needs to implement append
+        interface.verify.verifyObject(IPeerList, peerList)
+
+        self.peers = peerList
         self.peerId = makePeerId(name, address, port)
         self.reactor = reactor
         self.name = name
@@ -159,42 +207,19 @@ class PeerDiscoveryProtocol(DatagramProtocol):
 
     def datagramReceived(self, datagram, address):
         """
-        Handles how datagrams are read when they are received. Here,
-        as this is a json serialised message, we are pulling out the
-        peer information and placing it in a list.
+        Handles how datagrams are read when they are received. Here, as this
+        is a json serialised message, we are pulling out the peer information
+        and placing it in a list.
         """
         log.msg("Decoding: " + datagram + " from ", address)
-        parsed = parseDatagram(datagram)
+        parsed = PeerDiscoveryMessage.parseDatagram(datagram)
         peerId = makePeerId(parsed.name, parsed.address, parsed.port)
         if parsed.message == EXIT:
-            if self.isPeer(peerId):
+            if self.peers.exists(peerId):
                 log.msg('dropping peer:', address)
-                self.removePeer(peerId)
+                self.peers.remove(peerId)
         elif parsed.message == HEARTBEAT:
-            if self.isPeer(peerId) is False:
+            if not self.peers.exists(peerId):
                 newPeer = Peer(parsed.name, parsed.address, parsed.port)
-                self.addPeer(newPeer)
+                self.peers.add(newPeer)
                 log.msg("new Peer: address: {0}", parsed.name)
-
-    def isPeer(self, peerId):
-        """
-        Is the provided peer already known to this server.
-
-        :param peerId: the peerId to check
-        :returns: boolean
-        """
-        return peerId in self.peers.keys()
-
-    def removePeer(self, peerId):
-        """
-        remove a peer from the server's known set of peers.
-        """
-        del self.peers[peerId]
-
-    def addPeer(self, peer):
-        """
-        Add the given peer to the server's set of peers.
-
-        :param peer: a Peer object.
-        """
-        self.peers[peer.peerId] = peer

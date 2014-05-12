@@ -1,14 +1,26 @@
 """
 The module is intended to be an abstraction that helps the user find the
-local ip address that will be used for broadcasting. As windows, linux/mac
-handle their interfaces differently, we want the correct IP address found
-and used.
+local ip address that will be used for broadcasting.
 """
+import netifaces
 
 
-# come up with way to get the best interface to use to communicate
-# with your peers
 def getLiveInterface():
-    # XXX this obviously needs real code, twisted, I believe has a function
-    # that returns your ip
-    return '127.0.0.1'
+    """
+    Return the LAN address of this machine.
+    """
+    ifaces = netifaces.interfaces()
+    for layer in ifaces:
+        addrs = netifaces.ifaddresses(layer)
+        link = addrs.get(netifaces.AF_INET)
+        # this bit needs cleaning up. It doesn't cover enough cases
+        if link:
+            subaddr = link[0]
+            octet = subaddr['addr']
+            if octet[:3] != '127':
+                return subaddr['addr']
+
+
+if __name__ == '__main__':
+    address = getLiveInterface()
+    print 'addr: %s' % address

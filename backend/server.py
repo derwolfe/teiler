@@ -16,6 +16,7 @@ import backend.filerequest as filerequest
 
 HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
 
+
 class Files(object):
     """
     Data structure that maintains the current files being served by
@@ -30,7 +31,7 @@ class Files(object):
         self._items[url] = path
 
     def remove(self, url):
-        del self.items[url]
+        del self._items[url]
 
     def get(self, url):
         return self._items.get(url)
@@ -39,11 +40,11 @@ class Files(object):
         """
         Return a list of machine readable urls.
         """
-        buffer = []
+        combos = []
         for key, val in self._items.iteritems():
             uri = root + '/' + key
-            buffer.append({'url': uri, 'path': val})
-        return buffer
+            combos.append({'url': uri, 'path': val})
+        return combos
 
 
 class FileServerResource(Resource):
@@ -73,19 +74,22 @@ class FileServerResource(Resource):
         self.hosting.add(urlName, path)
         Resource.putChild(self, urlName, File(path))
 
-    def _removeFile(self, urlName):
+    def _removeFile(self, url):
         """
         Remove the file being served at the `urlName`
         """
-        self.hosting.remove(urlName)
-        self.delEntity(urlName)
+        self.hosting.remove(url)
+        self.delEntity(url)
 
-    def render_DELETE(self, urlName):
+    def render_DELETE(self, request):
         """
         Removes a File resource that is currently being hosted.
         """
-        log.msg('removeFile:', urlName, system="MainPage")
-        self._removeFile(urlName)
+        url = request.args['url'][0]
+        self._removeFile(url)
+        # return an HTTP response code!
+        request.setHeader("content-type", "application/json")
+        return json.dumps({'status': 'removed url'})
 
     def render_GET(self, request):
         """
@@ -102,22 +106,21 @@ class FileServerResource(Resource):
         at a location that the client can find.
         """
         serveAt = request.args['serveat']
-        filepath = request.args['filepath']
+        fileloc = request.args['filepath']
         # both of these could happen, result in a bad request
         if not serveAt:
-            return json.dumps({'url': None, 'errors': 'No serve path provided'})
+            return json.dumps({'url': None, 'errors': 'No url provided'})
         if not filepath:
             return json.dumps({'url': None, 'errors': 'No filepath provided'})
         # if this location is already being served, what to do?
-        self._addFile(serveAt[0], filepath[0])
-        url = request.URLPath().__str__()  + '/' + serveAt[0]
-
+        self._addFile(serveAt[0], fileloc[0])
+        url = request.URLPath().__str__() + '/' + serveAt[0]
         # filenames = createFilenames(filepath)  # this could block!
         # while posting, make a request to another server, saying
         # ADD THIS FILE TO YOUR DOWNLOADS
-        #postdata = createFileRequestData(request.location, filenames)
+        # postdata = createFileRequestData(request.location, filenames)
         request.setHeader("content-type", "application/json")
-        return json.dumps({ 'url': url, 'error': None })
+        return json.dumps({'url': url})
 
 
 def createFileRequestData(url, files):
@@ -130,6 +133,7 @@ def createFileRequestData(url, files):
     # XXX maybe the post data should be from a class containg url, session,
     # and file information. This class could then have an encode method.
     return urlencode({'url': url, 'files': files})
+
 
 # XXX not tested
 def createFilenames(path):
