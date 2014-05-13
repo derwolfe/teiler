@@ -212,3 +212,24 @@ class FileRequestResource(Resource):
         d.addCallback(self._parseForm)
         d.callback(request)
         return NOT_DONE_YET
+
+
+class UsersResource(Resource):
+    """
+    This resource exposes an endpoint that provides information
+    about other users in the system. Basically, an HTTP endpoint for the
+    PeerList.
+    """
+    isLeaf = True
+
+    def __init__(self, peers):
+        Resource.__init__(self)
+        self.peers = peers
+
+    def render_GET(self, request):
+        """
+        Return all of the users currently registered.
+        """
+        request.setHeader("content-type", "application/json")
+        them = {"users": [x.serialize() for x in self.peers.all()]}
+        return json.dumps(them)

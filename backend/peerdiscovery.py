@@ -68,6 +68,10 @@ class PeerList(object):
     def count(self):
         return len(self._peers.keys())
 
+    def all(self):
+        """ return an iterable """
+        return self._peers.iteritems()
+
 
 def makePeerId(name, address, port):
     """
@@ -126,8 +130,13 @@ class Peer(object):
         self.address = address
         self.port = port
 
-    def __str__(self):
-        return self.peerId
+    def serialize(self):
+        return json.dumps({
+            "peerId": self.peerId,
+            "name": self.name,
+            "address": self.address,
+            "port": self.port
+            })
 
     def __eq__(self, other):
         return self.peerId == other.peerId
