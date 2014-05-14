@@ -152,7 +152,8 @@ def createFilenames(path):
     return ['/'.join(subpath.segmentsFrom(path.parent()))
             for subpath in path.walk()]
 
-
+# XXX work on intiating a transfer
+# curl request, parse, send form to user
 class FileRequestResource(Resource):
     """
     FileRequestResource fields requests for file transfers.

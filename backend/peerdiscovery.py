@@ -181,6 +181,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         """
         Gracefully tell peers to remove you.
         """
+        # XXX this needs to occur at shut down!
         message = PeerDiscoveryMessage(EXIT,
                                        self.name,
                                        self.address,
@@ -195,12 +196,12 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         is a json serialised message, we are pulling out the peer information
         and placing it in a list.
         """
-        log.msg("Decoding: " + datagram + " from ", address)
         parsed = PeerDiscoveryMessage.parseDatagram(datagram)
         peerId = makePeerId(parsed.name, parsed.address, parsed.port)
         # ignore those messages from yourself
         if parsed.address == self.address:
             return
+        log.msg("Decoding: " + datagram + " from ", address)
         if parsed.message == EXIT:
             if self._peers.exists(peerId):
                 log.msg('dropping peer:', address)
