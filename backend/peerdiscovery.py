@@ -12,7 +12,6 @@ The process is simple.
 """
 import json
 
-from zope import interface
 from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
@@ -22,42 +21,20 @@ HEARTBEAT = "HEARTBEAT"
 EXIT = "EXIT"
 
 
-class IPeerList(interface.Interface):
-
-    def add(peer):
-        """
-        Add a peer to the list.
-        """
-
-    def remove(peerId):
-        """
-        Remove a peer from the list.
-        """
-
-    def exists(peerId):
-        """
-        Tell whether a peer is in the list.
-        """
-
-    def count():
-        """
-        Return the number of peers in the list.
-        """
-
-
 class PeerList(object):
     """
     A simple structure meant to manage the other peers. Supports a limited
     set of operations, such as add, remove, exists, and count.
     """
 
-    interface.implements(IPeerList)
-
     def __init__(self):
         self._peers = {}
 
     def add(self, peer):
         self._peers[peer.peerId] = peer
+
+    def get(self, peerId):
+        return self._peers.get(peerId)
 
     def remove(self, peerId):
         del self._peers[peerId]
@@ -71,19 +48,6 @@ class PeerList(object):
     def all(self):
         """ return an iterable """
         return self._peers.iteritems()
-
-
-def makePeerId(name, address, port):
-    """
-    Create a unique peerId for a peer.
-
-    :param name: the name of a peer
-    :param address: the ip address of a peer
-    :param port: the port being used
-
-    :returns string: an peerId
-    """
-    return name + '_' + address + '_' + str(port)
 
 
 class PeerDiscoveryMessage(object):
@@ -142,6 +106,19 @@ class Peer(object):
         return self.peerId == other.peerId
 
 
+def makePeerId(name, address, port):
+    """
+    Create a unique peerId for a peer.
+
+    :param name: the name of a peer
+    :param address: the ip address of a peer
+    :param port: the port being used
+
+    :returns string: an peerId
+    """
+    return name + '_' + address + '_' + str(port)
+
+
 class PeerDiscoveryProtocol(DatagramProtocol):
     """
     UDP protocol used to find others running the same program.
@@ -169,9 +146,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         the message information needed to broadcast other instances
         of the protocol running on the same network.
         """
-        interface.verify.verifyObject(IPeerList, peerList)
-
-        self.peers = peerList
+        self._peers = peerList
         self.peerId = makePeerId(name, address, port)
         self.reactor = reactor
         self.name = name
@@ -223,12 +198,15 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         log.msg("Decoding: " + datagram + " from ", address)
         parsed = PeerDiscoveryMessage.parseDatagram(datagram)
         peerId = makePeerId(parsed.name, parsed.address, parsed.port)
+        # ignore those messages from yourself
+        if parsed.address == self.address:
+            return
         if parsed.message == EXIT:
-            if self.peers.exists(peerId):
+            if self._peers.exists(peerId):
                 log.msg('dropping peer:', address)
-                self.peers.remove(peerId)
+                self._peers.remove(peerId)
         elif parsed.message == HEARTBEAT:
-            if not self.peers.exists(peerId):
+            if not self._peers.exists(peerId):
                 newPeer = Peer(parsed.name, parsed.address, parsed.port)
-                self.peers.add(newPeer)
+                self._peers.add(newPeer)
                 log.msg("new Peer: address: {0}", parsed.name)

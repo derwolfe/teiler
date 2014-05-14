@@ -1,4 +1,4 @@
-from zope.interface import implements
+#from zope.interface import implements
 
 from twisted.internet.interfaces import IUDPTransport
 from twisted.trial import unittest
@@ -16,8 +16,6 @@ class FakeUdpTransport(object):
     writes the broadcast messages to a variable that can be
     checked.
     """
-
-    implements(IUDPTransport)
 
     def __init__(self):
         self.msgs = []
@@ -71,7 +69,7 @@ class PeerDiscoveryTests(unittest.TestCase):
                                   self.myAddr,
                                   self.myUdpPort).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
-        self.assertTrue(self.protocol.peers.count() == 0)
+        self.assertTrue(self.peers.count() == 0)
 
     def test_received_message_from_peer_add(self):
         dg = PeerDiscoveryMessage(HEARTBEAT,
@@ -79,14 +77,14 @@ class PeerDiscoveryTests(unittest.TestCase):
                                   "192.168.1.2",
                                   1232).serialize()
         self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
-        self.assertTrue(self.protocol.peers.count() > 0)
+        self.assertTrue(self.peers.count() > 0)
 
     def test_remove_peer_on_receipt_of_exit_message(self):
         dg = PeerDiscoveryMessage(EXIT, "bob", "192.168.1.1", 8000).serialize()
         p = Peer("bob", "192.168.1.1", 8000)
         self.peers.add(p)
         self.protocol.datagramReceived(dg, "192.168.1.1")
-        self.assertTrue(self.protocol.peers.count() == 0)
+        self.assertTrue(self.peers.count() == 0)
 
     def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()

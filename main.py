@@ -4,7 +4,8 @@ from twisted.python import log
 from sys import stdout
 from backend.server import (FileServerResource, FileRequestResource, Files,
                             UsersResource)
-from backend.peerdiscovery import PeerList
+from backend.peerdiscovery import PeerList, PeerDiscoveryProtocol
+from backend.utils import getLiveInterface
 
 class IPResource(resource.Resource):
     isLeaf = True
@@ -12,13 +13,21 @@ class IPResource(resource.Resource):
     def render_GET(self, request):
         return "hey - you are from {0})".format(request.transport.getPeer())
 
-
-if __name__ == '__main__':
+def main():
     log.startLogging(stdout)
     filesServed = Files()
     peers = PeerList()
     transferRequests = []
     downloadDirectory = "."
+    username = 'chris'
+    multicastAddress = '224.0.0.1'
+    multicastPort = 8005
+    ip = getLiveInterface()
+    if ip is None:
+        log.msg("Cannot start, no network connection found")
+        return
+    port = 58888
+
     root = resource.Resource()
     root.putChild('', IPResource())
     root.putChild('files', FileServerResource(filesServed))
@@ -26,5 +35,18 @@ if __name__ == '__main__':
                                                     downloadDirectory))
     root.putChild('users', UsersResource(peers))
     # the peer discovery system should start running as well
-    reactor.listenTCP(58888, server.Site(root))
+    reactor.listenTCP(port, server.Site(root))
+    reactor.listenMulticast(multicastPort,
+                            PeerDiscoveryProtocol(reactor,
+                                                  peers,
+                                                  username,
+                                                  multicastAddress,
+                                                  multicastPort,
+                                                  ip,
+                                                  port))
+
     reactor.run()
+
+
+if __name__ == '__main__':
+    main()
