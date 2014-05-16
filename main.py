@@ -19,7 +19,7 @@ def main():
     peers = PeerList()
     transferRequests = []
     downloadDirectory = "."
-    username = 'chris'
+    username = "chris"   #"wölfe" this needs to be handled!
     multicastAddress = '224.0.0.1'
     multicastPort = 8005
     ip = getLiveInterface()
