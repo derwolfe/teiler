@@ -1,15 +1,12 @@
 language: python
 branches:
     only:
-        - master 
+        - master
 python:
     - "2.7"
-#    - "3.3"
-#    - "3.4"
 # deps
-install: 
+install:
     - "python setup.py -q install"
 #vscript to run tests
-script: 
-    - "trial backend/tests" 
-
+script:
+    - "trial backend/tests"
