@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+# -*- test-case-name: tests/test_filerequest.py -*-
+
 """
-filerequest.py
+filerequest
 
 A FileRequest object contains all of the information needed to transmit (that
 is to grab) a set of of files from one user to another.

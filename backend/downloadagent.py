@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+# -*- test-case-name: tests/test_downloader.py -*-
+
 """
-downloadagent.py
+downloadagent
 
 This download agent makes it possible to return the current status of a file
 transfer.

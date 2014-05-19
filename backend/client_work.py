@@ -1,6 +1,6 @@
 from twisted.web.client import getPage
 
-# XXX belongs on client
+
 def submitFileRequest(recipient, postdata, headers):
     """
     Post the file request information to another user.
