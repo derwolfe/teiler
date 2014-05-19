@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from twisted.internet.interfaces import IUDPTransport
 from twisted.trial import unittest
 from twisted.internet import task
-from collections import defaultdict
 
 from ..peerdiscovery import (
     PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol, HEARTBEAT, EXIT,
