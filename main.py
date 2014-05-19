@@ -22,7 +22,7 @@ def main():
     transferRequests = []
     downloadDirectory = "."
     # username needs to be able to handle unicode!
-    username = "wölfe"  #"chris"
+    username = u"wölfe"  #"chris"
     multicastAddress = '224.0.0.1'
     multicastPort = 8005
     ip = getLiveInterface()
