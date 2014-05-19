@@ -1,7 +1,9 @@
-"""
-server.py
+#!/usr/bin/env python
+# -*- coding: utf-8
+# -*- test-case-name: tests/test_server.py -*-
 
-All of the resources needed to run the file server
+"""
+server - All of the resources needed to run the file server
 """
 from twisted.web.resource import Resource
 from twisted.web.static import File
