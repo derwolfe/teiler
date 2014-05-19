@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
 from twisted.internet import reactor
 from twisted.web import server, resource
 from twisted.python import log
@@ -19,7 +21,8 @@ def main():
     peers = PeerList()
     transferRequests = []
     downloadDirectory = "."
-    username = "chris"   #"wölfe" this needs to be handled!
+    # username needs to be able to handle unicode!
+    username = "wölfe"  #"chris"
     multicastAddress = '224.0.0.1'
     multicastPort = 8005
     ip = getLiveInterface()
