@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+# -*- test-case-name: tests/test_peerdiscovery.py -*-
+
 """
-peerdiscovery.py
+peerdiscovery
 
 The process is simple.
 1) Start up the client and broadcast a UDP datagram on a defined interval.
@@ -57,15 +61,15 @@ class PeerDiscoveryMessage(object):
     are using, and what port to connect on
     """
     def __init__(self, message, name, address, port):
-        self.message = str(message)
-        self.name = str(name)
-        self.address = str(address)
-        self.port = str(port)
+        self.message = message  #always ASCII?
+        self.name = name.encode('utf-8')
+        self.address = address
+        self.port = port
 
     def serialize(self):
         return json.dumps({
             "message": self.message,
-            "name": self.name,
+            "name": self.name.decode('utf-8'),
             "address": self.address,
             "port": self.port
         })
@@ -90,14 +94,14 @@ class Peer(object):
     """
     def __init__(self, name, address, port):
         self.peerId = makePeerId(name, address, port)
-        self.name = name
+        self.name = name.encode('utf-8')
         self.address = address
         self.port = port
 
     def serialize(self):
         return json.dumps({
             "peerId": self.peerId,
-            "name": self.name,
+            "name": self.name.decode('utf-8'),
             "address": self.address,
             "port": self.port
             })
@@ -116,7 +120,7 @@ def makePeerId(name, address, port):
 
     :returns string: an peerId
     """
-    return name + '_' + address + '_' + str(port)
+    return name + '_' + str(address) + '_' + str(port)
 
 
 class PeerDiscoveryProtocol(DatagramProtocol):
@@ -148,8 +152,8 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         """
         self._peers = peerList
         self.peerId = makePeerId(name, address, port)
-        self.reactor = reactor
         self.name = name
+        self.reactor = reactor
         self.multiCastAddress = multiCastAddress
         self.multiCastPort = multiCastPort
         self.address = address
@@ -187,7 +191,8 @@ class PeerDiscoveryProtocol(DatagramProtocol):
                                        self.address,
                                        self.port).serialize()
         self.sendMessage(message)
-        self.loop.stop()
+        if self.loop is not None:
+            self.loop.stop()
         log.msg("Exit " + message)
 
     def datagramReceived(self, datagram, address):

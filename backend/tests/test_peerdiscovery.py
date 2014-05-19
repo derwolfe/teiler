@@ -1,4 +1,5 @@
-#from zope.interface import implements
+#!/usr/bin/env python
+# -*- coding: utf-8
 
 from twisted.internet.interfaces import IUDPTransport
 from twisted.trial import unittest
@@ -111,3 +112,21 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.loop.running is True)
         self.protocol.stopProtocol()
         self.assertTrue(self.protocol.loop.running is False)
+
+
+class UnicodePeerName(unittest.TestCase):
+
+    def setUp(self):
+        self.peer = Peer(u"wölfe", "192.168.1.1", 8000)
+
+    def test_utf8_name_sent_as_bytes(self):
+        self.assertEquals(self.peer.name, 'w\xc3\xb6lfe')
+
+
+class UnicodePeerMessageTests(unittest.TestCase):
+
+    def setUp(self):
+        self.message = PeerDiscoveryMessage(EXIT, u"wölfe", "192.168.1.1", 8000)
+
+    def test_utf8_peer_message_sent_as_bytes(self):
+        self.assertEquals(self.message.name, 'w\xc3\xb6lfe')
