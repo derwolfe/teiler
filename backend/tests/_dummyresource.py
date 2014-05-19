@@ -1,7 +1,7 @@
 from twisted.web.test.test_web import DummyRequest
 from twisted.web import resource
 from twisted.web import server
-from twisted.internet.defer import succeed, Deferred
+from twisted.internet.defer import succeed
 from twisted.python.urlpath import URLPath
 from backend.server import FileRequestResource
 
