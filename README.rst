@@ -1,9 +1,8 @@
-Master: |Build Status|
-
-\*\* Does not work yet \*\*
 
 Teiler (sharer)
 ===============
+
+|Build Status|
 
 I am extremely tired of needing a USB stick to transfer files between
 computers. Most of the time, I am on simple networks. A person has setup
