@@ -1,40 +1,116 @@
-from twisted.trial import unittest
-import json
+#!/usr/bin/env python
+# -*- coding: utf-8
 
-from .. import server, peerdiscovery
+from twisted.trial import unittest
+
+import json
+import urllib
+
+from .. import server, peerdiscovery, postagent
 from ._dummyresource import DummyRootResource, DummySite
 
+
+def fakeProcessFilenames(path):
+    return ['/plop', '/foo/bar']
+
+def fakeSubmitFileRequest(recipient, data):
+    """
+    doesn't send a real network request on file submission
+    """
+    pass
 
 class FileServerResourceTests(unittest.TestCase):
 
     def setUp(self):
-        self.hosting = server.Files()
-        self._resourceToTest = server.FileServerResource(self.hosting)
+
+        self.hosting = server.OutboundRequests()
+        self._ip = '192.168.1.1'
+        self._resourceToTest = server.FileServerResource(self.hosting,
+                                                         self._ip,
+                                                         fakeProcessFilenames,
+                                                         fakeSubmitFileRequest)
+
         self._resource = DummyRootResource('files', self._resourceToTest)
         self.web = DummySite(self._resource)
+        self.urlStub = "http://localhost/files/"
 
-    def test_posting_file_and_path_returns_new_location(self):
-        d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'},
-                          headers=server.HEADERS)
+    def test_valid_posting_returns_file_url_in_response(self):
+        d = self.web.post('files',
+                          {'filepath': '/bar',
+                           'user': '1.1.1.1'},
+                          None)
         def check(response):
             resp = json.loads(response.value())
-            self.assertTrue(resp['url'] == u'http://localhost/files/foo')
+            self.assertTrue(resp['url'] == self.urlStub + resp['transferId'])
         d.addCallback(check)
         return d
 
-    def test_posting_file_adds_filename_and_path_to_hosts(self):
-        d = self.web.post('files', {'serveat': 'foo', 'filepath': '/bar'},
-                          headers=server.HEADERS)
-        def check(ignored):
-            self.assertTrue(self.hosting.get('foo') == '/bar')
+    def test_valid_posting_returns_path_in_response(self):
+        d = self.web.post('files',
+                          {'filepath': '/bar',
+                           'user': '1.1.1.1'},
+                          None)
+        def check(response):
+            resp = json.loads(response.value())
+            self.assertTrue(resp['path'] == u'/bar')
+        d.addCallback(check)
+        return d
+
+    def test_valid_posting_returns_userIp_in_response(self):
+        d = self.web.post('files',
+                          {'serveat': 'foo',
+                           'filepath': '/bar',
+                           'user': '1.1.1.1'},
+                          None)
+        def check(response):
+            resp = json.loads(response.value())
+            self.assertTrue(resp['userIp'] == u'1.1.1.1')
+        d.addCallback(check)
+        return d
+
+    def test_posting_file_adds_transfer_to_outbound_requests(self):
+        d = self.web.post('files',
+                          {'filepath': '/bar',
+                           'user': '1.1.1.1'},
+                          None)
+        def check(response):
+            resp = json.loads(response.value())
+            transfer = self.hosting.get(resp["transferId"])
+            self.assertTrue(transfer.filePath == '/bar')
+            self.assertTrue(transfer.userIp == '1.1.1.1')
+        d.addCallback(check)
+        return d
+
+    def test_posting_request_without_serveat_returns_useful_message(self):
+        d = self.web.post('files', {'filepath': '/bar'}, None)
+        def check(response):
+            resp = json.loads(response.value())
+            errorMsg = u'Error parsing url or target user'
+            self.assertTrue(resp['errors'] == errorMsg)
+            self.assertTrue(resp['url'] is None)
+        d.addCallback(check)
+        return d
+
+    def test_posting_request_without_filepath_returns_useful_message(self):
+        d = self.web.post('files', {}, None)
+        def check(response):
+            resp = json.loads(response.value())
+            errorMsg = u'Error parsing url or target user'
+            self.assertTrue(resp['errors'] == errorMsg)
+            self.assertTrue(resp['url'] is None)
         d.addCallback(check)
         return d
 
     def test_delete_request_removes_file_and_cleans_up(self):
-        self._resourceToTest._addFile('foo', '.')
-        d = self.web.delete('files', {'url': 'foo'}, headers=server.HEADERS)
+        transfer = server.Transfer('foo', '.', '1.1.1.1')
+        self._resourceToTest._addRequest(transfer)
+        d = self.web.delete('files',
+                            {'url': 'foo', 'user': '1.1.1.1'},
+                            None)
         def check(response):
-            self.assertTrue(self.hosting.get('foo') == None)
+            resp = json.loads(response.value())
+            self.assertTrue(resp["status"] == "removed url")
+            self.assertTrue(self.hosting.get("foo") == None)
         d.addCallback(check)
         return d
 
@@ -52,7 +128,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def test_post_good_file_request_returns_ok(self):
         d = self.web.post('requests',
                           {'url': 'plop', 'files': 'fx'},
-                          headers=server.HEADERS)
+                          None)
 
         def check(response):
             self.assertEqual(response.value(), "ok")
@@ -63,7 +139,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def test_post_good_request_adds_file_request_to_queue(self):
         d = self.web.post('requests',
                           {'url': 'plop', 'files': 'fx'},
-                          headers=server.HEADERS)
+                          None)
 
         def check(response):
             self.assertEqual(self.requests[0].url, 'plop')
@@ -75,7 +151,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def test_post_bad_file_request_returns_error(self):
         d = self.web.post('requests',
                           {'urlzors': 'ploppy'},
-                          headers=server.HEADERS)
+                          None)
 
         def check(response):
             self.assertEqual(response.value(), "error parsing request")
@@ -85,7 +161,7 @@ class FileRequestResourceTests(unittest.TestCase):
     def test_post_bad_file_request_does_not_add_request_to_queue(self):
         d = self.web.post('requests',
                           {'urlzors': 'ploppy'},
-                          headers=server.HEADERS)
+                          None)
 
         def check(response):
             self.assertEqual(len(self.requests), 0)
@@ -104,7 +180,7 @@ class UsersResourceTests(unittest.TestCase):
 
     def test_getting_users_returns_single_user_with_one_present(self):
         self.peers.add(self.peer)
-        d = self.web.get('users', {}, headers=server.HEADERS)
+        d = self.web.get('users', {}, None)
         def check(response):
             parsed = json.loads(response.value())
             parsedUser = peerdiscovery.parsed['users'][0]

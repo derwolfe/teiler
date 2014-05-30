@@ -3,7 +3,7 @@ The module is intended to be an abstraction that helps the user find the
 local ip address that will be used for broadcasting.
 """
 import netifaces
-
+from twisted.python import filepath, log
 
 def getLiveInterface():
     """
@@ -20,6 +20,12 @@ def getLiveInterface():
             if octet[:3] != '127':
                 return subaddr['addr']
 
+
+def getFilenames(path):
+    path = filepath.FilePath(path)
+    names = ['/'.join(subpath.segmentsFrom(path.parent()))
+            for subpath in path.walk()]
+    return names
 
 if __name__ == '__main__':
     address = getLiveInterface()

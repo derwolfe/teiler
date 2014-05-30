@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 # -*- test-case-name: tests/test_filerequest.py -*-
 
 """
@@ -13,7 +13,7 @@ from twisted.python import filepath
 
 class FormArgsError(Exception):
     """
-    Exception to be thrown when a form doesn't contain correct arguments.
+    Exception to be thrown when a form doesn"t contain correct arguments.
     """
     pass
 
@@ -22,7 +22,7 @@ def _getFileNames(request):
     """
     given a request, return the filenames listed in the request.
     """
-    return request["files"][0].split(',')
+    return request["files"][0].split(",")
 
 
 def _getFileUrl(rooturl, filename):
@@ -33,7 +33,7 @@ def _getFileUrl(rooturl, filename):
     :param filename: a filename, relative to its base directory.
     :rtype: string
     """
-    return rooturl + '/' + filename
+    return rooturl + "/" + filename
 
 
 def parseFileRequest(args):
@@ -129,6 +129,6 @@ class FileRequest(object):
             self.history.append(url)
             newFile = _getNewFilePath(self._downloadTo, filename)
             d = downloader.getFile(url, newFile)
-            # XXX this doesn't work yet, you're not using the deferreds
+            # XXX this doesn"t work yet, you're not using the deferreds
             deferreds.append(d)
         return deferreds

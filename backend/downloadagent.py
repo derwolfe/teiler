@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 # -*- test-case-name: tests/test_downloader.py -*-
 
 """
@@ -61,7 +61,7 @@ class FileWriter(Protocol):
         """
         Connection closed
         """
-        log.msg('Finished receiving body:', reason.getErrorMessage(),
+        log.msg("Finished receiving body:", reason.getErrorMessage(),
                 system="FileWriter")
         self._ioHandler.close()
         self._finished.callback(None)
@@ -100,8 +100,8 @@ def getFile(reactor, url, filename, ioHandler, progress):
 
     :returns: a deferred object.
     """
-    d = Agent(reactor).request('GET', url,
-                               Headers({'User-Agent': ['Teiler']}),
+    d = Agent(reactor).request("GET", url,
+                               Headers({"User-Agent": ["Teiler"]}),
                                None)
 
     def cbRequest(response):
@@ -128,7 +128,7 @@ class IOHandler(object):
         """
         Open a file like object
         """
-        self._openedFile = open(path, 'w')
+        self._openedFile = open(path, "w")
 
     def close(self):
         """

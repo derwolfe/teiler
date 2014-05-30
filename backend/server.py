@@ -8,29 +8,40 @@ server - All of the resources needed to run the file server
 from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
-from twisted.python import log, filepath
+from twisted.python import log
 from twisted.internet.defer import Deferred
-from urllib import urlencode
+from twisted.internet import threads
 
 import json
+import urllib
+import uuid
+
 import backend.filerequest as filerequest
+import backend.utils as utils
+import backend.postagent as postagent
+
+class Transfer(object):
+
+    def __init__(self, transferId, filePath, userIp):
+        self.transferId = transferId
+        self.filePath = filePath
+        self.userIp = userIp
+
+    def toJson(self, root):
+        uri = root + '/' + self.transferId
+        return json.dumps({'url': uri.encode('utf-8'),
+                           'transferId': self.transferId,
+                           'path': self.filePath,
+                           'userIp': self.userIp})
 
 
-HEADERS = {'Content-type': 'application/x-www-form-urlencoded'}
+class OutboundRequests(object):
 
-
-class Files(object):
-    """
-    Data structure that maintains the current files being served by
-    the application.
-
-    Supports add, remove, and listall
-    """
     def __init__(self):
         self._items = {}
 
-    def add(self, url, path):
-        self._items[url] = path
+    def add(self, url, transfer):
+        self._items[url] = transfer
 
     def remove(self, url):
         del self._items[url]
@@ -44,37 +55,31 @@ class Files(object):
         """
         combos = []
         for key, val in self._items.iteritems():
-            uri = root + '/' + key
-            combos.append({'url': uri, 'path': val})
+            combos.append(val.toJson(root))
         return combos
 
 
+class MissingArgsError(Exception):
+    pass
+
+
 class FileServerResource(Resource):
-    """
-    The `FileServerResource` is the base location for the system.
 
-    :param addFile: New files are served from a host by calling addFiles with
-    both a location where the file should be served, relative to the root
-    resource. E.g., /mysuperspecialfile/foo.jpg. The file passed in will be
-    served at the specified URL. Completely accessible to any other user on
-    the network.
-
-    :param removeFile: is used when a user no longer wishes to serve a given
-    file to other users at  given location.
-    """
     isLeaf = False
 
-    def __init__(self, hosting):
+    def __init__(self, hosting, ip, getFilenames, submitFileRequest):
         Resource.__init__(self)
         self.hosting = hosting
+        self.ip = ip
+        self._getFilenames = getFilenames
+        self._submitFileRequest = submitFileRequest
 
-    def _addFile(self, urlName, path):
+    def _addRequest(self, transfer):
         """
         Adds a new file resource for other users to access.
         """
-        log.msg('addFile:', path, urlName, system="FileServerResource")
-        self.hosting.add(urlName, path)
-        Resource.putChild(self, urlName, File(path))
+        self.hosting.add(transfer.transferId, transfer)
+        Resource.putChild(self, transfer.transferId, File(transfer.filePath))
 
     def _removeFile(self, url):
         """
@@ -88,8 +93,10 @@ class FileServerResource(Resource):
         Removes a File resource that is currently being hosted.
         """
         url = request.args['url'][0]
+        userId = request.args['user'][0]
+        # XXX error check!
         self._removeFile(url)
-        # return an HTTP response code!
+        # XXX return an HTTP response code!
         request.setHeader("content-type", "application/json")
         return json.dumps({'status': 'removed url'})
 
@@ -107,55 +114,65 @@ class FileServerResource(Resource):
         user that you are ready to transfer the file AND set that file up
         at a location that the client can find.
         """
-        serveAt = request.args['serveat']
-        fileloc = request.args['filepath']
-        # both of these could happen, result in a bad request
-        if not serveAt:
-            return json.dumps({'url': None, 'errors': 'No url provided'})
-        if not filepath:
-            return json.dumps({'url': None, 'errors': 'No filepath provided'})
-        # if this location is already being served, what to do?
-        self._addFile(serveAt[0], fileloc[0])
-        url = request.URLPath().__str__() + '/' + serveAt[0]
-        # filenames = createFilenames(filepath)  # this could block!
-        # while posting, make a request to another server, saying
-        # ADD THIS FILE TO YOUR DOWNLOADS
-        # postdata = createFileRequestData(request.location, filenames)
+        def parsePostData(request):
+            log.msg('parsing request', request)
+            files = request.args.get('filepath')
+            target = request.args.get('user')
+            if files is None or target is None:
+                raise MissingArgsError()
+            location = str(uuid.uuid4())
+            transfer = Transfer(location, files[0], target[0])
+            self._addRequest(transfer)
+            return transfer
+
+        def handleParseError(failure):
+            failure.trap(MissingArgsError)
+            msg = {'url': None,
+                   'errors':'Error parsing url or target user'}
+            request.write(json.dumps(msg))
+            request.finish()
+            return failure
+
+        def processFilenames(transfer):
+            d = threads.deferToThread(self._getFilenames, transfer.filePath)
+            def returnArgs(filenames):
+                return (filenames, transfer)
+            d.addCallback(returnArgs)
+            return d
+
+        def createRequest(url, filenames):
+            return json.dumps({'url': url,
+                               'filenames': filenames})
+
+        def requestTransfer(args):
+            filenames, transfer = args
+            userUrl = 'http://' + transfer.userIp + '/requests'
+            data = createRequest(transfer.transferId, filenames)
+            self._submitFileRequest(userUrl, data)
+            return transfer
+
+        def finish(transfer):
+            url = request.URLPath().__str__()
+            transfer = self.hosting.get(transfer.transferId)
+            request.write(transfer.toJson(url))
+            request.finish()
+
+        def doNothing(failure):
+            return failure
+
+        def finalTrap(failure):
+            failure.trap(MissingArgsError)
+
+        d = Deferred()
         request.setHeader("content-type", "application/json")
-        return json.dumps({'url': url})
+        d.callback(request)
+        d.addCallback(parsePostData)
+        d.addCallbacks(processFilenames, handleParseError)
+        d.addCallbacks(requestTransfer, doNothing)
+        d.addCallbacks(finish, finalTrap)
+        return NOT_DONE_YET
 
 
-def createFileRequestData(url, files):
-    """
-    Create the data needed to send a file request to another users.
-
-    The file request will contain the url where the files will be hosted,
-    a session key, and the actual file names that can be found.
-    """
-    # XXX maybe the post data should be from a class containg url, session,
-    # and file information. This class could then have an encode method.
-    return urlencode({'url': url, 'files': files})
-
-
-# XXX not tested
-def createFilenames(path):
-    """
-    Get all of the filenames that are below this path. Basically if a directory
-    is passed in, it can be assumed that the user wants to share the entire
-    directory.
-
-    :param applicationPath: a string that will be converted to a FilePath
-    object
-    """
-    # XXX this could block
-    path = filepath.FilePath(path)
-    # this could be arbitrarily large, it might make sense to force the client
-    # to do this!
-    return ['/'.join(subpath.segmentsFrom(path.parent()))
-            for subpath in path.walk()]
-
-# XXX work on intiating a transfer
-# curl request, parse, send form to user
 class FileRequestResource(Resource):
     """
     FileRequestResource fields requests for file transfers.

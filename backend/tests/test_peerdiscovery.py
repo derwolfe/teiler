@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 
 from twisted.trial import unittest
 from twisted.internet import task
@@ -58,7 +58,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.protocol.transport = self.tr
 
     def test_writes_message(self):
-        self.protocol.sendMessage('bob')
+        self.protocol.sendMessage("bob")
         self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
 
     def test_received_message_from_self_do_not_add(self):
@@ -103,7 +103,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         # check that stop protocol sends an exit message
         self.protocol.startProtocol()  # needed to get a loop object to cancel
         self.protocol.stopProtocol()
-        self.assertTrue('EXIT' in self.protocol.transport.msgs[1])
+        self.assertTrue("EXIT" in self.protocol.transport.msgs[1])
 
     def test_kills_looping_call(self):
         self.protocol.startProtocol()  # loop started, could this be mocked?
@@ -115,16 +115,16 @@ class PeerDiscoveryTests(unittest.TestCase):
 class UnicodePeerName(unittest.TestCase):
 
     def setUp(self):
-        self.peer = Peer(u"wölfe", "192.168.1.1", 8000)
+        self.peer = Peer("wölfe", "192.168.1.1", 8000)
 
     def test_utf8_name_sent_as_bytes(self):
-        self.assertEquals(self.peer.name, 'w\xc3\xb6lfe')
+        self.assertEquals(self.peer.name, u"w\xf6lfe")
 
 
 class UnicodePeerMessageTests(unittest.TestCase):
 
     def setUp(self):
-        self.message = PeerDiscoveryMessage(EXIT, u"wölfe", "192.168.1.1", 8000)
+        self.message = PeerDiscoveryMessage(EXIT, "wölfe", "192.168.1.1", 8000)
 
     def test_utf8_peer_message_sent_as_bytes(self):
-        self.assertEquals(self.message.name, 'w\xc3\xb6lfe')
+        self.assertEquals(self.message.name, u"w\xf6lfe")

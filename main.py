@@ -5,10 +5,11 @@ from twisted.internet import reactor
 from twisted.web import server, resource
 from twisted.python import log
 from sys import stdout
-from backend.server import (FileServerResource, FileRequestResource, Files,
-                            UsersResource)
+from backend.server import (FileServerResource, FileRequestResource,
+                            OutboundRequests, UsersResource)
 from backend.peerdiscovery import PeerList, PeerDiscoveryProtocol
-from backend.utils import getLiveInterface
+from backend.utils import getLiveInterface, getFilenames
+from backend.postagent import submitFileRequest
 
 class IPResource(resource.Resource):
     isLeaf = True
@@ -18,7 +19,7 @@ class IPResource(resource.Resource):
 
 def main():
     log.startLogging(stdout)
-    filesServed = Files()
+    outbound = OutboundRequests()
     peers = PeerList()
     transferRequests = []
     downloadDirectory = "."
@@ -34,20 +35,23 @@ def main():
 
     root = resource.Resource()
     root.putChild('', IPResource())
-    root.putChild('files', FileServerResource(filesServed))
+    root.putChild('files', FileServerResource(outbound,
+                                              ip,
+                                              getFilenames,
+                                              submitFileRequest ))
     root.putChild('requests', FileRequestResource(transferRequests,
                                                     downloadDirectory))
     root.putChild('users', UsersResource(peers))
     # the peer discovery system should start running as well
     reactor.listenTCP(port, server.Site(root))
-    reactor.listenMulticast(multicastPort,
-                            PeerDiscoveryProtocol(reactor,
-                                                  peers,
-                                                  username,
-                                                  multicastAddress,
-                                                  multicastPort,
-                                                  ip,
-                                                  port))
+    # reactor.listenMulticast(multicastPort,
+    #                         PeerDiscoveryProtocol(reactor,
+    #                                               peers,
+    #                                               username,
+    #                                               multicastAddress,
+    #                                               multicastPort,
+    #                                               ip,
+    #                                               port))
 
     reactor.run()
 

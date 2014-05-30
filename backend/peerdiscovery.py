@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 # -*- test-case-name: tests/test_peerdiscovery.py -*-
 
 """
@@ -61,16 +61,22 @@ class PeerDiscoveryMessage(object):
     are using, and what port to connect on
     """
     def __init__(self, message, name, address, port):
-        self.message = message  #always ASCII?
-        self.name = name.encode('utf-8')
+        if isinstance(message, str):
+            message = unicode(message, "utf-8")
+        if isinstance(name, str):
+            name = unicode(name, "utf-8")
+        if isinstance(message, str):
+            address = unicode(address, "utf-8")
+        self.message = message
+        self.name = name
         self.address = address
         self.port = port
 
     def serialize(self):
         return json.dumps({
-            "message": self.message,
-            "name": self.name.decode('utf-8'),
-            "address": self.address,
+            "message": self.message.encode("utf-8"),
+            "name": self.name.encode("utf-8"),
+            "address": self.address.encode("utf-8"),
             "port": self.port
         })
 
@@ -80,30 +86,34 @@ class PeerDiscoveryMessage(object):
         Given a datagram formatted using JSON, return a new message object.
         """
         msg = json.loads(datagram)
-        peerMsg = msg['message']
-        peerName = msg['name']
-        peerAddress = msg['address']
-        peerPort = msg['port']
+        peerMsg = msg["message"]
+        peerName = msg["name"]
+        peerAddress = msg["address"]
+        peerPort = msg["port"]
         return klass(peerMsg, peerName, peerAddress, peerPort)
 
 
 class Peer(object):
     """
-    A peer is another user located on a different system. Maintains the user's
+    A peer is another user located on a different system. Maintains the user"s
     peerId, username, IP address, and port.
     """
     def __init__(self, name, address, port):
         self.peerId = makePeerId(name, address, port)
-        self.name = name.encode('utf-8')
+        if isinstance(name, str):
+            name = unicode(name, "utf-8")
+        if isinstance(address, str):
+            address = unicode(address, "utf-8")
+        self.name = name
         self.address = address
         self.port = port
 
     def serialize(self):
         return json.dumps({
-            "peerId": self.peerId,
-            "name": self.name.decode('utf-8'),
-            "address": self.address,
-            "port": self.port
+            "peerId": self.peerId.encode("utf-8"),
+            "name": self.name.encode("utf-8"),
+            "address": self.address.encode("utf-8"),
+            "port": port
             })
 
     def __eq__(self, other):
@@ -120,7 +130,11 @@ def makePeerId(name, address, port):
 
     :returns string: an peerId
     """
-    return name + '_' + str(address) + '_' + str(port)
+    if isinstance(name, str):
+        name = unicode(name, "utf-8")
+    if isinstance(name, str):
+        address = unicode(name, "utf-8")
+    return u"{0}_{1}_{2}".format(name, address, port)
 
 
 class PeerDiscoveryProtocol(DatagramProtocol):
@@ -137,7 +151,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
     :param reactor: the reactor being used.
     :param peers: a data structure in which peers can be stored, implements
     IPeerList
-    :param name: the username you'd like to broadcast.
+    :param name: the username you"d like to broadcast.
     :param multiCastAddress: the multicast address to broadcast.
     :param multiCastPort: the port on which to broadcast.
     :param address: the IP address to broadcast. This is for the current user.
@@ -154,6 +168,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         self.peerId = makePeerId(name, address, port)
         self.name = name
         self.reactor = reactor
+        # these need to be strings
         self.multiCastAddress = multiCastAddress
         self.multiCastPort = multiCastPort
         self.address = address
@@ -209,8 +224,8 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         log.msg("Decoding: " + datagram + " from ", address)
         if parsed.message == EXIT:
             if self._peers.exists(peerId):
-                log.msg('dropping peer:', address)
                 self._peers.remove(peerId)
+                log.msg("dropping peer:", address)
         elif parsed.message == HEARTBEAT:
             if not self._peers.exists(peerId):
                 newPeer = Peer(parsed.name, parsed.address, parsed.port)
