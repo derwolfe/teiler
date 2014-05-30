@@ -5,7 +5,7 @@ if __name__ == "__main__":
     here = os.path.abspath(".")
     README = open(os.path.join(here, 'README.rst')).read()
 
-    install_requires = ["twisted"]
+    install_requires = ["twisted", "netifaces"]
 
     setup(
       name="teiler",
