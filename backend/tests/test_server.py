@@ -4,9 +4,7 @@
 from twisted.trial import unittest
 
 import json
-import urllib
-
-from .. import server, peerdiscovery, postagent
+from .. import server, peerdiscovery
 from ._dummyresource import DummyRootResource, DummySite
 
 
@@ -58,8 +56,7 @@ class FileServerResourceTests(unittest.TestCase):
 
     def test_valid_posting_returns_userIp_in_response(self):
         d = self.web.post('files',
-                          {'serveat': 'foo',
-                           'filepath': '/bar',
+                          {'filepath': '/bar',
                            'user': '1.1.1.1'},
                           None)
         def check(response):
@@ -183,6 +180,6 @@ class UsersResourceTests(unittest.TestCase):
         d = self.web.get('users', {}, None)
         def check(response):
             parsed = json.loads(response.value())
-            parsedUser = peerdiscovery.parsed['users'][0]
+            parsedUser = parsed['users'][0]
             self.assertEqual(parsedUser['peerId'] == self.peer.peerId)
         return d

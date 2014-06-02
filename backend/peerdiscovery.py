@@ -113,7 +113,7 @@ class Peer(object):
             "peerId": self.peerId.encode("utf-8"),
             "name": self.name.encode("utf-8"),
             "address": self.address.encode("utf-8"),
-            "port": port
+            "port": self.port
             })
 
     def __eq__(self, other):

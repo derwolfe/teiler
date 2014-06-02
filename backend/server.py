@@ -13,12 +13,10 @@ from twisted.internet.defer import Deferred
 from twisted.internet import threads
 
 import json
-import urllib
 import uuid
 
 import backend.filerequest as filerequest
-import backend.utils as utils
-import backend.postagent as postagent
+
 
 class Transfer(object):
 
@@ -93,7 +91,6 @@ class FileServerResource(Resource):
         Removes a File resource that is currently being hosted.
         """
         url = request.args['url'][0]
-        userId = request.args['user'][0]
         # XXX error check!
         self._removeFile(url)
         # XXX return an HTTP response code!
@@ -186,9 +183,7 @@ class FileRequestResource(Resource):
 
     def __init__(self, transferRequests, downloadTo):
         Resource.__init__(self)
-        # list of files that others want to transfer to you
         self.transferRequests = transferRequests
-        # top level directory into which files will be saved
         self.downloadTo = downloadTo
 
     def _parseForm(self, request):
@@ -201,7 +196,7 @@ class FileRequestResource(Resource):
         def successfulParse(data):
             """ pass the request on if it parses """
             self.transferRequests.append(data)
-            request.write("ok")  # this is not being returned outside
+            request.write("ok")
             request.finish()
 
         def parseFailure(failure):

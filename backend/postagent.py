@@ -5,7 +5,7 @@
 """
 postagent - Handles POSTing file requests to other users
 """
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
@@ -29,7 +29,7 @@ class StringProducer(object):
 
     def startProducing(self, consumer):
         consumer.write(self.body)
-        return succeed(None)
+        return defer.succeed(None)
 
     def pauseProducing(self):
         pass

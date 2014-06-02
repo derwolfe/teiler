@@ -3,7 +3,7 @@ The module is intended to be an abstraction that helps the user find the
 local ip address that will be used for broadcasting.
 """
 import netifaces
-from twisted.python import filepath, log
+from twisted.python import filepath
 
 def getLiveInterface():
     """
