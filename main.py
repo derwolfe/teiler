@@ -44,14 +44,14 @@ def main():
     root.putChild('users', UsersResource(peers))
     # the peer discovery system should start running as well
     reactor.listenTCP(port, server.Site(root))
-    # reactor.listenMulticast(multicastPort,
-    #                         PeerDiscoveryProtocol(reactor,
-    #                                               peers,
-    #                                               username,
-    #                                               multicastAddress,
-    #                                               multicastPort,
-    #                                               ip,
-    #                                               port))
+    reactor.listenMulticast(multicastPort,
+                            PeerDiscoveryProtocol(reactor,
+                                                  peers,
+                                                  username,
+                                                  multicastAddress,
+                                                  multicastPort,
+                                                  ip,
+                                                  port))
 
     reactor.run()
 
