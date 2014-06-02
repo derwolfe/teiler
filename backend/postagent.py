@@ -14,7 +14,7 @@ from twisted.python import log
 from zope.interface import implements
 
 
-JSONHEADERS = {'Content-type':'application/json'}
+JSONHEADERS = {'Content-type': 'application/json'}
 
 
 class StringProducer(object):

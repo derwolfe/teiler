@@ -11,11 +11,13 @@ from ._dummyresource import DummyRootResource, DummySite
 def fakeProcessFilenames(path):
     return ['/plop', '/foo/bar']
 
+
 def fakeSubmitFileRequest(recipient, data):
     """
     doesn't send a real network request on file submission
     """
     pass
+
 
 class FileServerResourceTests(unittest.TestCase):
 
@@ -33,10 +35,9 @@ class FileServerResourceTests(unittest.TestCase):
         self.urlStub = "http://localhost/files/"
 
     def test_valid_posting_returns_file_url_in_response(self):
-        d = self.web.post('files',
-                          {'filepath': '/bar',
-                           'user': '1.1.1.1'},
+        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
+
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp['url'] == self.urlStub + resp['transferId'])
@@ -44,10 +45,9 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_valid_posting_returns_path_in_response(self):
-        d = self.web.post('files',
-                          {'filepath': '/bar',
-                           'user': '1.1.1.1'},
+        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
+
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp['path'] == u'/bar')
@@ -55,10 +55,9 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_valid_posting_returns_userIp_in_response(self):
-        d = self.web.post('files',
-                          {'filepath': '/bar',
-                           'user': '1.1.1.1'},
+        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
+
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp['userIp'] == u'1.1.1.1')
@@ -66,10 +65,9 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_posting_file_adds_transfer_to_outbound_requests(self):
-        d = self.web.post('files',
-                          {'filepath': '/bar',
-                           'user': '1.1.1.1'},
+        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
+
         def check(response):
             resp = json.loads(response.value())
             transfer = self.hosting.get(resp["transferId"])
@@ -80,6 +78,7 @@ class FileServerResourceTests(unittest.TestCase):
 
     def test_posting_request_without_serveat_returns_useful_message(self):
         d = self.web.post('files', {'filepath': '/bar'}, None)
+
         def check(response):
             resp = json.loads(response.value())
             errorMsg = u'Error parsing url or target user'
@@ -90,6 +89,7 @@ class FileServerResourceTests(unittest.TestCase):
 
     def test_posting_request_without_filepath_returns_useful_message(self):
         d = self.web.post('files', {}, None)
+
         def check(response):
             resp = json.loads(response.value())
             errorMsg = u'Error parsing url or target user'
@@ -101,13 +101,13 @@ class FileServerResourceTests(unittest.TestCase):
     def test_delete_request_removes_file_and_cleans_up(self):
         transfer = server.Transfer('foo', '.', '1.1.1.1')
         self._resourceToTest._addRequest(transfer)
-        d = self.web.delete('files',
-                            {'url': 'foo', 'user': '1.1.1.1'},
+        d = self.web.delete('files', {'url': 'foo', 'user': '1.1.1.1'},
                             None)
+
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp["status"] == "removed url")
-            self.assertTrue(self.hosting.get("foo") == None)
+            self.assertTrue(self.hosting.get("foo") is None)
         d.addCallback(check)
         return d
 
@@ -123,8 +123,7 @@ class FileRequestResourceTests(unittest.TestCase):
         self.web = DummySite(self._resource)
 
     def test_post_good_file_request_returns_ok(self):
-        d = self.web.post('requests',
-                          {'url': 'plop', 'files': 'fx'},
+        d = self.web.post('requests', {'url': 'plop', 'files': 'fx'},
                           None)
 
         def check(response):
@@ -134,8 +133,7 @@ class FileRequestResourceTests(unittest.TestCase):
         return d
 
     def test_post_good_request_adds_file_request_to_queue(self):
-        d = self.web.post('requests',
-                          {'url': 'plop', 'files': 'fx'},
+        d = self.web.post('requests', {'url': 'plop', 'files': 'fx'},
                           None)
 
         def check(response):
@@ -146,8 +144,7 @@ class FileRequestResourceTests(unittest.TestCase):
         return d
 
     def test_post_bad_file_request_returns_error(self):
-        d = self.web.post('requests',
-                          {'urlzors': 'ploppy'},
+        d = self.web.post('requests', {'urlzors': 'ploppy'},
                           None)
 
         def check(response):
@@ -156,8 +153,7 @@ class FileRequestResourceTests(unittest.TestCase):
         return d
 
     def test_post_bad_file_request_does_not_add_request_to_queue(self):
-        d = self.web.post('requests',
-                          {'urlzors': 'ploppy'},
+        d = self.web.post('requests', {'urlzors': 'ploppy'},
                           None)
 
         def check(response):
@@ -178,6 +174,7 @@ class UsersResourceTests(unittest.TestCase):
     def test_getting_users_returns_single_user_with_one_present(self):
         self.peers.add(self.peer)
         d = self.web.get('users', {}, None)
+
         def check(response):
             parsed = json.loads(response.value())
             parsedUser = parsed['users'][0]

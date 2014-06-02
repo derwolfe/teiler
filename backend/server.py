@@ -125,13 +125,14 @@ class FileServerResource(Resource):
         def handleParseError(failure):
             failure.trap(MissingArgsError)
             msg = {'url': None,
-                   'errors':'Error parsing url or target user'}
+                   'errors': 'Error parsing url or target user'}
             request.write(json.dumps(msg))
             request.finish()
             return failure
 
         def processFilenames(transfer):
             d = threads.deferToThread(self._getFilenames, transfer.filePath)
+
             def returnArgs(filenames):
                 return (filenames, transfer)
             d.addCallback(returnArgs)

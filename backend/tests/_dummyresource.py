@@ -53,6 +53,7 @@ class DummySite(server.Site):
         else:
             raise ValueError("Unexpected return value: %r" % (result,))
 
+
 class DummyRootResource(resource.Resource):
     """
     Creates a simple resource that can be used to construct a site.

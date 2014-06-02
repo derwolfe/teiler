@@ -5,6 +5,7 @@ local ip address that will be used for broadcasting.
 import netifaces
 from twisted.python import filepath
 
+
 def getLiveInterface():
     """
     Return the LAN address of this machine.
@@ -24,7 +25,7 @@ def getLiveInterface():
 def getFilenames(path):
     path = filepath.FilePath(path)
     names = ['/'.join(subpath.segmentsFrom(path.parent()))
-            for subpath in path.walk()]
+             for subpath in path.walk()]
     return names
 
 if __name__ == '__main__':

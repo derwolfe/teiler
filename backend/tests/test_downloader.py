@@ -3,6 +3,7 @@ from twisted.internet.defer import Deferred
 
 from ..downloadagent import FileWriter, DownloadProgress
 
+
 class FakeIoHandler(object):
     """
     Fake file operations.
