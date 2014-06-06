@@ -42,3 +42,7 @@ files. New files are added via post as a filerequests.
 
 This way you can build a pyjs client.
 
+-- 5 jun
+- fix unicode errors in peer discovery
+- complete file download code (not the ui)
+- think about using self signed certs/tls for all file transfers
