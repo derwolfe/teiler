@@ -2,7 +2,7 @@
 Teiler (sharer)
 ===============
 
-|Build Status|
+|Build Status| |Coverage|
 
 I am extremely tired of needing a USB stick to transfer files between
 computers. Most of the time, I am on simple networks. A person has setup
@@ -49,3 +49,5 @@ Thanks!
 
 .. |Build Status| image:: https://travis-ci.org/derwolfe/teiler.png?branch=dev
    :target: https://travis-ci.org/derwolfe/teiler
+.. |Coverage| image::https://coveralls.io/repos/derwolfe/teiler/badge.png?branch=master
+  :target: https://coveralls.io/r/derwolfe/teiler?branch=master
