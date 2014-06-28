@@ -37,7 +37,7 @@ How do I work on the project?
     ``vitualenv venv``
 
 3.  Install the dependencies with
-   
+
     ``source ./venv/bin/activate``
 
     ``pip install -r requirements-dev.txt``
@@ -49,5 +49,6 @@ Thanks!
 
 .. |Build Status| image:: https://travis-ci.org/derwolfe/teiler.png?branch=dev
    :target: https://travis-ci.org/derwolfe/teiler
-.. |Coverage| image::https://coveralls.io/repos/derwolfe/teiler/badge.png?branch=master
+
+.. |Coverage| image:: https://coveralls.io/repos/derwolfe/teiler/badge.png?branch=master
   :target: https://coveralls.io/r/derwolfe/teiler?branch=master
