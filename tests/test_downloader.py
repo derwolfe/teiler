@@ -1,7 +1,7 @@
 from twisted.trial import unittest
 from twisted.internet.defer import Deferred
 
-from ..downloadagent import FileWriter, DownloadProgress
+from backend.downloadagent import FileWriter, DownloadProgress
 
 
 class FakeIoHandler(object):

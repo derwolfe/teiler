@@ -102,7 +102,7 @@ class FileServerResource(Resource):
         Display the files currently being hosted.
         """
         request.setHeader("content-type", "application/json")
-        url = request.URLPath().__str__()
+        url = str(request.URLPath())
         return json.dumps({'files': self.hosting.listAll(url)})
 
     def render_POST(self, request):
@@ -152,7 +152,7 @@ class FileServerResource(Resource):
             return transfer
 
         def finish(transfer):
-            url = request.URLPath().__str__()
+            url = str(request.URLPath())
             transfer = self.hosting.get(transfer.transferId)
             request.write(transfer.toJson(url))
             request.finish()

@@ -1,5 +1,3 @@
-API 
-
 The application is made up of several web pages, requests, and responses.
 
 At any given time, the following "pages" are used by a single user.
@@ -46,3 +44,4 @@ This way you can build a pyjs client.
 - fix unicode errors in peer discovery
 - complete file download code (not the ui)
 - think about using self signed certs/tls for all file transfers
+- config objects, certificates will be stored in platform specific places

@@ -4,7 +4,7 @@
 from twisted.trial import unittest
 
 import json
-from .. import server, peerdiscovery
+from backend import server, peerdiscovery
 from ._dummyresource import DummyRootResource, DummySite
 
 

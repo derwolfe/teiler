@@ -2,3 +2,5 @@
 **_trial_temp
 **venv
 cleanup.sh
+teiler.egg-info
+.coverage

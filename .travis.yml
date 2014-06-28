@@ -7,6 +7,9 @@ python:
 # deps
 install:
     - "python setup.py -q install"
+    - pip install coveralls
 #vscript to run tests
-script:
-    - "trial backend/tests"
+script: coverage run --source backend setup.py test
+
+after_success:
+    coveralls
