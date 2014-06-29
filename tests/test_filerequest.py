@@ -1,7 +1,7 @@
 from twisted.trial import unittest
 from twisted.internet.defer import Deferred
 
-from backend import filerequest
+from teiler import filerequest
 
 
 class ParseFileRequestTests(unittest.TestCase):
