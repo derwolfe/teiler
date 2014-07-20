@@ -4,3 +4,4 @@
 cleanup.sh
 teiler.egg-info
 .coverage
+htmlcov
