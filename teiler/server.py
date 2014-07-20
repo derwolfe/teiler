@@ -131,8 +131,6 @@ class FileServerResource(Resource):
             return failure
 
         def processFilenames(transfer):
-            # this will run to long. At this point, you should seperate the render_POST
-            # into something else. The issue being, you want the request to be very short.
             d = threads.deferToThread(self._getFilenames, transfer.filePath)
 
             def returnArgs(filenames):
