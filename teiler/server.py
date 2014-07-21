@@ -61,30 +61,65 @@ class MissingArgsError(Exception):
     pass
 
 
-class FileServerResource(Resource):
+class FileHostResource(Resource):
+    """
+    FileHostResource is responsible for hosting all of the files
+    that need to be accessible from the outside.
 
+    The goal of this resource is to allow seperation, using the network,
+    of the resources needed to receive commands to add files (which should be
+    used internally) from those that are external and from other users.
+    """
     isLeaf = False
 
-    def __init__(self, hosting, ip, getFilenames, submitFileRequest):
+    # XXX is this needed?
+    def __init__(self):
         Resource.__init__(self)
-        self.hosting = hosting
-        self.ip = ip
+
+    def addFile(self, transfer):
+        """
+        Adds a child new file resource for other users to access.
+        """
+        Resource.putChild(self, transfer.transferId, File(transfer.filePath))
+
+    def removeFile(self, url):
+        """
+        Remove the file being served at the `url`
+        """
+        self.delEntity(url)
+
+
+class FileServerResource(Resource):
+    """
+    FileServerResource is responsible for handling all internal commands
+    relating to serving files.
+    """
+    isLeaf = False
+
+    def __init__(self,
+                 hosting,
+                 getFilenames,
+                 submitFileRequest,
+                 fileHostResource):
+        Resource.__init__(self)
+        self._hosting = hosting
         self._getFilenames = getFilenames
         self._submitFileRequest = submitFileRequest
+        self._fileHostResource = fileHostResource
 
-    def _addRequest(self, transfer):
+    def _addFile(self, transfer):
         """
-        Adds a new file resource for other users to access.
+        Adds a child new file resource for other users to access.
         """
-        self.hosting.add(transfer.transferId, transfer)
-        Resource.putChild(self, transfer.transferId, File(transfer.filePath))
+        self._hosting.add(transfer.transferId, transfer)
+        self._fileHostResource.addFile(transfer)
 
     def _removeFile(self, url):
         """
-        Remove the file being served at the `urlName`
+        Remove the file being served at the `url`
         """
-        self.hosting.remove(url)
-        self.delEntity(url)
+        self._hosting.remove(url)
+        self._fileHostResource.removeFile(url)
 
     def render_DELETE(self, request):
         """
@@ -111,6 +146,7 @@ class FileServerResource(Resource):
         user that you are ready to transfer the file AND set that file up
         at a location that the client can find.
         """
+
         def parsePostData(request):
             log.msg('parsing request', request)
             files = request.args.get('filepath')
@@ -119,7 +155,7 @@ class FileServerResource(Resource):
                 raise MissingArgsError()
             location = str(uuid.uuid4())
             transfer = Transfer(location, files[0], target[0])
-            self._addRequest(transfer)
+            self._addFile(transfer)
             return transfer
 
         def handleParseError(failure):
@@ -132,7 +168,6 @@ class FileServerResource(Resource):
 
         def processFilenames(transfer):
             d = threads.deferToThread(self._getFilenames, transfer.filePath)
-
             def returnArgs(filenames):
                 return (filenames, transfer)
             d.addCallback(returnArgs)
@@ -151,7 +186,7 @@ class FileServerResource(Resource):
 
         def finish(transfer):
             url = str(request.URLPath())
-            transfer = self.hosting.get(transfer.transferId)
+            transfer = self._hosting.get(transfer.transferId)
             request.write(transfer.toJson(url))
             request.finish()
 

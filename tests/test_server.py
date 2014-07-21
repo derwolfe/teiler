@@ -19,23 +19,32 @@ def fakeSubmitFileRequest(recipient, data):
     pass
 
 
+class FakeFileHostResource(object):
+
+    def addFile(self, transfer):
+        pass
+
+    def removeFile(self, url):
+        pass
+
+
+# XXX change these to use new FileHostResource or a similar fake.
+# depends what I want to test!
 class FileServerResourceTests(unittest.TestCase):
 
     def setUp(self):
-
         self.hosting = server.OutboundRequests()
-        self._ip = '192.168.1.1'
         self._resourceToTest = server.FileServerResource(self.hosting,
-                                                         self._ip,
                                                          fakeProcessFilenames,
-                                                         fakeSubmitFileRequest)
-
+                                                         fakeSubmitFileRequest,
+                                                         FakeFileHostResource())
         self._resource = DummyRootResource('files', self._resourceToTest)
         self.web = DummySite(self._resource)
         self.urlStub = "http://localhost/files/"
 
     def test_valid_posting_returns_file_url_in_response(self):
-        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
+        d = self.web.post('files',
+                          {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
 
         def check(response):
@@ -45,9 +54,9 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_valid_posting_returns_path_in_response(self):
-        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
+        d = self.web.post('files',
+                          {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
-
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp['path'] == u'/bar')
@@ -55,7 +64,8 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_valid_posting_returns_userIp_in_response(self):
-        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
+        d = self.web.post('files',
+                          {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
 
         def check(response):
@@ -65,7 +75,8 @@ class FileServerResourceTests(unittest.TestCase):
         return d
 
     def test_posting_file_adds_transfer_to_outbound_requests(self):
-        d = self.web.post('files', {'filepath': '/bar', 'user': '1.1.1.1'},
+        d = self.web.post('files',
+                          {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
 
         def check(response):
@@ -98,18 +109,51 @@ class FileServerResourceTests(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    def test_delete_request_removes_file_and_cleans_up(self):
+    def test_delete_request_returns_resource_status_in_response(self):
         transfer = server.Transfer('foo', '.', '1.1.1.1')
-        self._resourceToTest._addRequest(transfer)
-        d = self.web.delete('files', {'url': 'foo', 'user': '1.1.1.1'},
+        self._resourceToTest._addFile(transfer)
+        d = self.web.delete('files',
+                            {'url': 'foo', 'user': '1.1.1.1'},
                             None)
 
         def check(response):
             resp = json.loads(response.value())
-            self.assertTrue(resp["status"] == "removed url")
-            self.assertTrue(self.hosting.get("foo") is None)
+            statusMsg = u'removed url'
+            self.assertTrue(resp['status'] == statusMsg)
         d.addCallback(check)
         return d
+
+    def test_delete_request_removes_file_from_hosting(self):
+        transfer = server.Transfer('foo', '.', '1.1.1.1')
+        self._resourceToTest._addFile(transfer)
+        d = self.web.delete('files',
+                            {'url': 'foo', 'user': '1.1.1.1'},
+                            None)
+
+        def check(response):
+            self.assertTrue(self.hosting.get("foo") == None)
+        d.addCallback(check)
+        return d
+
+
+class FileHostResourceTests(unittest.TestCase):
+
+    def setUp(self):
+        self.resource = server.FileHostResource()
+
+    def test_add_file_adds_new_child_file_resource(self):
+        url = 'hosted'
+        t = server.Transfer(url, 'foo', '1.1.1.1')
+        self.resource.addFile(t)
+        self.assertTrue('hosted' in self.resource.listNames())
+
+    def test_remove_file_remove_child_file_from_resource(self):
+        url = 'hosted'
+        t = server.Transfer(url, 'foo', '1.1.1.1')
+        self.resource.addFile(t)
+        self.assertTrue('hosted' in self.resource.listNames())
+        self.resource.removeFile(url)
+        self.assertTrue('hosted' not in self.resource.listNames())
 
 
 class FileRequestResourceTests(unittest.TestCase):
@@ -123,17 +167,18 @@ class FileRequestResourceTests(unittest.TestCase):
         self.web = DummySite(self._resource)
 
     def test_post_good_file_request_returns_ok(self):
-        d = self.web.post('requests', {'url': 'plop', 'files': 'fx'},
+        d = self.web.post('requests',
+                          {'url': 'plop', 'files': 'fx'},
                           None)
 
         def check(response):
             self.assertEqual(response.value(), "ok")
-            # response code?
         d.addCallback(check)
         return d
 
     def test_post_good_request_adds_file_request_to_queue(self):
-        d = self.web.post('requests', {'url': 'plop', 'files': 'fx'},
+        d = self.web.post('requests',
+                          {'url': 'plop', 'files': 'fx'},
                           None)
 
         def check(response):
@@ -144,7 +189,8 @@ class FileRequestResourceTests(unittest.TestCase):
         return d
 
     def test_post_bad_file_request_returns_error(self):
-        d = self.web.post('requests', {'urlzors': 'ploppy'},
+        d = self.web.post('requests',
+                          {'urlzors': 'ploppy'},
                           None)
 
         def check(response):
@@ -153,7 +199,8 @@ class FileRequestResourceTests(unittest.TestCase):
         return d
 
     def test_post_bad_file_request_does_not_add_request_to_queue(self):
-        d = self.web.post('requests', {'urlzors': 'ploppy'},
+        d = self.web.post('requests',
+                          {'urlzors': 'ploppy'},
                           None)
 
         def check(response):
