@@ -1,15 +1,12 @@
 language: python
-branches:
-    only:
-        - master
 python:
     - "2.7"
-# deps
 install:
     - "python setup.py -q install"
-    - pip install coveralls
-#vscript to run tests
-script: coverage run --source backend setup.py test
-
+    - "pip install -r requirements-dev.txt"
+    - "pip install coverage"
+    - "pip install coveralls"
+script:
+    - "coverage run --source teiler setup.py test"
 after_success:
     coveralls
