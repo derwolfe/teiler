@@ -8,5 +8,9 @@ install:
     - "pip install coveralls"
 script:
     - "coverage run --source teiler setup.py test"
+    - "flake8 teiler"
+    #    - "flake8 tests"
 after_success:
     coveralls
+notifications:
+    email: false

@@ -34,11 +34,11 @@ class FileServerResourceTests(unittest.TestCase):
 
     def setUp(self):
         self.hosting = server.OutboundRequests()
-        self._resourceToTest = server.FileServerResource(self.hosting,
-                                                         fakeProcessFilenames,
-                                                         fakeSubmitFileRequest,
-                                                         FakeFileHostResource())
-        self._resource = DummyRootResource('files', self._resourceToTest)
+        self._resToTest = server.FileServerResource(self.hosting,
+                                                    fakeProcessFilenames,
+                                                    fakeSubmitFileRequest,
+                                                    FakeFileHostResource())
+        self._resource = DummyRootResource('files', self._resToTest)
         self.web = DummySite(self._resource)
         self.urlStub = "http://localhost/files/"
 
@@ -57,6 +57,7 @@ class FileServerResourceTests(unittest.TestCase):
         d = self.web.post('files',
                           {'filepath': '/bar', 'user': '1.1.1.1'},
                           None)
+
         def check(response):
             resp = json.loads(response.value())
             self.assertTrue(resp['path'] == u'/bar')
@@ -111,7 +112,7 @@ class FileServerResourceTests(unittest.TestCase):
 
     def test_delete_request_returns_resource_status_in_response(self):
         transfer = server.Transfer('foo', '.', '1.1.1.1')
-        self._resourceToTest._addFile(transfer)
+        self._resToTest._addFile(transfer)
         d = self.web.delete('files',
                             {'url': 'foo', 'user': '1.1.1.1'},
                             None)
@@ -125,13 +126,13 @@ class FileServerResourceTests(unittest.TestCase):
 
     def test_delete_request_removes_file_from_hosting(self):
         transfer = server.Transfer('foo', '.', '1.1.1.1')
-        self._resourceToTest._addFile(transfer)
+        self._resToTest._addFile(transfer)
         d = self.web.delete('files',
                             {'url': 'foo', 'user': '1.1.1.1'},
                             None)
 
         def check(response):
-            self.assertTrue(self.hosting.get("foo") == None)
+            self.assertTrue(self.hosting.get("foo") is None)
         d.addCallback(check)
         return d
 

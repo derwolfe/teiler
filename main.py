@@ -37,7 +37,7 @@ def main():
     # set up ports
     internalPort = 58889
     externalPort = 58888
-    fileHost = FileHostResource(outbound)
+    fileHost = FileHostResource()
 
     # build the internal API
     internal = resource.Resource()

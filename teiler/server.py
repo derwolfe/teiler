@@ -137,6 +137,8 @@ class FileServerResource(Resource):
         Display the files currently being hosted.
         """
         request.setHeader("content-type", "application/json")
+        # this is a problem, you need to use the correct port for
+        # the resource!
         url = str(request.URLPath())
         return json.dumps({'files': self.hosting.listAll(url)})
 
@@ -168,6 +170,7 @@ class FileServerResource(Resource):
 
         def processFilenames(transfer):
             d = threads.deferToThread(self._getFilenames, transfer.filePath)
+
             def returnArgs(filenames):
                 return (filenames, transfer)
             d.addCallback(returnArgs)
@@ -241,15 +244,6 @@ class FileRequestResource(Resource):
             request.finish()
         d.addCallbacks(successfulParse, parseFailure)
         d.callback((request.args, self.downloadTo,))
-
-    def render_GET(self, request):
-        """
-        Shows all of the requests currently on the server.
-        """
-        # if request is local, show local file requests, otherwise, show a
-        # message
-        request.setHeader("content-type", "text/plain")
-        return "Hi, welcome to teiler - here are the file requests."
 
     def render_POST(self, request):
         """

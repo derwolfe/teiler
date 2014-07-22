@@ -38,7 +38,7 @@ class StringProducer(object):
         pass
 
 
-def submitFileRequest(recipient, data):
+def submitFileRequest(recipient, data, producer=StringProducer):
     """
     This is a generic agent meant to make post requests.
 
@@ -50,4 +50,7 @@ def submitFileRequest(recipient, data):
     log.msg("submitFileRequest:: data:", recipient, system="httpFileTransfer")
     headers = Headers()
     headers.setRawHeaders('Content-type', ['application/json'])
-    return Agent(reactor).request("POST", recipient, headers, StringProducer(data))
+    return Agent(reactor).request("POST",
+                                  recipient,
+                                  headers,
+                                  producer(data))
