@@ -1,18 +1,19 @@
-
 Teiler (sharer)
 ===============
 
 |Build Status| |Coverage|
 
 I am extremely tired of needing a USB stick to transfer files between
-computers. Most of the time, I am on simple networks. A person has setup
-a router in its simplest configuration. I and my friend have simple wifi
-access to the network. We want to transfer files to one another, but
-sadly have no thumb drive or disc.
+computers. While netcat, scp, dropbox, and other tools solve this problem,
+I'd like the solution to be a bit simpler.
 
-The goal of this software is to make the above situation simple. We each
-download the program and need only the basic knowledge needed to use a
-web browser.
+Often, a person wants to transfer files to another person on the same network.
+This network doesn't have any special configuration. Each user is able to see
+the other on the network.
+
+The goal of this software is to make the above situation simple. Both users
+download the program, open the application, and can transfer files to one
+another without needing to be connected to the internet.
 
 How will I use this?
 --------------------
