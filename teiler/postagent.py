@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# -*- test-case-name: tests/ -*-
+# -*- test-case-name: tests.test_postagent -*-
 
 """
 postagent - Handles POSTing file requests to other users

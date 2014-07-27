@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# -*- test-case-name: tests/test_peerdiscovery.py -*-
+# -*- test-case-name: tests.test_peerdiscovery.py -*-
 
 """
 peerdiscovery
