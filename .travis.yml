@@ -2,8 +2,8 @@ language: python
 python:
     - "2.7"
 install:
-    - "python setup.py -q install"
-    - "pip install -r requirements-dev.txt"
+    - "pip install -e ."
+    - "pip install -e . 'teiler[dev]'"
     - "pip install coverage"
     - "pip install coveralls"
 script:
