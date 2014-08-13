@@ -140,7 +140,7 @@ class FileServerResource(Resource):
         # this is a problem, you need to use the correct port for
         # the resource!
         url = str(request.URLPath())
-        return json.dumps({'files': self.hosting.listAll(url)})
+        return json.dumps({'files': self._hosting.listAll(url)})
 
     def render_POST(self, request):
         """
