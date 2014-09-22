@@ -51,7 +51,7 @@ class PeerList(object):
 
     def all(self):
         """ return an iterable """
-        return self._peers.iteritems()
+        return self._peers.itervalues()
 
 
 class PeerDiscoveryMessage(object):

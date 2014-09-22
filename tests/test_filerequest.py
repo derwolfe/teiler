@@ -4,7 +4,7 @@ from twisted.internet.defer import Deferred
 from teiler import filerequest
 
 
-class ParseFileRequestTests(unittest.TestCase):
+class ParseFileRequestTests(unittest.SynchronousTestCase):
 
     def test_parse_file_req_returns_two_files_and_url(self):
         request = {'url': ['192.168.1.1'], 'files': ['plop,foo/bar/baz.txt']}
@@ -48,7 +48,7 @@ def fakeCreateFileDirs(downloadTo, newPath):
     return True
 
 
-class FileRequestTests(unittest.TestCase):
+class FileRequestTests(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.url = 'here'

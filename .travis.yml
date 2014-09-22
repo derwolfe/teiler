@@ -2,14 +2,11 @@ language: python
 python:
     - "2.7"
 install:
-    - "pip install -e ."
-    - "pip install -e . 'teiler[dev]'"
-    - "pip install coverage"
+    - "make install-dev"
     - "pip install coveralls"
 script:
-    - "coverage run --source teiler setup.py test"
-    - "flake8 teiler"
-    #    - "flake8 tests"
+    - "make cover"
+    - "make lint"
 after_success:
     coveralls
 notifications:

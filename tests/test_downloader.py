@@ -21,7 +21,7 @@ class FakeIoHandler(object):
         self.buffer.append(bytes)
 
 
-class FileWriterTests(unittest.TestCase):
+class FileWriterTests(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.io = FakeIoHandler()
@@ -38,7 +38,7 @@ class FileWriterTests(unittest.TestCase):
         self.assertTrue(self.protocol.currentProgress() == 17.0)
 
 
-class FileWriterProgressTests(unittest.TestCase):
+class FileWriterProgressTests(unittest.SynchronousTestCase):
 
     def test_internal_progress_accessible(self):
         self.io = FakeIoHandler()
@@ -49,7 +49,7 @@ class FileWriterProgressTests(unittest.TestCase):
         self.assertTrue(self.progress.current() == 10)
 
 
-class DownloadProgressTests(unittest.TestCase):
+class DownloadProgressTests(unittest.SynchronousTestCase):
 
     def test_can_update_progress(self):
         progress = DownloadProgress()

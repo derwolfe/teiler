@@ -1,280 +1,288 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# -*- test-case-name: tests.test_server.py -*-
+# -*- test-case-name: tests.test_server -*-
 
 """
 server - All of the resources needed to run the file server
 """
-from twisted.web.resource import Resource
+from twisted.web.resource import NoResource
 from twisted.web.static import File
-from twisted.web.server import NOT_DONE_YET
-from twisted.python import log
+from twisted.python import log, filepath
 from twisted.internet.defer import Deferred
 from twisted.internet import threads
+
+from klein import Klein
 
 import json
 import uuid
 
-import teiler.filerequest as filerequest
+
+__all__ = ('Transfer', 'OutboundRequests', 'UsersEndpoint',
+           'FileEndpoint', 'OutboundRequestEndpoint',
+           'InboundRequestEndpoint')
 
 
 class Transfer(object):
+    """
+    A transfer is an outbound request for a file transfer.
+    """
+    def __init__(self, transferId, filepath, userIp):
+        if isinstance(transferId, unicode):
+            self.transferId = transferId
+        else:
+            self.transferId = unicode(transferId, 'utf-8')
+        if isinstance(filepath, unicode):
+            self.filepath = filepath
+        else:
+            self.filepath = unicode(filepath, 'utf-8')
+        if isinstance(userIp, unicode):
+            self.userIp = userIp
+        else:
+            self.userIp = unicode(userIp, 'utf-8')
 
-    def __init__(self, transferId, filePath, userIp):
-        self.transferId = transferId
-        self.filePath = filePath
-        self.userIp = userIp
+    def filenameBytes(self):
+        """
+        return the filename as bytes.
+        """
+        return self.filepath.encode('utf-8', 'ignore')
+
+    def url(self, root):
+        words = root + '/' + self.transferId + '/'
+        return words.encode('utf-8', 'ignore')
+
+    # XXX bad name?
+    def encode(self, root):
+        return {'url': self.url(root),
+                'transferId': self.transferId.encode('utf-8'),
+                'filepath': self.filepath.encode('utf-8'),
+                'userIp': self.userIp.encode('utf-8')}
 
     def toJson(self, root):
-        uri = root + '/' + self.transferId
-        return json.dumps({'url': uri.encode('utf-8'),
-                           'transferId': self.transferId,
-                           'path': self.filePath,
-                           'userIp': self.userIp})
+        """
+        Serialize the transfer as json data
+        """
+        return json.dumps(self.encode(root))
 
 
 class OutboundRequests(object):
+    """
+    Manages all of the outbound requests (transfers).
+    """
+    def __init__(self, items=dict()):
+        self._items = items
 
-    def __init__(self):
-        self._items = {}
-
-    def add(self, url, transfer):
-        self._items[url] = transfer
+    def add(self, transfer):
+        """
+        Add a new transfer at the specified url.
+        """
+        self._items[transfer.transferId] = transfer
 
     def remove(self, url):
-        del self._items[url]
+        """
+        Remove a transfer being hosted at the provided url.
+        """
+        if url in self._items:
+            del self._items[url]
+            return True
+        return False
 
     def get(self, url):
+        """
+        Get the tranfer object at the given url.
+        If none is present, this returns None.
+        """
         return self._items.get(url)
 
-    def listAll(self, root):
+    def all(self):
         """
-        Return a list of machine readable urls.
+        Return all of the outbound request objects as a list.
         """
-        combos = []
-        for key, val in self._items.iteritems():
-            combos.append(val.toJson(root))
-        return combos
+        return self._items.values()
 
 
-class MissingArgsError(Exception):
+class FileEndpoint(object):
+
+    app = Klein()
+
+    def __init__(self, outboundRequests):
+        self._outboundRequests = outboundRequests
+
+    @app.route('/<string:transferId>/', methods=['GET'], branch=True)
+    def getFile(self, request, transferId):
+        """
+        Get the file objects located at transfer id.
+        """
+        transfer = self._outboundRequests.get(transferId)
+
+        if transfer is None:
+            return NoResource()
+
+        path = filepath.FilePath(transfer.filenameBytes())
+        if path.isdir():
+            return File(path.dirname())
+
+        else:  # path.isfile():
+            # XXX serving the parent directory, instead of the file itself
+            # You SHOULD only serve the file that you want to share.
+            # the following serves the directory where the
+            # file is found and *not* the single file.
+            # This will need to be changed!
+            return File(path.dirname())
+
+
+class UsersEndpoint(object):
+    """
+    HTTP interface for the peerlist.
+    """
+    app = Klein()
+
+    def __init__(self, peers):
+        """
+        :ivar peers: an instance of `teiler.peerdiscover.PeerList`
+        """
+        self._peers = peers
+
+    @app.route('/', methods=['GET'])
+    def getAllPeers(self, request):
+        """
+        Get all of the peers in the system peer list.
+        """
+        request.setHeader("Content-Type", "application/json")
+        them = {"users": [p.serialize() for p in self._peers.all()]}
+        return json.dumps(them)
+
+
+class MissingFormDataError(Exception):
+    """
+    Exception to be raised when a form/request does not contain
+    necessary data.
+    """
     pass
 
 
-class FileHostResource(Resource):
+class OutboundRequestEndpoint(object):
     """
-    FileHostResource is responsible for hosting all of the files
-    that need to be accessible from the outside.
-
-    The goal of this resource is to allow seperation, using the network,
-    of the resources needed to receive commands to add files (which should be
-    used internally) from those that are external and from other users.
+    The internal HTTP api for outbound file requests.
     """
-    isLeaf = False
-
-    # XXX is this needed?
-    def __init__(self):
-        Resource.__init__(self)
-
-    def addFile(self, transfer):
-        """
-        Adds a child new file resource for other users to access.
-        """
-        Resource.putChild(self, transfer.transferId, File(transfer.filePath))
-
-    def removeFile(self, url):
-        """
-        Remove the file being served at the `url`
-        """
-        self.delEntity(url)
-
-
-class FileServerResource(Resource):
-    """
-    FileServerResource is responsible for handling all internal commands
-    relating to serving files.
-    """
-    isLeaf = False
+    app = Klein()
 
     def __init__(self,
-                 hosting,
-                 getFilenames,
+                 outboundRequests,
+                 getFileNames,
                  submitFileRequest,
-                 fileHostResource):
-        Resource.__init__(self)
-        self._hosting = hosting
-        self._getFilenames = getFilenames
+                 rootUrl):
+        self._outboundRequests = outboundRequests
+        self._getFileNames = getFileNames
         self._submitFileRequest = submitFileRequest
-        self._fileHostResource = fileHostResource
+        self._rootUrl = rootUrl
 
-    def _addFile(self, transfer):
-        """
-        Adds a child new file resource for other users to access.
-        """
-        self._hosting.add(transfer.transferId, transfer)
-        self._fileHostResource.addFile(transfer)
-
-    def _removeFile(self, url):
-        """
-        Remove the file being served at the `url`
-        """
-        self._hosting.remove(url)
-        self._fileHostResource.removeFile(url)
-
-    def render_DELETE(self, request):
-        """
-        Removes a File resource that is currently being hosted.
-        """
-        url = request.args['url'][0]
-        # XXX error check!
-        self._removeFile(url)
-        # XXX return an HTTP response code!
-        request.setHeader("content-type", "application/json")
-        return json.dumps({'status': 'removed url'})
-
-    def render_GET(self, request):
+    @app.route('/', methods=['GET'])
+    def getFiles(self, request):
         """
         Display the files currently being hosted.
         """
-        request.setHeader("content-type", "application/json")
-        # this is a problem, you need to use the correct port for
-        # the resource!
-        url = str(request.URLPath())
-        return json.dumps({'files': self._hosting.listAll(url)})
+        request.setHeader("Content-Type", "application/json")
+        return json.dumps(
+            {'files': [
+                t.encode(self._rootUrl) for t in self._outboundRequests.all()
+            ]}
+        )
 
-    def render_POST(self, request):
+    def parse(self, body):
         """
-        Initiate a file transfer to another user. This means, notify the other
-        user that you are ready to transfer the file AND set that file up
-        at a location that the client can find.
+        Parse incoming post data into a new `Transfer`
         """
+        loaded = json.loads(body.read())
+        log.msg("parsing request", json.dumps(loaded)[:100])
+        # what if the args are not present in the data?
+        filepath = loaded.get('filepath')
+        user = loaded.get('user')
+        if filepath is None or user is None:
+            raise MissingFormDataError()
+        transfer = Transfer(str(uuid.uuid4()), filepath, user)
+        return transfer
 
-        def parsePostData(request):
-            log.msg('parsing request', request)
-            files = request.args.get('filepath')
-            target = request.args.get('user')
-            if files is None or target is None:
-                raise MissingArgsError()
-            location = str(uuid.uuid4())
-            transfer = Transfer(location, files[0], target[0])
-            self._addFile(transfer)
-            return transfer
+    def addOutbound(self, transfer):
+        """
+        Add a transfer to the outboundRequests object.
+        """
+        log.msg('adding outbound request', transfer)
+        self._outboundRequests.add(transfer)
+        return transfer
 
-        def handleParseError(failure):
-            failure.trap(MissingArgsError)
-            msg = {'url': None,
-                   'errors': 'Error parsing url or target user'}
-            request.write(json.dumps(msg))
-            request.finish()
-            return failure
+    def getFilenames(self, transfer):
+        """
+        get the filenames that the transfer contains.
+        """
+        log.msg("getting file names")
+        d = threads.deferToThread(self._getFileNames, transfer.filepath)
+        d.addCallback(lambda filenames: (filenames, transfer))
+        return d
 
-        def processFilenames(transfer):
-            d = threads.deferToThread(self._getFilenames, transfer.filePath)
+    def requestTransfer(self, args):
+        """
+        send the transfer request and file names to the recipient named
+        in the transfer.
+        """
+        log.msg('requesting transfer')
+        filenames, transfer = args
+        userUrl = 'http://{0}/requests'.format(transfer.userIp).encode('utf-8')
+        requestBody = json.dumps({'transfer': transfer.url(self._rootUrl),
+                                  'filenames': filenames})
+        self._submitFileRequest(userUrl, requestBody)
+        return requestBody
 
-            def returnArgs(filenames):
-                return (filenames, transfer)
-            d.addCallback(returnArgs)
-            return d
+    @app.route('/', methods=['POST'])
+    def newTransfer(self, request):
+        """
+        Initiate a file transfer to another user.
 
-        def createRequest(url, filenames):
-            return json.dumps({'url': url,
-                               'filenames': filenames})
-
-        def requestTransfer(args):
-            filenames, transfer = args
-            userUrl = 'http://' + transfer.userIp + '/requests'
-            data = createRequest(transfer.transferId, filenames)
-            self._submitFileRequest(userUrl, data)
-            return transfer
-
-        def finish(transfer):
-            url = str(request.URLPath())
-            transfer = self._hosting.get(transfer.transferId)
-            request.write(transfer.toJson(url))
-            request.finish()
-
-        def doNothing(failure):
-            return failure
-
-        def finalTrap(failure):
-            failure.trap(MissingArgsError)
-
-        d = Deferred()
-        request.setHeader("content-type", "application/json")
-        d.callback(request)
-        d.addCallback(parsePostData)
-        d.addCallbacks(processFilenames, handleParseError)
-        d.addCallbacks(requestTransfer, doNothing)
-        d.addCallbacks(finish, finalTrap)
-        return NOT_DONE_YET
+        1. Notify user that you are ready to transfer the file
+        2. Add the path to the outbound_transfers object.
+        """
+        request.setHeader(b"Content-Type", b"application/json")
+        deferred = Deferred()
+        deferred.callback(request)
+        deferred.addCallback(lambda request: request.content)
+        deferred.addCallback(self.parse)
+        deferred.addCallback(self.addOutbound)
+        deferred.addCallback(self.getFilenames)
+        deferred.addCallback(self.requestTransfer)
+        # several errors could occur
+        # 1. parsing request
+        # 2. unable to contact peer
+        # 3. getting filenames
+        return deferred
 
 
-class FileRequestResource(Resource):
+class InboundRequestEndpoint(object):
     """
-    FileRequestResource fields requests for file transfers.
-
-    Expose a simple endpoint where other users can post transfer requests.
-
-    The resource accepts POSTed json data messages containing file location
-    information.
+    Other users that would like to send files use this endpoint.
+    New file requests are posted here.
     """
-    isLeaf = True
 
-    def __init__(self, transferRequests, downloadTo):
-        Resource.__init__(self)
-        self.transferRequests = transferRequests
-        self.downloadTo = downloadTo
+    app = Klein()
 
-    def _parseForm(self, request):
-        """
-        Try parsing the request, if it fails, tell the requestor.
-        """
-        d = Deferred()
-        d.addCallback(filerequest.parseFileRequest)
+    def __init__(self, inboundRequests, downloadTo, fileRequestParser):
+        self._inboundRequests = inboundRequests
+        self._downloadTo = downloadTo
+        self._fileRequestParser = fileRequestParser
+
+    @app.route('/', methods=['POST'])
+    def parseTransferRequest(self, request):
 
         def successfulParse(data):
-            """ pass the request on if it parses """
-            self.transferRequests.append(data)
-            request.write("ok")
-            request.finish()
+            self._inboundRequests.append(data)
+            return json.dumps({'error': None, 'status': 'ok'})
 
-        def parseFailure(failure):
-            """ trap failures """
-            request.write("error parsing request")
-            request.finish()
-        d.addCallbacks(successfulParse, parseFailure)
-        d.callback((request.args, self.downloadTo,))
+        def parseFailure(fail):
+            log.msg(fail)
+            return json.dumps({'error': 'error parsing request',
+                               'status': 'error'})
 
-    def render_POST(self, request):
-        """
-        respond to post requests. This is where the file sender processing
-        will begin.
-
-        File locations will be posted to this URL for the recipient to
-        download later.
-        """
-        d = Deferred()
-        d.addCallback(self._parseForm)
-        d.callback(request)
-        return NOT_DONE_YET
-
-
-class UsersResource(Resource):
-    """
-    This resource exposes an endpoint that provides information
-    about other users in the system. Basically, an HTTP endpoint for the
-    PeerList.
-    """
-    isLeaf = True
-
-    def __init__(self, peers):
-        Resource.__init__(self)
-        self.peers = peers
-
-    def render_GET(self, request):
-        """
-        Return all of the users currently registered.
-        """
-        request.setHeader("content-type", "application/json")
-        them = {"users": [x.serialize() for x in self.peers.all()]}
-        return json.dumps(them)
+        deferred = Deferred()
+        deferred.addCallback(self._fileRequestParser)
+        deferred.addCallbacks(successfulParse, parseFailure)
+        deferred.callback((request.args, self._downloadTo,))
+        # was returning not done yet
+        return deferred

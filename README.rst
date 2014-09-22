@@ -41,10 +41,24 @@ How do I work on the project?
 
     ``source ./venv/bin/activate``
 
-    ``pip install -r requirements-dev.txt``
+    ``make install-dev``
 
 If you'd like to contribute, just fork the repository and submit a pull
 request.
+
+You can run tests by using:
+
+    ``make test``
+
+If you'd like to see coverage information:
+
+    ``make cover``
+
+Lastly, lint can be run using:
+
+    ``make lint``
+
+
 
 Thanks!
 

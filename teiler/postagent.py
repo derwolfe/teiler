@@ -51,6 +51,6 @@ def submitFileRequest(recipient, data, producer=StringProducer):
     headers = Headers()
     headers.setRawHeaders('Content-type', ['application/json'])
     return Agent(reactor).request("POST",
-                                  recipient,
+                                  recipient.encode('utf-8'),
                                   headers,
                                   producer(data))

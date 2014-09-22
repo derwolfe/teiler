@@ -38,7 +38,7 @@ class FakeUdpTransport(object):
         pass
 
 
-class PeerDiscoveryTests(unittest.TestCase):
+class PeerDiscoveryTests(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.clock = task.Clock()
@@ -112,7 +112,7 @@ class PeerDiscoveryTests(unittest.TestCase):
         self.assertTrue(self.protocol.loop.running is False)
 
 
-class UnicodePeerName(unittest.TestCase):
+class UnicodePeerName(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.peer = Peer("wölfe", "192.168.1.1", 8000)
@@ -121,7 +121,7 @@ class UnicodePeerName(unittest.TestCase):
         self.assertEquals(self.peer.name, u"w\xf6lfe")
 
 
-class UnicodePeerMessageTests(unittest.TestCase):
+class UnicodePeerMessageTests(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.message = PeerDiscoveryMessage(EXIT, "wölfe", "192.168.1.1", 8000)

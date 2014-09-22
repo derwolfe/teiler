@@ -2,62 +2,48 @@
 # -*- coding: utf-8
 
 from twisted.internet import reactor
-from twisted.web import server, resource
+from twisted.web import server
 from twisted.python import log
+
 from sys import stdout
-from teiler.server import (FileHostResource,
-                            FileServerResource,
-                            FileRequestResource,
-                            OutboundRequests,
-                            UsersResource)
-from teiler.peerdiscovery import PeerList, PeerDiscoveryProtocol
-from teiler.utils import getLiveInterface, getFilenames
-from teiler.postagent import submitFileRequest
 
-class IPResource(resource.Resource):
-    isLeaf = True
+from teiler import api
+from teiler.server import OutboundRequests
+from teiler.utils import getLiveInterface  # , getFilenames
+# from teiler.postagent import submitFileRequest
+# from teiler.peerdiscovery import PeerList, PeerDiscoveryProtocol
 
-    def render_GET(self, request):
-        return "hey - you are from {0})".format(request.transport.getPeer())
 
 def main():
     log.startLogging(stdout)
-    outbound = OutboundRequests()
-    peers = PeerList()
-    transferRequests = []
-    downloadDirectory = "."
-    # username needs to be able to handle unicode!
-    username = "chris"
-    multicastAddress = '224.0.0.1'
-    multicastPort = 8005
+    # username = "chris"
+    # multicastAddress = '224.0.0.1'
+    # multicastPort = 8005
     ip = getLiveInterface()
     if ip is None:
         log.msg("Cannot start, no network connection found")
         return
-    # set up ports
-    internalPort = 58889
-    externalPort = 58888
-    fileHost = FileHostResource()
 
-    # build the internal API
-    internal = resource.Resource()
-    internal.putChild('', IPResource())
-    internal.putChild('files', FileServerResource(outbound,
-                                                  getFilenames,
-                                                  submitFileRequest,
-                                                  fileHost))
-    internal.putChild('users', UsersResource(peers))
+    outbound = OutboundRequests()
+    # inbound = []
+    # downloadTo = "."
+    internalPort = 58888
+    externalPort = 58889
+    rootUrl = "http://" + ip + ":" + str(externalPort) + "/files"
+    internal = api.InternalAPIFactory(rootUrl, outbound)
+    external = api.ExternalAPIFactory(outbound)
 
-    # build the external API
-    external = resource.Resource()
-    external.putChild('', IPResource())
-    external.putChild('requests', FileRequestResource(transferRequests,
-                                                      downloadDirectory))
-    external.putChild('files', fileHost)
+    log.msg(internal)
+    log.msg(external)
 
-    # start listening for connections
-    reactor.listenTCP(externalPort, server.Site(external))
-    reactor.listenTCP(internalPort, server.Site(internal), interface='127.0.0.1')
+    reactor.listenTCP(internalPort, server.Site(internal.app.resource()),
+                      interface='127.0.0.1')
+    reactor.listenTCP(externalPort, server.Site(external.app.resource()),
+                      interface='0.0.0.0')
+    reactor.run()
+    # reactor.listenTCP(internalPort,
+    #                   server.Site(internal),
+    #                   interface='127.0.0.1')
     # reactor.listenMulticast(multicastPort,
     #                         PeerDiscoveryProtocol(reactor,
     #                                               peers,
@@ -66,7 +52,7 @@ def main():
     #                                               multicastPort,
     #                                               ip,
     #                                               externalPort))
-    reactor.run()
+    # reactor.run()
 
 
 if __name__ == '__main__':

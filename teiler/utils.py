@@ -23,6 +23,13 @@ def getLiveInterface():
 
 
 def getFilenames(path):
+    """ Given a path, provide all of the files occuring at or under the
+    given path.
+
+    This function expects that path is a directory and not a single
+    file path.
+    """
+    # XXX throw an argument exception if a filename is passed in!
     path = filepath.FilePath(path)
     names = ['/'.join(subpath.segmentsFrom(path.parent()))
              for subpath in path.walk()]
