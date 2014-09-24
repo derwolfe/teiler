@@ -194,7 +194,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
                                        self.address,
                                        self.port).serialize()
         self.sendMessage(message)
-        log.msg("Sent " + message)
+        log.msg("Sent ", message)
 
     def stopProtocol(self):
         """
@@ -208,7 +208,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         self.sendMessage(message)
         if self.loop is not None:
             self.loop.stop()
-        log.msg("Exit " + message)
+        log.msg("Exit ", message)
 
     def datagramReceived(self, datagram, address):
         """
@@ -221,7 +221,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         # ignore those messages from yourself
         if parsed.address == self.address:
             return
-        log.msg("Decoding: " + datagram + " from ", address)
+        log.msg("Decoding:{0} from {1}", datagram, address)
         if parsed.message == EXIT:
             if self._peers.exists(peerId):
                 self._peers.remove(peerId)
