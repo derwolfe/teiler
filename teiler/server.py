@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# -*- test-case-name: tests.test_server -*-
-
 """
 server - All of the resources needed to run the file server
 """

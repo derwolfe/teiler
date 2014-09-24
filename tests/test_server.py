@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-
 from twisted.trial.unittest import SynchronousTestCase
 
 from twisted.internet.defer import succeed

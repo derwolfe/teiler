@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from twisted.trial import unittest
 from twisted.internet import task
 
@@ -115,7 +112,7 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
 class UnicodePeerName(unittest.SynchronousTestCase):
 
     def setUp(self):
-        self.peer = Peer("wölfe", "192.168.1.1", 8000)
+        self.peer = Peer(u"w\xf6lfe", "192.168.1.1", 8000)
 
     def test_utf8_name_sent_as_bytes(self):
         self.assertEquals(self.peer.name, u"w\xf6lfe")
@@ -124,7 +121,9 @@ class UnicodePeerName(unittest.SynchronousTestCase):
 class UnicodePeerMessageTests(unittest.SynchronousTestCase):
 
     def setUp(self):
-        self.message = PeerDiscoveryMessage(EXIT, "wölfe", "192.168.1.1", 8000)
+        self.message = PeerDiscoveryMessage(
+            EXIT, u"w\xf6lfe", "192.168.1.1", 8000
+        )
 
     def test_utf8_peer_message_sent_as_bytes(self):
         self.assertEquals(self.message.name, u"w\xf6lfe")
