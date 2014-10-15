@@ -24,17 +24,27 @@ def getLiveInterface():
 
 
 def getFilenames(path):
-    """ Given a path, provide all of the files occuring at or under the
-    given path.
+    """
+    Given a path, find all of the file and directory names that are
+    the path's children.
 
     This function expects that path is a directory and not a single
     file path.
+
+    :returns: a list of directories and a list of filenames
+    :rtype: list, list
     """
-    # XXX throw an argument exception if a filename is passed in!
     path = filepath.FilePath(path)
-    names = ['/'.join(subpath.segmentsFrom(path.parent()))
-             for subpath in path.walk()]
-    return names
+    filenames = []
+    dirs = set()
+    for subpath in path.walk():
+        name = '/'.join(subpath.segmentsFrom(path.parent()))
+        if subpath.isfile():
+            filenames.append(name)
+        if subpath.isdir():
+            dirs.add(name)
+    return list(dirs), filenames
+
 
 
 def sortedDump(data):
