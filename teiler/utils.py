@@ -4,6 +4,7 @@ local ip address that will be used for broadcasting.
 """
 import netifaces
 from twisted.python import filepath
+import json
 
 
 def getLiveInterface():
@@ -34,6 +35,19 @@ def getFilenames(path):
     names = ['/'.join(subpath.segmentsFrom(path.parent()))
              for subpath in path.walk()]
     return names
+
+
+def sortedDump(data):
+    """
+    return the data object as serialized json, with the keys sorted
+    alphabetically.
+
+    :param data: any data structure that can be serialized.
+    :returns: a serialized object encoded in utf-8 with all keys sorted
+    alphabetically.
+    """
+    return json.dumps(data, sort_keys=True)
+
 
 if __name__ == '__main__':
     address = getLiveInterface()

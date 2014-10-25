@@ -58,7 +58,10 @@ Lastly, lint can be run using:
 
     ``make lint``
 
+For a final check, tox can be used. As long as you have it available in your
+path, you can run the tests and linters using:
 
+    ``tox``
 
 Thanks!
 

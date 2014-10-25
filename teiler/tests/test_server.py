@@ -12,9 +12,12 @@ from mock import MagicMock, patch
 
 from StringIO import StringIO
 
-import json
-
-from teiler import server, peerdiscovery, filerequest
+from teiler import (
+    server,
+    peerdiscovery,
+    filerequest,
+    utils
+    )
 
 
 class TransferTests(SynchronousTestCase):
@@ -41,8 +44,8 @@ class TransferTests(SynchronousTestCase):
         transfer = server.Transfer('1', '/User/', '1.1.1.1')
         url = 'json.com'
         result = transfer.toJson(url)
-        expected = '{"url": "json.com/1/", "transferId": "1",'\
-                   ' "userIp": "1.1.1.1", "filepath": "/User/"}'
+        expected = '{"filepath": "/User/", "transferId": "1", '\
+                   '"url": "json.com/1/", "userIp": "1.1.1.1"}'
         self.assertEqual(result, expected)
 
     # XXX these seem like bad tests
@@ -78,8 +81,9 @@ class TransferTests(SynchronousTestCase):
         transfer = server.Transfer('1', u'/Users/' + u'\u262D', '1.1.1.1')
         result = transfer.toJson("")
         self.assertTrue(isinstance(result, str))
-        expected = b'{"url": "/1/", "transferId": "1", ' \
-                   b'"userIp": "1.1.1.1", "filepath": "/Users/\u262d"}'
+
+        expected = b'{"filepath": "/Users/\\u262d", "transferId": "1", '\
+                   b'"url": "/1/", "userIp": "1.1.1.1"}'
         self.assertEqual(result, expected)
 
     def test_filename_bytes_returns_bytes_from_unicode_filename(self):
@@ -275,7 +279,7 @@ class UsersEndpointTests(SynchronousTestCase, MockMixin):
 
         self.assertFired(d)
         self.assertEqual(
-            json.dumps({"users": []}),
+            utils.sortedDump({"users": []}),
             request.getWrittenData()
         )
 
@@ -295,7 +299,7 @@ class UsersEndpointTests(SynchronousTestCase, MockMixin):
         self.assertTrue(peerlist.all.called)
 
         self.assertEqual(
-            json.dumps({"users": [peer.serialize()]}),
+            utils.sortedDump({"users": [peer.serialize()]}),
             request.getWrittenData()
         )
 
@@ -338,7 +342,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
         self.assertFired(d)
         self.assertTrue(mockOb.all.called)
 
-        expected = json.dumps(
+        expected = utils.sortedDump(
             {"files": [{
                 "url": "piazza.org/1/",
                 "transferId": "1",
@@ -352,7 +356,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
                                              getFileNames=None,
                                              submitFileRequest=None,
                                              rootUrl=None)
-        request = json.dumps(
+        request = utils.sortedDump(
             {"filepath": "/Users/chris/Documents", "user": "1.1.1.1"}
         )
         body = StringIO(request)
@@ -364,7 +368,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
                                              getFileNames=None,
                                              submitFileRequest=None,
                                              rootUrl=None)
-        request = json.dumps(
+        request = utils.sortedDump(
             {"filepath": "/Users/chris/Documents"}
         )
         body = StringIO(request)
@@ -375,7 +379,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
                                              getFileNames=None,
                                              submitFileRequest=None,
                                              rootUrl=None)
-        request = json.dumps({"user": "1.1.1.1"})
+        request = utils.sortedDump({"user": "1.1.1.1"})
         body = StringIO(request)
         self.assertRaises(server.MissingFormDataError, app.parse, body)
 
@@ -439,7 +443,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         transfer = server.Transfer('1', '.', '1.1.1.1')
         response = app.requestTransfer((fakeResults, transfer,))
-        expected = '{"transfer": "/1/", "filenames": ["/plop", "/plop/foo"]}'
+        expected = '{"filenames": ["/plop", "/plop/foo"], "transfer": "/1/"}'
 
         self.assertEqual(expected, response)
 
@@ -479,7 +483,7 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
 
     def test_newTransfer_succeeds(self):
 
-        body = json.dumps(
+        body = utils.sortedDump(
             {
                 "filepath": "/plop.txt",
                 "user": "1.1.1.1"
@@ -491,7 +495,7 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
         self.assertFired(d)
         self.assertEqual(
             request.getWrittenData(),
-            b'{"transfer": "/1/", "filenames": ["/plop.txt"]}'
+            b'{"filenames": ["/plop.txt"], "transfer": "/1/"}'
         )
 
 
@@ -512,7 +516,7 @@ class InboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         kr = KleinResource(endpoint.app)
 
-        body = json.dumps({})
+        body = utils.sortedDump({})
         request = requestMock('/', 'POST', body=body)
         d = _render(kr, request)
 
@@ -520,7 +524,7 @@ class InboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         self.assertEqual(
             request.getWrittenData(),
-            b'{"status": "error", "error": "error parsing request"}'
+            b'{"error": "error parsing request", "status": "error"}'
         )
 
     def test_parseTransferRequest_success(self):
@@ -538,7 +542,7 @@ class InboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         kr = KleinResource(endpoint.app)
 
-        body = json.dumps({"type": "good request"})
+        body = utils.sortedDump({"type": "good request"})
         request = requestMock('/', 'POST', body=body)
         d = _render(kr, request)
 
@@ -546,5 +550,5 @@ class InboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         self.assertEqual(
             request.getWrittenData(),
-            b'{"status": "ok", "error": null}'
+            b'{"error": null, "status": "ok"}'
         )
