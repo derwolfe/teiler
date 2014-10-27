@@ -8,7 +8,7 @@ setup(
     version='0.1',
     maintainer="Chris Wolfe",
     maintainer_email="chriswwolfe@gmail.com",
-    packages=['teiler'],
+    packages=['teiler', 'teiler.tests'],
     license="MIT",
     zip_safe=False,
     classifiers=[
@@ -17,12 +17,11 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
-    ] + [
-        ("Programming Language :: Python :: %s" % x) for x in
-        "2.7".split()],
+        "Programming Language :: Python :: 2.7",
+    ],
     install_requires=["twisted", "netifaces", "klein"],
     extras_require=dict(
         dev=["coverage", "flake8", "mock"]
     ),
-    test_suite='tests'
+    test_suite='teiler.tests'
 )

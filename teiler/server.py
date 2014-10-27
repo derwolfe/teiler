@@ -12,6 +12,7 @@ from klein import Klein
 import json
 import uuid
 
+from .utils import sortedDump
 
 __all__ = ('Transfer', 'OutboundRequests', 'UsersEndpoint',
            'FileEndpoint', 'OutboundRequestEndpoint',
@@ -57,7 +58,7 @@ class Transfer(object):
         """
         Serialize the transfer as json data
         """
-        return json.dumps(self.encode(root))
+        return sortedDump(self.encode(root))
 
 
 class OutboundRequests(object):
@@ -145,7 +146,7 @@ class UsersEndpoint(object):
         """
         request.setHeader("Content-Type", "application/json")
         them = {"users": [p.serialize() for p in self._peers.all()]}
-        return json.dumps(them)
+        return sortedDump(them)
 
 
 class MissingFormDataError(Exception):
@@ -178,7 +179,7 @@ class OutboundRequestEndpoint(object):
         Display the files currently being hosted.
         """
         request.setHeader("Content-Type", "application/json")
-        return json.dumps(
+        return sortedDump(
             {'files': [
                 t.encode(self._rootUrl) for t in self._outboundRequests.all()
             ]}
@@ -189,7 +190,7 @@ class OutboundRequestEndpoint(object):
         Parse incoming post data into a new `Transfer`
         """
         loaded = json.loads(body.read())
-        log.msg("parsing request", json.dumps(loaded)[:100])
+        log.msg("parsing request", sortedDump(loaded)[:100])
         # what if the args are not present in the data?
         filepath = loaded.get('filepath')
         user = loaded.get('user')
@@ -223,7 +224,7 @@ class OutboundRequestEndpoint(object):
         log.msg('requesting transfer')
         filenames, transfer = args
         userUrl = 'http://{0}/requests'.format(transfer.userIp).encode('utf-8')
-        requestBody = json.dumps({'transfer': transfer.url(self._rootUrl),
+        requestBody = sortedDump({'transfer': transfer.url(self._rootUrl),
                                   'filenames': filenames})
         self._submitFileRequest(userUrl, requestBody)
         return requestBody
@@ -269,11 +270,11 @@ class InboundRequestEndpoint(object):
 
         def successfulParse(data):
             self._inboundRequests.append(data)
-            return json.dumps({'error': None, 'status': 'ok'})
+            return sortedDump({'error': None, 'status': 'ok'})
 
         def parseFailure(fail):
             log.msg(fail)
-            return json.dumps({'error': 'error parsing request',
+            return sortedDump({'error': 'error parsing request',
                                'status': 'error'})
 
         deferred = Deferred()
