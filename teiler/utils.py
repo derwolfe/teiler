@@ -31,8 +31,8 @@ def getFilenames(path):
     This function expects that path is a directory and not a single
     file path.
 
-    :returns: a list of directories and a list of filenames
-    :rtype: list, list
+    :returns: a Paths object containing filenames and directories.
+    :rtype:  Paths object
     """
     path = filepath.FilePath(path)
     filenames = []
@@ -43,8 +43,16 @@ def getFilenames(path):
             filenames.append(name)
         if subpath.isdir():
             dirs.add(name)
-    return list(dirs), filenames
+    return Paths(filenames, list(dirs))
 
+
+class Paths(object):
+    """
+    Files and paths as an object
+    """
+    def __init__(self, filenames, directories):
+        self.filenames = filenames
+        self.directories = directories
 
 
 def sortedDump(data):

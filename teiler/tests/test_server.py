@@ -431,8 +431,10 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         As of right now, this contains the file names and the root url.
         """
-        fakeResults = [b'/plop', b'/plop/foo']
-
+        fakeResults = utils.Paths(
+            directories=[b'plop'],
+            filenames=[b'/plop', b'/plop/foo']
+        )
         def fakeSubmitter(*args):
             return
 
@@ -443,7 +445,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         transfer = server.Transfer('1', '.', '1.1.1.1')
         response = app.requestTransfer((fakeResults, transfer,))
-        expected = '{"filenames": ["/plop", "/plop/foo"], "transfer": "/1/"}'
+        expected = '{"directories": ["plop"], "filenames": ["/plop", "/plop/foo"], "transfer": "/1/"}'
 
         self.assertEqual(expected, response)
 
@@ -452,9 +454,13 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
 
     def setUp(self):
         self.transfer = server.Transfer('1', '.', '1.1.1.1')
+        self.paths = utils.Paths(
+            directories=[],
+            filenames=[b'plop.txt']
+        )
         self.patcher = patch(
             'teiler.server.OutboundRequestEndpoint.getFilenames',
-            return_value=([b'/plop.txt'], self.transfer,)
+            return_value=(self.paths, self.transfer,)
         )
         self.patcher.start()
 
@@ -478,14 +484,14 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
     def test_patch(self):
         self.assertEqual(
             self.endpoint.getFilenames(),
-            ([b'/plop.txt'], self.transfer,)
+            (self.paths, self.transfer,)
         )
 
     def test_newTransfer_succeeds(self):
 
         body = utils.sortedDump(
             {
-                "filepath": "/plop.txt",
+                "filepath": "plop.txt",
                 "user": "1.1.1.1"
             }
         )
@@ -495,7 +501,7 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
         self.assertFired(d)
         self.assertEqual(
             request.getWrittenData(),
-            b'{"filenames": ["/plop.txt"], "transfer": "/1/"}'
+            b'{"directories": [], "filenames": ["plop.txt"], "transfer": "/1/"}'
         )
 
 
