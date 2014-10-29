@@ -435,6 +435,7 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
             directories=[b'plop'],
             filenames=[b'/plop', b'/plop/foo']
         )
+
         def fakeSubmitter(*args):
             return
 
@@ -445,7 +446,8 @@ class OutboundRequestEndpointTests(SynchronousTestCase, MockMixin):
 
         transfer = server.Transfer('1', '.', '1.1.1.1')
         response = app.requestTransfer((fakeResults, transfer,))
-        expected = '{"directories": ["plop"], "filenames": ["/plop", "/plop/foo"], "transfer": "/1/"}'
+        expected = '{"directories": ["plop"], "filenames": ' \
+                   '["/plop", "/plop/foo"], "transfer": "/1/"}'
 
         self.assertEqual(expected, response)
 
@@ -501,7 +503,8 @@ class OutboundRequestEndpointIntegrationTests(SynchronousTestCase, MockMixin):
         self.assertFired(d)
         self.assertEqual(
             request.getWrittenData(),
-            b'{"directories": [], "filenames": ["plop.txt"], "transfer": "/1/"}'
+            b'{"directories": [], "filenames": ["plop.txt"],'
+            b' "transfer": "/1/"}'
         )
 
 
