@@ -7,9 +7,6 @@ env:
 install:
     - pip install tox coveralls
 
-script:
-    - tox hashseed random -e $TOX_ENV
-
 after_success:
     - coveralls
 
