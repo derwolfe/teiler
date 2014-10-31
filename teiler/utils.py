@@ -16,6 +16,7 @@ def getLiveInterface():
         addrs = netifaces.ifaddresses(layer)
         link = addrs.get(netifaces.AF_INET)
         # this bit needs cleaning up. It doesn't cover enough cases
+        # how can you test this??
         if link:
             subaddr = link[0]
             octet = subaddr['addr']
@@ -65,8 +66,3 @@ def sortedDump(data):
     alphabetically.
     """
     return json.dumps(data, sort_keys=True)
-
-
-if __name__ == '__main__':
-    address = getLiveInterface()
-    print 'addr: %s' % address

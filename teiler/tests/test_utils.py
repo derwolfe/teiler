@@ -1,14 +1,14 @@
 """
 Tests for teiler utilities.
 """
-
 from twisted.trial.unittest import SynchronousTestCase
 from twisted.python import filepath
-# from teiler import utils
+from teiler import utils
+
+import os
 
 
 class TestSortedDump(SynchronousTestCase):
-    pass
 
     def test_sorts(self):
         data = {'z': '1', 'a': 'strano'}
