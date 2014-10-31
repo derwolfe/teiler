@@ -18,17 +18,38 @@ class TestSortedDump(SynchronousTestCase):
             result
         )
 
+
 class TestGetFilenames(SynchronousTestCase):
 
-    def setUp(self):
-        self.path = self.mktemp()
-        filepath.FilePath(self.path).create()
-
     def test_returns_files(self):
-        self.fail()
+        """
+        All filenames under a given path are returned.
+        """
+        path = self.mktemp()
+        filepath.FilePath(path).create()
+        result = utils.getFilenames(path)
+        self.assertEqual(result.filenames, ['temp'])
 
     def test_returns_directories(self):
-        self.fail()
+        """
+        All directories that are children of the root directory are returned.
+        """
+        path = self.mktemp()
+        os.mkdir(path)
+        result = utils.getFilenames(path)
+        self.assertEqual(['temp'], result.directories)
 
-    def test_paths_are_relative_to_application(self):
-        self.fail()
+    def test_paths_are_relative_to_root_of_file(self):
+        """
+        Filepaths are all relative to the target directory
+        passed in.
+        """
+        targetpath = self.mktemp()
+        # create a directory at root named temp
+        os.mkdir(targetpath)
+        # create a file inside of 'temp' named 'newtmp'
+        filepath.FilePath(targetpath).child('newtmp').touch()
+
+        result = utils.getFilenames(targetpath)
+        self.assertEqual(['temp'], result.directories)
+        self.assertEqual(['temp/newtmp'], result.filenames)
