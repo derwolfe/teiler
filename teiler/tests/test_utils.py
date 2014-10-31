@@ -10,6 +10,13 @@ from twisted.python import filepath
 class TestSortedDump(SynchronousTestCase):
     pass
 
+    def test_sorts(self):
+        data = {'z': '1', 'a': 'strano'}
+        result = utils.sortedDump(data)
+        self.assertEqual(
+            '{"a": "strano", "z": "1"}',
+            result
+        )
 
 class TestGetFilenames(SynchronousTestCase):
 

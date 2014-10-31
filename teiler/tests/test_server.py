@@ -17,7 +17,7 @@ from teiler import (
     peerdiscovery,
     filerequest,
     utils
-    )
+)
 
 
 class TransferTests(SynchronousTestCase):
