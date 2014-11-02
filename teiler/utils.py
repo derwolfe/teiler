@@ -29,22 +29,24 @@ def getFilenames(path):
     Given a path, find all of the file and directory names that are
     the path's children.
 
-    This function expects that path is a directory and not a single
-    file path.
-
     :returns: a Paths object containing filenames and directories.
     :rtype:  Paths object
     """
     path = filepath.FilePath(path)
-    filenames = []
-    dirs = set()
-    for subpath in path.walk():
-        name = '/'.join(subpath.segmentsFrom(path.parent()))
-        if subpath.isfile():
-            filenames.append(name)
-        if subpath.isdir():
-            dirs.add(name)
-    return Paths(filenames, list(dirs))
+    if path.isfile():
+        # get the filename only
+        print str(path.basename())
+        return Paths(path.basename(), [])
+    else:
+        filenames = []
+        dirs = set()
+        for subpath in path.walk():
+            name = '/'.join(subpath.segmentsFrom(path.parent()))
+            if subpath.isfile():
+                filenames.append(name)
+                if subpath.isdir():
+                    dirs.add(name)
+        return Paths(filenames, list(dirs))
 
 
 class Paths(object):
