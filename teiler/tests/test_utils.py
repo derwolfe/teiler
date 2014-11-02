@@ -28,7 +28,7 @@ class TestGetFilenames(SynchronousTestCase):
         path = self.mktemp()
         filepath.FilePath(path).create()
         result = utils.getFilenames(path)
-        self.assertEqual(result.filenames, ['temp'])
+        self.assertEqual(['temp'], result.filenames)
 
     def test_returns_directories(self):
         """

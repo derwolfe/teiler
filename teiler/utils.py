@@ -33,10 +33,10 @@ def getFilenames(path):
     :rtype:  Paths object
     """
     path = filepath.FilePath(path)
+    # what if the path doesn't exist?!
+    # you should throw an error that stops adding and sending the new request.
     if path.isfile():
-        # get the filename only
-        print str(path.basename())
-        return Paths(path.basename(), [])
+        return Paths([path.basename()], [])
     else:
         filenames = []
         dirs = set()
