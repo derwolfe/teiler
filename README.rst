@@ -67,6 +67,5 @@ Thanks!
 
 .. |Build Status| image:: https://travis-ci.org/derwolfe/teiler.png?branch=dev
    :target: https://travis-ci.org/derwolfe/teiler
-
-.. |Coverage| image:: https://coveralls.io/repos/derwolfe/teiler/badge.png?branch=master
-  :target: https://coveralls.io/r/derwolfe/teiler?branch=master
+.. |Coverage| image:: https://codecov.io/github/derwolfe/teiler/coverage.svg?branch=master
+   :target: https://codecov.io/github/derwolfe/teiler?branch=master
