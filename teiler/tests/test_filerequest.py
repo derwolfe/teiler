@@ -9,14 +9,15 @@ class ParseFileRequestTests(unittest.SynchronousTestCase):
     def test_parse_file_req_ret(self):
         request = {
             'url': ['192.168.1.1'],
-            'filenames': ['foo/plop, foo/bar/baz.txt'],
-            'directories': ['foo', 'foo/bar']
+            'filenames': ['foo/plop,foo/bar/baz.txt'],
+            'directories': ['foo,foo/bar']
         }
         downdir = "."
         result = filerequest.parseFileRequest(request, downdir)
         self.assertEqual(2, len(result.files))
-        self.assertEqual('plop', result.files[0])
+        self.assertEqual('foo/plop', result.files[0])
         self.assertEqual('foo/bar/baz.txt', result.files[1])
+
         self.assertEqual(2, len(result.directories))
         self.assertEqual('foo', result.directories[0])
         self.assertEqual('foo/bar', result.directories[1])

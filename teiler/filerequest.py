@@ -75,10 +75,7 @@ def _getNewFilePath(downloadTo, filename):
     """
     Get the absolute file name.
     :param downloadTo: the location where downloads are saved
-    :paramtype: string
-
     :param filename: the new filename
-    :paramtype string:
 
     :returns: a filepath
     """
@@ -92,10 +89,7 @@ def createFileDirs(downloadTo, newPath):
     createsFiles and returns no information.
 
     :param downloadTo: where downloads are saved
-    :paramtype: string
-
     :param newPath: where the new file will be saved
-    :paramtype: string
 
     :returns: None
     """
