@@ -213,7 +213,7 @@ class OutboundRequestEndpoint(object):
         """
         log.msg("getting file names")
         d = threads.deferToThread(self._getFileNames, transfer.filepath)
-        d.addCallback(lambda filenames: (filenames, transfer))
+        d.addCallback(lambda paths: (paths, transfer))
         return d
 
     def requestTransfer(self, args):
@@ -222,10 +222,15 @@ class OutboundRequestEndpoint(object):
         in the transfer.
         """
         log.msg('requesting transfer')
-        filenames, transfer = args
+        paths, transfer = args
         userUrl = 'http://{0}/requests'.format(transfer.userIp).encode('utf-8')
-        requestBody = sortedDump({'transfer': transfer.url(self._rootUrl),
-                                  'filenames': filenames})
+        requestBody = sortedDump(
+            {
+                'transfer': transfer.url(self._rootUrl),
+                'filenames': paths.filenames,
+                'directories': paths.directories
+            }
+        )
         self._submitFileRequest(userUrl, requestBody)
         return requestBody
 

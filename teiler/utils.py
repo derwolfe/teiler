@@ -16,6 +16,7 @@ def getLiveInterface():
         addrs = netifaces.ifaddresses(layer)
         link = addrs.get(netifaces.AF_INET)
         # this bit needs cleaning up. It doesn't cover enough cases
+        # how can you test this??
         if link:
             subaddr = link[0]
             octet = subaddr['addr']
@@ -24,17 +25,37 @@ def getLiveInterface():
 
 
 def getFilenames(path):
-    """ Given a path, provide all of the files occuring at or under the
-    given path.
-
-    This function expects that path is a directory and not a single
-    file path.
     """
-    # XXX throw an argument exception if a filename is passed in!
+    Given a path, find all of the file and directory names that are
+    the path's children.
+
+    :returns: a Paths object containing filenames and directories.
+    :rtype:  Paths object
+    """
     path = filepath.FilePath(path)
-    names = ['/'.join(subpath.segmentsFrom(path.parent()))
-             for subpath in path.walk()]
-    return names
+    # what if the path doesn't exist?!
+    # you should throw an error that stops adding and sending the new request.
+    if path.isfile():
+        return Paths([path.basename()], [])
+    else:
+        filenames = []
+        dirs = set()
+        for subpath in path.walk():
+            name = '/'.join(subpath.segmentsFrom(path.parent()))
+            if subpath.isfile():
+                filenames.append(name)
+            if subpath.isdir():
+                dirs.add(name)
+        return Paths(filenames, list(dirs))
+
+
+class Paths(object):
+    """
+    Files and paths as an object
+    """
+    def __init__(self, filenames, directories):
+        self.filenames = filenames
+        self.directories = directories
 
 
 def sortedDump(data):
@@ -47,8 +68,3 @@ def sortedDump(data):
     alphabetically.
     """
     return json.dumps(data, sort_keys=True)
-
-
-if __name__ == '__main__':
-    address = getLiveInterface()
-    print 'addr: %s' % address
