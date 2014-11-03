@@ -36,20 +36,18 @@ class TestGetFilenames(SynchronousTestCase):
         """
         path = self.mktemp()
         os.mkdir(path)
+        child = filepath.FilePath(path).child('child')
+        os.mkdir(child.path)
+
         result = utils.getFilenames(path)
-        self.assertEqual(['temp'], result.directories)
+        self.assertIn('temp/child', result.directories)
+        self.assertIn('temp', result.directories)
 
-    def test_paths_are_relative_to_root_of_file(self):
+    def test_returns_no_directories_when_no_child_dirs(self):
         """
-        Filepaths are all relative to the target directory
-        passed in.
+        All directories that are children of the root directory are returned.
         """
-        targetpath = self.mktemp()
-        # create a directory at root named temp
-        os.mkdir(targetpath)
-        # create a file inside of 'temp' named 'newtmp'
-        filepath.FilePath(targetpath).child('newtmp').touch()
-
-        result = utils.getFilenames(targetpath)
-        self.assertEqual(['temp'], result.directories)
-        self.assertEqual(['temp/newtmp'], result.filenames)
+        path = self.mktemp()
+        filepath.FilePath(path).create()
+        result = utils.getFilenames(path)
+        self.assertEqual([], result.directories)

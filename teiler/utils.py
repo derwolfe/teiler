@@ -44,8 +44,8 @@ def getFilenames(path):
             name = '/'.join(subpath.segmentsFrom(path.parent()))
             if subpath.isfile():
                 filenames.append(name)
-                if subpath.isdir():
-                    dirs.add(name)
+            if subpath.isdir():
+                dirs.add(name)
         return Paths(filenames, list(dirs))
 
 
