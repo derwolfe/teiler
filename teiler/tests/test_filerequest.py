@@ -6,20 +6,59 @@ from teiler import filerequest
 
 class ParseFileRequestTests(unittest.SynchronousTestCase):
 
-    def test_parse_file_req_returns_two_files_and_url(self):
-        request = {'url': ['192.168.1.1'], 'files': ['plop,foo/bar/baz.txt']}
+    def test_parse_file_req_ret(self):
+        request = {
+            'url': ['192.168.1.1'],
+            'filenames': ['foo/plop, foo/bar/baz.txt'],
+            'directories': ['foo', 'foo/bar']
+        }
         downdir = "."
-        result = filerequest.parseFileRequest((request, downdir,))
-        self.assertTrue(len(result.files) == 2)
-        self.assertTrue(result.files[0] == 'plop')
-        self.assertTrue(result.files[1] == 'foo/bar/baz.txt')
+        result = filerequest.parseFileRequest(request, downdir)
+        self.assertEqual(2, len(result.files))
+        self.assertEqual('plop', result.files[0])
+        self.assertEqual('foo/bar/baz.txt', result.files[1])
+        self.assertEqual(2, len(result.directories))
+        self.assertEqual('foo', result.directories[0])
+        self.assertEqual('foo/bar', result.directories[1])
 
-    def test_malformed_request_raises_form_args_exception(self):
-        request = {'urls': [], 'files': ['plop,foo/bar/baz.txt']}
+    def test_malformed_request_raises_missing_url_exception(self):
+        request = {
+            'filenames': ['plop', 'foo/bar/baz.txt'],
+            'directories': ['foo/bar'],
+        }
         downdir = "."
-        self.assertRaises(filerequest.FormArgsError,
-                          filerequest.parseFileRequest,
-                          (request, downdir,))
+        self.assertRaises(
+            filerequest.MissingUrlError,
+            filerequest.parseFileRequest,
+            request,
+            downdir
+        )
+
+    def test_malformed_request_raises_missing_files_exception(self):
+        request = {
+            'url': 'foo://foo',
+            'directories': [],
+        }
+        downdir = "."
+        self.assertRaises(
+            filerequest.MissingFilesError,
+            filerequest.parseFileRequest,
+            request,
+            downdir
+        )
+
+    def test_malformed_request_raises_missing_dir_exception(self):
+        request = {
+            'url': 'foo//foo',
+            'filenames': ['imafile']
+        }
+        downdir = "."
+        self.assertRaises(
+            filerequest.MissingDirectoriesError,
+            filerequest.parseFileRequest,
+            request,
+            downdir
+        )
 
 
 class FakeDownloader(object):
@@ -53,9 +92,11 @@ class FileRequestTests(unittest.SynchronousTestCase):
     def setUp(self):
         self.url = 'here'
         self.files = ['file1']
+        self.directories = ['home']
         self.downloadTo = '.'
         self.frequest = filerequest.FileRequest(self.url,
                                                 self.files,
+                                                self.directories,
                                                 self.downloadTo)
 
     def test_get_files_adds_files_to_downloading(self):

@@ -7,22 +7,22 @@ This file is mainly focused on parsing received file requests.
 from twisted.python import filepath
 
 
-class FormArgsError(Exception):
+class FileRequestError(Exception):
     """
     Exception to be thrown when a form doesn"t contain correct arguments.
     """
     pass
 
 
-class MissingFilesError(FormArgsError):
+class MissingFilesError(FileRequestError):
     pass
 
 
-class MissingDirectoriesError(FormArgsError):
+class MissingDirectoriesError(FileRequestError):
     pass
 
 
-class MissingUrlError(FormArgsError):
+class MissingUrlError(FileRequestError):
     pass
 
 
@@ -38,7 +38,7 @@ def _getFileNames(request):
     """
     given a request, return the filenames listed in the request.
     """
-    return request["files"][0].split(",")
+    return request["filenames"][0].split(",")
 
 
 #  this could just be a class method...
@@ -53,7 +53,6 @@ def _getFileUrl(rooturl, filename):
     return rooturl + "/" + filename
 
 
-# xxx this is gross, fixme.
 def parseFileRequest(request, downloadDir):
     """
     Parse and create a new FileRequest object from a request.
@@ -68,6 +67,7 @@ def parseFileRequest(request, downloadDir):
     url = request["url"][0]
     files = _getFileNames(request)
     dirs = _getDirectories(request)
+
     return FileRequest(url, files, dirs, downloadDir)
 
 
