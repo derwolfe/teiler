@@ -28,10 +28,12 @@ class Transfer(object):
             self.transferId = transferId
         else:
             self.transferId = unicode(transferId, 'utf-8')
+
         if isinstance(filepath, unicode):
             self.filepath = filepath
         else:
             self.filepath = unicode(filepath, 'utf-8')
+
         if isinstance(userIp, unicode):
             self.userIp = userIp
         else:
@@ -116,21 +118,15 @@ class FileEndpoint(object):
             return NoResource()
 
         path = filepath.FilePath(transfer.filenameBytes())
+        # I haven;t figured out how to return a single file.
+        # this must be possible
+        return File(path.dirname())
 
-        # this is a bit of an issue, if it is a directory,
-        # then the directory is the guid, the children are the files
-        # e.g. 12124124/filename
-        if path.isdir():
-            # this returns the directory hosting the filepath
-            return File(path.dirname())
-
-        # this should return the same thing, but doesn't.
-        if path.isfile():
-            return File(path.dirname())
-
-        else:
-            return NoResource()
-
+    # this should work but doesnt;...why?
+    @app.route('/try/', methods=['GET'])
+    def gileor(self, request):
+        log.msg('here')
+        return File('/Users/chris/code/teiler/tox.ini')
 
 class UsersEndpoint(object):
     """
