@@ -8,9 +8,9 @@ setup(
     version='0.1',
     maintainer="Chris Wolfe",
     maintainer_email="chriswwolfe@gmail.com",
-    packages=['teiler', 'teiler.tests'],
+    packages=['teiler'],
     license="MIT",
-    zip_safe=False,
+    zip_safe=True,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
@@ -23,5 +23,5 @@ setup(
     extras_require=dict(
         dev=["coverage", "flake8", "mock"]
     ),
-    test_suite='teiler.tests'
+    test_suite='tests'
 )

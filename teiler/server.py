@@ -47,12 +47,13 @@ class Transfer(object):
         words = root + '/' + self.transferId + '/'
         return words.encode('utf-8', 'ignore')
 
-    # XXX bad name?
     def encode(self, root):
-        return {'url': self.url(root),
-                'transferId': self.transferId.encode('utf-8'),
-                'filepath': self.filepath.encode('utf-8'),
-                'userIp': self.userIp.encode('utf-8')}
+        return {
+            'url': self.url(root),
+            'transferId': self.transferId.encode('utf-8'),
+            'filepath': self.filepath.encode('utf-8'),
+            'userIp': self.userIp.encode('utf-8')
+        }
 
     def toJson(self, root):
         """
@@ -115,16 +116,20 @@ class FileEndpoint(object):
             return NoResource()
 
         path = filepath.FilePath(transfer.filenameBytes())
+
+        # this is a bit of an issue, if it is a directory,
+        # then the directory is the guid, the children are the files
+        # e.g. 12124124/filename
         if path.isdir():
+            # this returns the directory hosting the filepath
             return File(path.dirname())
 
-        else:  # path.isfile():
-            # XXX serving the parent directory, instead of the file itself
-            # You SHOULD only serve the file that you want to share.
-            # the following serves the directory where the
-            # file is found and *not* the single file.
-            # This will need to be changed!
+        # this should return the same thing, but doesn't.
+        if path.isfile():
             return File(path.dirname())
+
+        else:
+            return NoResource()
 
 
 class UsersEndpoint(object):
@@ -191,11 +196,13 @@ class OutboundRequestEndpoint(object):
         """
         loaded = json.loads(body.read())
         log.msg("parsing request", sortedDump(loaded)[:100])
-        # what if the args are not present in the data?
+
         filepath = loaded.get('filepath')
         user = loaded.get('user')
+
         if filepath is None or user is None:
             raise MissingFormDataError()
+
         transfer = Transfer(str(uuid.uuid4()), filepath, user)
         return transfer
 
