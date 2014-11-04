@@ -108,7 +108,7 @@ class FileEndpoint(object):
         self._outboundRequests = outboundRequests
 
     @app.route('/<string:transferId>/', methods=['GET'], branch=True)
-    def getFile(self, request, transferId):
+    def getFile(self, request, transferId, *args):
         """
         Get the file objects located at transfer id.
         """
@@ -117,16 +117,16 @@ class FileEndpoint(object):
         if transfer is None:
             return NoResource()
 
-        path = filepath.FilePath(transfer.filenameBytes())
-        # I haven;t figured out how to return a single file.
-        # this must be possible
-        return File(path.dirname())
+        rootpath = filepath.FilePath(transfer.filenameBytes())
 
-    # this should work but doesnt;...why?
-    @app.route('/try/', methods=['GET'])
-    def gileor(self, request):
-        log.msg('here')
-        return File('/Users/chris/code/teiler/tox.ini')
+        if rootpath.isdir():
+            return File(rootpath.dirname())
+
+        if rootpath.isfile():
+            file = File(rootpath.path)
+            file.isLeaf = True
+            return file
+
 
 class UsersEndpoint(object):
     """
