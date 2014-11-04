@@ -71,7 +71,7 @@ def main():
         port=externalPort
     )
 
-    reactor.listenMulticast(multicastPort, peerDiscovery)
+    # reactor.listenMulticast(multicastPort, peerDiscovery)
     reactor.run()
 
 
