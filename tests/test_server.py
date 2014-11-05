@@ -208,6 +208,10 @@ class FileEndpointLogicTests(SynchronousTestCase, MockMixin):
                          NoResource().render(request))
 
     def test_with_existing_file_request_returns_directory_listing(self):
+
+        # uses the current directory where tests are run
+        # this is all that is needed as no operations are performed
+        # that change the files in the pwd.
         transfer = server.Transfer('1', '.', '1.1.1.1')
         mockOb = MagicMock(server.OutboundRequests)
         mockOb.get.return_value = transfer
@@ -226,13 +230,12 @@ class FileEndpointLogicTests(SynchronousTestCase, MockMixin):
         self.assertIn(b'Directory listing',
                       request.getWrittenData())
 
-    def test_with_filename_returns_entire_enclosing_directory(self):
+    def test_with_single_filename_returns_single_file(self):
+        fpath = filepath.FilePath(self.mktemp())
+        contents = b'im the contents of a file :-)'
+        fpath.setContent(contents)
 
-        # make a temporary file
-        path = self.mktemp()
-        filepath.FilePath(path).create()
-
-        transfer = server.Transfer('1', path, '1.1.1.1')
+        transfer = server.Transfer('1', fpath.path, '1.1.1.1')
         mockOb = MagicMock(server.OutboundRequests)
         mockOb.get.return_value = transfer
 
@@ -240,15 +243,17 @@ class FileEndpointLogicTests(SynchronousTestCase, MockMixin):
         app = server.FileEndpoint(outbound).app
         kr = KleinResource(app)
 
-        url = u'/' + transfer.transferId + u'/'
+        url = u'/' + transfer.transferId + u'/' + fpath.basename()
         request = requestMock(url.encode('ascii', 'ignore'), 'GET')
 
         d = _render(kr, request)
 
         self.assertFired(d)
         self.assertTrue(mockOb.get.called)
-        self.assertIn(b'Directory listing',
-                      request.getWrittenData())
+        self.assertIn(
+            contents,
+            request.getWrittenData()
+        )
 
     def test_returns_no_resource_when_transfer_not_in_outbound_requests(self):
         mockOb = MagicMock(server.OutboundRequests)

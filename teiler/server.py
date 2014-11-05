@@ -28,10 +28,12 @@ class Transfer(object):
             self.transferId = transferId
         else:
             self.transferId = unicode(transferId, 'utf-8')
+
         if isinstance(filepath, unicode):
             self.filepath = filepath
         else:
             self.filepath = unicode(filepath, 'utf-8')
+
         if isinstance(userIp, unicode):
             self.userIp = userIp
         else:
@@ -106,7 +108,7 @@ class FileEndpoint(object):
         self._outboundRequests = outboundRequests
 
     @app.route('/<string:transferId>/', methods=['GET'], branch=True)
-    def getFile(self, request, transferId):
+    def getFile(self, request, transferId, *args):
         """
         Get the file objects located at transfer id.
         """
@@ -115,21 +117,15 @@ class FileEndpoint(object):
         if transfer is None:
             return NoResource()
 
-        path = filepath.FilePath(transfer.filenameBytes())
+        rootpath = filepath.FilePath(transfer.filenameBytes())
 
-        # this is a bit of an issue, if it is a directory,
-        # then the directory is the guid, the children are the files
-        # e.g. 12124124/filename
-        if path.isdir():
-            # this returns the directory hosting the filepath
-            return File(path.dirname())
+        if rootpath.isdir():
+            return File(rootpath.dirname())
 
-        # this should return the same thing, but doesn't.
-        if path.isfile():
-            return File(path.dirname())
-
-        else:
-            return NoResource()
+        if rootpath.isfile():
+            file = File(rootpath.path)
+            file.isLeaf = True
+            return file
 
 
 class UsersEndpoint(object):
