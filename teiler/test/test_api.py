@@ -1,8 +1,10 @@
 """
 api tests
 """
-from twisted.trial.unittest import SynchronousTestCase
+
 from teiler import api
+
+from twisted.trial.unittest import SynchronousTestCase
 
 
 class ApiTests(SynchronousTestCase):

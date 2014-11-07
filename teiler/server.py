@@ -1,22 +1,24 @@
 """
 server - All of the resources needed to run the file server
 """
-from twisted.web.resource import NoResource
-from twisted.web.static import File
-from twisted.python import log, filepath
-from twisted.internet.defer import Deferred
-from twisted.internet import threads
-
-from klein import Klein
 
 import json
 import uuid
 
+from klein import Klein
+
+from twisted.internet import threads
+from twisted.internet.defer import Deferred
+from twisted.python import filepath, log
+from twisted.web.resource import NoResource
+from twisted.web.static import File
+
 from .utils import sortedDump
 
-__all__ = ('Transfer', 'OutboundRequests', 'UsersEndpoint',
+
+__all__ = ['Transfer', 'OutboundRequests', 'UsersEndpoint',
            'FileEndpoint', 'OutboundRequestEndpoint',
-           'InboundRequestEndpoint')
+           'InboundRequestEndpoint']
 
 
 class Transfer(object):

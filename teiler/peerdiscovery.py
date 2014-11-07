@@ -12,9 +12,9 @@ The process is simple.
 """
 import json
 
-from twisted.python import log
 from twisted.internet import task
 from twisted.internet.protocol import DatagramProtocol
+from twisted.python import log
 
 
 HEARTBEAT = "HEARTBEAT"

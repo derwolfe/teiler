@@ -8,19 +8,18 @@ because these resource allow users to expose files on their system.
 The external api exists to allow fellow users to propose new transfer requests
 and to download the files they have accepted.
 """
+from klein import Klein
 
-from teiler.server import (
-    UsersEndpoint,
-    FileEndpoint,
-    OutboundRequestEndpoint,
-    InboundRequestEndpoint
-)
-from teiler.utils import getFilenames
-from teiler.postagent import submitFileRequest
 from teiler.filerequest import parseFileRequest
 from teiler.peerdiscovery import PeerList
-
-from klein import Klein
+from teiler.postagent import submitFileRequest
+from teiler.server import (
+    FileEndpoint,
+    InboundRequestEndpoint,
+    OutboundRequestEndpoint,
+    UsersEndpoint
+)
+from teiler.utils import getFilenames
 
 
 class InternalAPIFactory(object):

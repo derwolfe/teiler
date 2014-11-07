@@ -6,11 +6,11 @@ transfer.
 """
 from __future__ import division
 
-from twisted.internet.protocol import Protocol
-from twisted.web.client import Agent
-from twisted.python import log
-from twisted.web.http_headers import Headers
 from twisted.internet.defer import Deferred
+from twisted.internet.protocol import Protocol
+from twisted.python import log
+from twisted.web.client import Agent
+from twisted.web.http_headers import Headers
 
 
 class FileWriter(Protocol):

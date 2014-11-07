@@ -1,7 +1,11 @@
-from twisted.trial import unittest
-from twisted.internet.defer import Deferred
+"""
+Tests for the download agent.
+"""
 
-from teiler.downloadagent import FileWriter, DownloadProgress
+from teiler.downloadagent import DownloadProgress, FileWriter
+
+from twisted.internet.defer import Deferred
+from twisted.trial import unittest
 
 
 class FakeIoHandler(object):
