@@ -1,7 +1,7 @@
 """
 api
 
-This exists to build the resource structure necessary for the application.
+Builds the resource structure necessary for the application.
 The internal api is meant for resources that run on localhost only. This is
 because these resource allow users to expose files on their system.
 
@@ -38,6 +38,16 @@ class InternalAPIFactory(object):
                  fileNameGetter=getFilenames,
                  fileRequestSubmitter=submitFileRequest,
                  peerList=PeerList()):
+        """
+        Builds a new api factory, with defaults preloaded.
+
+        :ivar rootUrl: the root url from which files can be downloaded
+        :ivar outboundRequests: data structure that will hold outbound requests
+        :ivar fileNameGetter: a function that can return filenames
+        :ivar fileRequestSubmitter: a function that can submit new file
+        requests to other users
+        :ivar peerlist: a data structure that tracks the other users.
+        """
         self._usersEndpoint = UsersEndpoint(peerList)
         self._outboundRequestsEndpoint = OutboundRequestEndpoint(
             outboundRequests,
