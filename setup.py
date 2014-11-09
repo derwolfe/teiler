@@ -1,6 +1,14 @@
 import os
 from setuptools import setup
 
+
+INSTALL_REQUIRES = [
+    "twisted",
+    "netifaces",
+    "klein",
+    "mock"
+]
+
 setup(
     name="teiler",
     description="simple LAN filesharing",
@@ -19,9 +27,12 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
     ],
-    install_requires=["twisted", "netifaces", "klein"],
+    install_requires=INSTALL_REQUIRES,
     extras_require=dict(
-        dev=["coverage", "flake8", "mock"]
+        dev=["coverage", "flake8"]
     ),
-    test_suite='tests'
+    test_suite='tests',
+    # py2app
+    app=['main.py'],
+    setup_requires=['py2app'] + INSTALL_REQUIRES
 )
