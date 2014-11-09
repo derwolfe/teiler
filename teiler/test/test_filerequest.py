@@ -1,7 +1,11 @@
-from twisted.trial import unittest
-from twisted.internet.defer import Deferred
+"""
+Tests for the FileRequest module.
+"""
 
 from teiler import filerequest
+
+from twisted.internet.defer import Deferred
+from twisted.trial import unittest
 
 
 class ParseFileRequestTests(unittest.SynchronousTestCase):

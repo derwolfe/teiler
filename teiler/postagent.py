@@ -1,11 +1,11 @@
 """
 postagent - Handles POSTing file requests to other users
 """
-from twisted.internet import reactor, defer
+from twisted.internet import defer, reactor
+from twisted.python import log
 from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
-from twisted.python import log
 
 from zope.interface import implements
 

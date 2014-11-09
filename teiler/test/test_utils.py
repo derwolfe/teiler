@@ -1,11 +1,13 @@
 """
 Tests for teiler utilities.
 """
-from twisted.trial.unittest import SynchronousTestCase
-from twisted.python import filepath
-from teiler import utils
 
 import os
+
+from teiler import utils
+
+from twisted.python import filepath
+from twisted.trial.unittest import SynchronousTestCase
 
 
 class TestSortedDump(SynchronousTestCase):

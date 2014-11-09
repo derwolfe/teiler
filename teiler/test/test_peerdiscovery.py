@@ -1,9 +1,19 @@
-from twisted.trial import unittest
-from twisted.internet import task
+"""
+Tests for the peer discovery module.
+"""
 
 from teiler.peerdiscovery import (
-    PeerDiscoveryMessage, Peer, PeerDiscoveryProtocol, HEARTBEAT, EXIT,
-    makePeerId, PeerList)
+    EXIT,
+    HEARTBEAT,
+    Peer,
+    PeerDiscoveryMessage,
+    PeerDiscoveryProtocol,
+    PeerList,
+    makePeerId
+)
+
+from twisted.internet import task
+from twisted.trial import unittest
 
 
 class FakeUdpTransport(object):

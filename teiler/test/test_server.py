@@ -1,23 +1,26 @@
-from twisted.trial.unittest import SynchronousTestCase
+"""
+Tests for the server module.
+"""
 
-from twisted.internet.defer import succeed
-from twisted.web.resource import NoResource
-from twisted.web.server import NOT_DONE_YET
-from twisted.python import filepath
+from StringIO import StringIO
 
 from klein.resource import KleinResource
 from klein.test_resource import requestMock
 
 from mock import MagicMock, patch
 
-from StringIO import StringIO
-
 from teiler import (
-    server,
-    peerdiscovery,
     filerequest,
+    peerdiscovery,
+    server,
     utils
 )
+
+from twisted.internet.defer import succeed
+from twisted.python import filepath
+from twisted.trial.unittest import SynchronousTestCase
+from twisted.web.resource import NoResource
+from twisted.web.server import NOT_DONE_YET
 
 
 class TransferTests(SynchronousTestCase):
