@@ -65,7 +65,7 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
 
     def test_writes_message(self):
         self.protocol.sendMessage("bob")
-        self.assertTrue(self.protocol.transport.msgs[0] == "'bob'")
+        self.assertEqual("'bob'", self.protocol.transport.msgs[0])
 
     def test_received_message_from_self_do_not_add(self):
         """The new peer should not be added as it is equal to the host."""
@@ -74,7 +74,7 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
                                   self.myAddr,
                                   self.myUdpPort).serialize()
         self.protocol.datagramReceived(dg, "192.168.1.1")
-        self.assertTrue(self.peers.count() == 0)
+        self.assertEqual(0, self.peers.count())
 
     def test_received_message_from_peer_add(self):
         dg = PeerDiscoveryMessage(HEARTBEAT,
