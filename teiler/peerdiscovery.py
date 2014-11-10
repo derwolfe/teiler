@@ -76,7 +76,7 @@ class PeerDiscoveryMessage(object):
         })
 
     @classmethod
-    def parseDatagram(klass, datagram):
+    def parseDatagram(cls, datagram):
         """
         Given a datagram formatted using JSON, return a new message object.
         """
@@ -85,7 +85,7 @@ class PeerDiscoveryMessage(object):
         peerName = msg["name"]
         peerAddress = msg["address"]
         peerPort = msg["port"]
-        return klass(peerMsg, peerName, peerAddress, peerPort)
+        return cls(peerMsg, peerName, peerAddress, peerPort)
 
 
 class Peer(object):
