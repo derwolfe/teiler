@@ -2,11 +2,11 @@
 Tap file for teiler.
 """
 from teiler import api
-from teiler.server import OutboundRequests
-from teiler.utils import getLiveInterface, getFilenames
-from teiler.postagent import submitFileRequest
-from teiler.peerdiscovery import PeerList, PeerDiscoveryProtocol
 from teiler.filerequest import parseFileRequest
+from teiler.peerdiscovery import PeerDiscoveryProtocol, PeerList
+from teiler.postagent import submitFileRequest
+from teiler.server import OutboundRequests
+from teiler.utils import getFilenames, getLiveInterface
 
 from twisted.application import internet, service
 from twisted.python import log, usage
@@ -31,6 +31,7 @@ def makeService(config):
         return
 
     return _bootstrap(config['username'], reactor, ip)
+
 
 def _bootstrap(username, reactor, ip):
     multicastAddress = '224.0.0.1'
@@ -69,17 +70,20 @@ def _bootstrap(username, reactor, ip):
     # set up the services - should these be plugins?
 
     p = service.MultiService()
-    internet.TCPServer(internalPort,
-                       server.Site(internal.app.resource()),
-                       interface='127.0.0.1'
+    internet.TCPServer(
+        internalPort,
+        server.Site(internal.app.resource()),
+        interface='127.0.0.1'
     ).setServiceParent(p)
 
-    internet.TCPServer(externalPort,
-                        server.Site(external.app.resource()),
-                        interface='0.0.0.0'
+    internet.TCPServer(
+        externalPort,
+        server.Site(external.app.resource()),
+        interface='0.0.0.0'
     ).setServiceParent(p)
 
-    internet.MulticastServer(multicastPort,
-                             peerDiscovery
+    internet.MulticastServer(
+        multicastPort,
+        peerDiscovery
     ).setServiceParent(p)
     return p

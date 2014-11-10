@@ -131,6 +131,7 @@ def makePeerId(name, address, port):
         address = unicode(name, "utf-8")
     return u"{0}_{1}_{2}".format(name, address, port)
 
+
 # xxx - https://twistedmatrix.com/documents/14.0.0/_downloads/udpbroadcast.py
 class PeerDiscoveryProtocol(DatagramProtocol):
     """
@@ -196,7 +197,6 @@ class PeerDiscoveryProtocol(DatagramProtocol):
     # if no, remove, otherwise keep.
     def stopProtocol(self):
         pass
-
 
     def datagramReceived(self, datagram, address):
         """
