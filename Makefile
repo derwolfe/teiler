@@ -1,5 +1,5 @@
 CODEDIR=teiler
-UNITTESTS=teiler/tests
+UNITTESTS=teiler/test
 BASE=./main.py
 
 run:
