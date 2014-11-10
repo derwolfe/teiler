@@ -89,7 +89,7 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
         self.protocol.reactor.advance(10)
         # there should be two messages delivered over the
         # dinterval of 10 seconds
-        self.assertTrue(len(self.protocol.transport.msgs) == 2)
+        self.assertEqual(2, len(self.protocol.transport.msgs))
 
     def test_different_peer_is_added(self):
         p = Peer("jeff", "192.168.1.1", 8000)
