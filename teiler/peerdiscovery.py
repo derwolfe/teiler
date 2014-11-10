@@ -18,7 +18,6 @@ from twisted.python import log
 
 
 HEARTBEAT = "HEARTBEAT"
-EXIT = "EXIT"
 
 
 class PeerList(object):
@@ -132,7 +131,7 @@ def makePeerId(name, address, port):
         address = unicode(name, "utf-8")
     return u"{0}_{1}_{2}".format(name, address, port)
 
-
+# xxx - https://twistedmatrix.com/documents/14.0.0/_downloads/udpbroadcast.py
 class PeerDiscoveryProtocol(DatagramProtocol):
     """
     UDP protocol used to find others running the same program.
@@ -175,6 +174,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         self.transport.write(message,
                              (self.multiCastAddress, self.multiCastPort))
 
+    # XXX some of this belongs in a service that uses the protocol.
     def startProtocol(self):
         self.transport.setTTL(5)
         self.transport.joinGroup(self.multiCastAddress)
@@ -190,21 +190,13 @@ class PeerDiscoveryProtocol(DatagramProtocol):
                                        self.address,
                                        self.port).serialize()
         self.sendMessage(message)
-        log.msg("Sent ", message)
 
+    # XXX this could be implemented as a looping call check on the client.
+    # every X seconds check if the client has posted in the last five seconds.
+    # if no, remove, otherwise keep.
     def stopProtocol(self):
-        """
-        Gracefully tell peers to remove you.
-        """
-        # XXX this needs to occur at shut down!
-        message = PeerDiscoveryMessage(EXIT,
-                                       self.name,
-                                       self.address,
-                                       self.port).serialize()
-        self.sendMessage(message)
-        if self.loop is not None:
-            self.loop.stop()
-        log.msg("Exit ", message)
+        pass
+
 
     def datagramReceived(self, datagram, address):
         """
@@ -218,11 +210,7 @@ class PeerDiscoveryProtocol(DatagramProtocol):
         if parsed.address == self.address:
             return
         log.msg("Decoding:{0} from {1}", datagram, address)
-        if parsed.message == EXIT:
-            if self._peers.exists(peerId):
-                self._peers.remove(peerId)
-                log.msg("dropping peer:", address)
-        elif parsed.message == HEARTBEAT:
+        if parsed.message == HEARTBEAT:
             if not self._peers.exists(peerId):
                 newPeer = Peer(parsed.name, parsed.address, parsed.port)
                 self._peers.add(newPeer)
