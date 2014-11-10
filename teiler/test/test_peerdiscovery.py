@@ -3,7 +3,6 @@ Tests for the peer discovery module.
 """
 
 from teiler.peerdiscovery import (
-    EXIT,
     HEARTBEAT,
     Peer,
     PeerDiscoveryMessage,
@@ -85,19 +84,11 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
         self.protocol.datagramReceived(dg, ("192.168.1.2", 1232))
         self.assertTrue(self.peers.count() > 0)
 
-    def test_remove_peer_on_receipt_of_exit_message(self):
-        dg = PeerDiscoveryMessage(EXIT, "bob", "192.168.1.1", 8000).serialize()
-        p = Peer("bob", "192.168.1.1", 8000)
-        self.peers.add(p)
-        self.protocol.datagramReceived(dg, "192.168.1.1")
-        self.assertTrue(self.peers.count() == 0)
-
     def test_sends_messages_on_loop(self):
         self.protocol.startProtocol()
         self.protocol.reactor.advance(10)
         # there should be two messages delivered over the
         # dinterval of 10 seconds
-        self.protocol.stopProtocol()  # this keeps the reactor clean
         self.assertTrue(len(self.protocol.transport.msgs) == 2)
 
     def test_different_peer_is_added(self):
@@ -105,18 +96,6 @@ class PeerDiscoveryTests(unittest.SynchronousTestCase):
         peerId = makePeerId(p.name, p.address, p.port)
         self.peers.add(p)
         self.assertTrue(self.peers.exists(peerId))
-
-    def test_sends_exit_message_on_exit(self):
-        # check that stop protocol sends an exit message
-        self.protocol.startProtocol()  # needed to get a loop object to cancel
-        self.protocol.stopProtocol()
-        self.assertTrue("EXIT" in self.protocol.transport.msgs[1])
-
-    def test_kills_looping_call(self):
-        self.protocol.startProtocol()  # loop started, could this be mocked?
-        self.assertTrue(self.protocol.loop.running is True)
-        self.protocol.stopProtocol()
-        self.assertTrue(self.protocol.loop.running is False)
 
 
 class UnicodePeerName(unittest.SynchronousTestCase):
@@ -132,7 +111,7 @@ class UnicodePeerMessageTests(unittest.SynchronousTestCase):
 
     def setUp(self):
         self.message = PeerDiscoveryMessage(
-            EXIT, u"w\xf6lfe", "192.168.1.1", 8000
+            HEARTBEAT, u"w\xf6lfe", "192.168.1.1", 8000
         )
 
     def test_utf8_peer_message_sent_as_bytes(self):
