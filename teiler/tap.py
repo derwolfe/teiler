@@ -32,6 +32,22 @@ def makeService(config):
 
     return _bootstrap(config['username'], reactor, ip)
 
+# create a service for initialization
+
+# or, should I create a service that encompasses peer discovery
+# and has a task allowing peers to be added or removed.
+# Peerlist could provide an interface with cull and be passed
+# around.
+class UserCullService(service.Service):
+
+    name = "User Cull Service"
+
+    def startService(self):
+        self.task.LoopingCall(10, self.cull)
+
+    def cull(self, peers):
+        log.msg("removing missing users")
+
 
 def _bootstrap(username, reactor, ip):
     multicastAddress = '224.0.0.1'

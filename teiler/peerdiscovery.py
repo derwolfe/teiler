@@ -211,6 +211,8 @@ class PeerDiscoveryProtocol(DatagramProtocol):
             return
         log.msg("Decoding:{0} from {1}", datagram, address)
         if parsed.message == HEARTBEAT:
+            # if the user is culled, then the code to update timestamps
+            # might fit well here...
             if not self._peers.exists(peerId):
                 newPeer = Peer(parsed.name, parsed.address, parsed.port)
                 self._peers.add(newPeer)
