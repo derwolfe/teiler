@@ -19,7 +19,12 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
     ],
-    install_requires=INSTALL_REQUIRES,
+    install_requires=[
+        "twisted",
+        "netifaces",
+        "klein",
+        "mock"
+    ],
     extras_require=dict(
         dev=["coverage", "flake8"]
     ),
