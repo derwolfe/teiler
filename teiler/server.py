@@ -255,6 +255,7 @@ class OutboundRequestEndpoint(object):
         deferred.addCallback(self.addOutbound)
         deferred.addCallback(self.getFilenames)
         deferred.addCallback(self.requestTransfer)
+        deferred.addErrback(log.err)
         # several errors could occur
         # 1. parsing request
         # 2. unable to contact peer
