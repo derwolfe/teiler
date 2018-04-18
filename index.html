@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+    <body>Hi</body>
+</html>
+<script>
+ // let's talk to the local teiler server
+ var xhr = new XMLHttpRequest();
+ xhr.open("GET", "http://localhost:8080", true);
+ xhr.onload = function() {alert(xhr.responseText)};
+ xhr.send();
+</script>
+</html>
